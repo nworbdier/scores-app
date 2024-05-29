@@ -3,10 +3,10 @@ import { createStackNavigator } from '@react-navigation/stack';
 
 import { BackButton } from '../components/BackButton';
 import Details from '../screens/details';
-import Overview from '../screens/overview';
+import Scores from '../screens/scores';
 
 export type RootStackParamList = {
-  Overview: undefined;
+  Scores: undefined;
   Details: { name: string };
 };
 
@@ -15,8 +15,8 @@ const Stack = createStackNavigator<RootStackParamList>();
 export default function RootStack() {
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Overview">
-        <Stack.Screen name="Overview" component={Overview} />
+      <Stack.Navigator initialRouteName="Scores">
+        <Stack.Screen name="Scores" component={Scores} />
         <Stack.Screen
           name="Details"
           component={Details}

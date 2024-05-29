@@ -6,14 +6,14 @@ import { StyleSheet, View } from 'react-native';
 import { Button } from '../components/Button';
 import { RootStackParamList } from '../navigation';
 
-type OverviewScreenNavigationProps = StackNavigationProp<RootStackParamList, 'Overview'>;
+type ScoresScreenNavigationProps = StackNavigationProp<RootStackParamList, 'Scores'>;
 
-export default function Overview() {
-  const navigation = useNavigation<OverviewScreenNavigationProps>();
+export default function Scores() {
+  const navigation = useNavigation<ScoresScreenNavigationProps>();
 
   return (
     <View style={styles.container}>
-      <ScreenContent path="screens/overview.tsx" title="Overview" />
+      <ScreenContent path="screens/scores.tsx" title="Scores" />
       <Button
         onPress={() =>
           navigation.navigate('Details', {

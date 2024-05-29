@@ -3,15 +3,12 @@
     "name": "scores-app",
     "slug": "scores-app",
     "version": "1.0.0",
-
     "web": {
       "favicon": "./assets/favicon.png"
     },
-
     "experiments": {
       "tsconfigPaths": true
     },
-
     "plugins": [
       [
         "expo-dev-launcher",
@@ -20,18 +17,17 @@
         }
       ]
     ],
-
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-
     "userInterfaceStyle": "light",
-
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true
     },
@@ -39,6 +35,11 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
+      }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "4aafe30b-175b-4916-b8c2-67ae340d7248"
       }
     }
   }
