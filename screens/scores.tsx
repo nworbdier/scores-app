@@ -1,90 +1,157 @@
+import React, { useEffect, useState } from 'react';
+import {
+  StyleSheet,
+  View,
+  Text,
+  FlatList,
+  SafeAreaView,
+  RefreshControl,
+  TouchableOpacity,
+} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, Text, FlatList, SafeAreaView, RefreshControl } from 'react-native';
-
+import moment from 'moment';
 import { RootStackParamList } from '../navigation';
 
 type ScoresScreenNavigationProps = StackNavigationProp<RootStackParamList, 'Scores'>;
 
+type Athlete = {
+  displayName: string;
+};
+
 type Competitor = {
-  name: string;
-  symbolicName: string;
-  score: number;
+  athlete: Athlete;
 };
 
-type Game = {
+type Competition = {
+  competitors: Competitor[];
+};
+
+type Event = {
   id: string;
-  homeCompetitor: Competitor;
-  awayCompetitor: Competitor;
-  gameTimeDisplay: string;
-  shortStatusText: string;
+  name: string;
+  competitions: Competition[];
 };
 
-const url =
-  'https://allscores.p.rapidapi.com/api/allscores/custom-scores?langId=1&timezone=America%2FChicago&competitions=438&startDate=28%2F05%2F2024&endDate=28%2F05%2F2024';
+type CalendarDate = {
+  startDate: string;
+};
+
 const options = {
   method: 'GET',
-  headers: {
-    'x-rapidapi-key': 'b5085a79ffmsh6fae92970b1a422p1c6e8ajsnb4013fb16637',
-    'x-rapidapi-host': 'allscores.p.rapidapi.com',
-  },
+};
+
+const findClosestDate = (dates: string[]): string => {
+  const today = moment();
+  return dates.reduce((closestDate, currentDate) => {
+    const currentDiff = Math.abs(today.diff(moment(currentDate), 'days'));
+    const closestDiff = Math.abs(today.diff(moment(closestDate), 'days'));
+    return currentDiff < closestDiff ? currentDate : closestDate;
+  });
 };
 
 export default function Scores() {
   const navigation = useNavigation<ScoresScreenNavigationProps>();
-  const [games, setGames] = useState<Game[]>([]);
+  const [events, setEvents] = useState<Event[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [selectedDate, setSelectedDate] = useState('');
+  const [dates, setDates] = useState<string[]>([]);
 
-  const fetchScores = async () => {
+  const fetchDates = async () => {
     try {
-      const response = await fetch(url, options);
+      const response = await fetch(
+        `https://site.api.espn.com/apis/site/v2/sports/mma/ufc/scoreboard?dates=2024`,
+        options
+      );
       const result = await response.json();
-      setGames(result.games);
+      const calendarDates = result.leagues[0].calendar.map((item: CalendarDate) => item.startDate);
+      setDates(calendarDates);
+      if (calendarDates.length > 0) {
+        const closestDate = findClosestDate(calendarDates);
+        setSelectedDate(closestDate);
+        fetchScores(closestDate);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const fetchScores = async (date: string) => {
+    try {
+      const formattedDate = moment(date).format('YYYYMMDD');
+      const response = await fetch(
+        `https://site.api.espn.com/apis/site/v2/sports/mma/ufc/scoreboard?dates=${formattedDate}`,
+        options
+      );
+      const result = await response.json();
+      setEvents(result.events);
     } catch (error) {
       console.error(error);
     }
   };
 
   useEffect(() => {
-    fetchScores();
+    fetchDates();
   }, []);
+
+  useEffect(() => {
+    if (selectedDate) {
+      fetchScores(selectedDate);
+    }
+  }, [selectedDate]);
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await fetchScores();
+    await fetchScores(selectedDate);
     setRefreshing(false);
   };
 
-  const renderItem = ({ item }: { item: Game }) => (
-    <View style={styles.gameContainer}>
-      <View style={styles.playerContainer}>
-        <View style={styles.player}>
-          <Text style={styles.symbolicName}>{item.homeCompetitor.symbolicName}</Text>
-          <Text style={styles.score}>{item.homeCompetitor.score}</Text>
-        </View>
-        <View style={styles.gameInfo}>
-          {item.shortStatusText === 'Just Ended' || item.shortStatusText === 'Final' ? (
-            <Text style={styles.shortStatusText}>Final</Text>
-          ) : (
-            <Text style={styles.gameTimeText}>{item.gameTimeDisplay}</Text>
-          )}
-        </View>
-        <View style={styles.player}>
-          <Text style={styles.symbolicName}>{item.awayCompetitor.symbolicName}</Text>
-          <Text style={styles.score}>{item.awayCompetitor.score}</Text>
-        </View>
-      </View>
+  const renderDateItem = ({ item }: { item: string }) => (
+    <TouchableOpacity
+      style={[styles.dateButton, item === selectedDate && styles.selectedDateButton]}
+      onPress={() => setSelectedDate(item)}>
+      <Text style={[styles.dateText, item === selectedDate && styles.selectedDateText]}>
+        {moment(item).format('MMM DD')}
+      </Text>
+    </TouchableOpacity>
+  );
+
+  const renderEventItem = ({ item }: { item: Event }) => (
+    <View style={styles.eventContainer}>
+      <Text style={styles.eventName}>{item.name}</Text>
+      <FlatList
+        data={item.competitions}
+        renderItem={renderCompetitionItem}
+        keyExtractor={(item, index) => `${item.id}-${index}`}
+      />
+    </View>
+  );
+
+  const renderCompetitionItem = ({ item }: { item: Competition }) => (
+    <View style={styles.competitorsContainer}>
+      <Text style={styles.competitorName}>{item.competitors[0]?.athlete.displayName}</Text>
+      <Text style={styles.vsText}>vs</Text>
+      <Text style={styles.competitorName}>{item.competitors[1]?.athlete.displayName}</Text>
     </View>
   );
 
   return (
     <SafeAreaView style={styles.container}>
+      <View style={styles.headerContainer}>
+        <FlatList
+          data={dates}
+          renderItem={renderDateItem}
+          keyExtractor={(item) => item}
+          horizontal
+          contentContainerStyle={styles.dateList}
+          showsHorizontalScrollIndicator={false}
+        />
+      </View>
       <FlatList
-        data={games}
-        renderItem={renderItem}
+        data={events}
+        renderItem={renderEventItem}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.grid}
+        contentContainerStyle={styles.eventList}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       />
     </SafeAreaView>
@@ -94,62 +161,59 @@ export default function Scores() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 24,
+    padding: 16,
   },
-  grid: {
+  headerContainer: {
+    height: 50, // Adjust as needed
+  },
+  dateList: {
+    flexGrow: 1,
     justifyContent: 'center',
   },
-  gameContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 20,
-  },
-  playerContainer: {
-    flex: 1,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    margin: 10,
-    padding: 20,
-    backgroundColor: '#f8f8f8',
-    alignItems: 'center',
-    borderRadius: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-    elevation: 3,
-  },
-  player: {
-    flexDirection: 'column',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  gameInfo: {
+  dateButton: {
+    height: '100%',
+    marginHorizontal: 10,
+    paddingHorizontal: 10,
+    borderRadius: 5,
+    backgroundColor: '#ececec',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 10,
   },
-  gameTimeText: {
+  selectedDateButton: {
+    backgroundColor: '#cce5ff',
+  },
+  dateText: {
     fontSize: 16,
-    color: '#666',
   },
-  shortStatusText: {
-    fontSize: 14,
-    color: '#888',
-    marginTop: 5,
-  },
-  name: {
-    fontSize: 18,
+  selectedDateText: {
     fontWeight: 'bold',
-    marginBottom: 5,
+    color: '#007bff',
   },
-  symbolicName: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom: 5,
+  eventList: {
+    paddingTop: 20,
   },
-  score: {
+  eventContainer: {
+    padding: 10,
+    marginBottom: 10,
+    backgroundColor: '#f8f8f8',
+    borderRadius: 5,
+  },
+  eventName: {
     fontSize: 16,
-    marginBottom: 5,
+    marginBottom: 10,
+  },
+  competitorsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginVertical: 5,
+    padding: 10,
+    borderRadius: 3,
+  },
+  competitorName: {
+    fontSize: 14,
+  },
+  vsText: {
+    fontSize: 14,
+    fontStyle: 'italic',
   },
 });
