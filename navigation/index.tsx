@@ -2,6 +2,7 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { SafeAreaView, StyleSheet } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
 
 import { BackButton } from '../components/BackButton';
 import Details from '../screens/details';
@@ -17,6 +18,7 @@ const Stack = createStackNavigator<RootStackParamList>();
 export default function RootStack() {
   return (
     <SafeAreaView style={styles.safeArea}>
+      <StatusBar style="light" />
       <NavigationContainer>
         <Stack.Navigator initialRouteName="Scores">
           <Stack.Screen name="Scores" component={Scores} options={{ headerShown: false }} />
@@ -36,5 +38,6 @@ export default function RootStack() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
+    backgroundColor: 'black',
   },
 });

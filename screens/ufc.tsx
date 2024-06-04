@@ -1,4 +1,3 @@
-import { AntDesign, Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import moment from 'moment';
@@ -11,7 +10,6 @@ import {
   SafeAreaView,
   RefreshControl,
   TouchableOpacity,
-  Image,
 } from 'react-native';
 
 import { RootStackParamList } from '../navigation';
@@ -130,81 +128,16 @@ export default function Scores() {
     </View>
   );
 
-  const renderCompetitionItem = ({ item }: { item: Competition }) => {
-    const statusType = item.status?.type?.name;
-    const competitor1Record = item.competitors[0]?.records[0]?.summary;
-    const competitor2Record = item.competitors[1]?.records[0]?.summary;
-
-    return (
-      <View style={styles.competitorsContainer}>
-        <View style={styles.competitorColumn}>
-          <Image
-            source={{ uri: item.competitors[0]?.athlete.flag.href }}
-            style={styles.flagImage}
-          />
-          <Text style={styles.competitorName}>{item.competitors[0]?.athlete.displayName}</Text>
-          <Text
-            style={[
-              styles.resultText,
-              statusType === 'STATUS_SCHEDULED' && styles.scheduledText,
-              statusType === 'L' && styles.lossText,
-            ]}>
-            {statusType === 'STATUS_SCHEDULED'
-              ? competitor1Record
-              : item.competitors[0]?.winner
-                ? 'W'
-                : 'L'}
-          </Text>
-        </View>
-        <View style={styles.vsColumn}>
-          <Text style={styles.vsText}>vs</Text>
-        </View>
-        <View style={styles.competitorColumn}>
-          <Image
-            source={{ uri: item.competitors[1]?.athlete.flag.href }}
-            style={styles.flagImage}
-          />
-          <Text style={styles.competitorName}>{item.competitors[1]?.athlete.displayName}</Text>
-          <Text
-            style={[
-              styles.resultText,
-              statusType === 'STATUS_SCHEDULED' && styles.scheduledText,
-              statusType === 'L' && styles.lossText,
-            ]}>
-            {statusType === 'STATUS_SCHEDULED'
-              ? competitor2Record
-              : item.competitors[1]?.winner
-                ? 'W'
-                : 'L'}
-          </Text>
-        </View>
-      </View>
-    );
-  };
+  const renderCompetitionItem = ({ item }: { item: Competition }) => (
+    <View style={styles.competitorsContainer}>
+      <Text style={styles.competitorName}>{item.competitors[0]?.athlete.displayName}</Text>
+      <Text style={styles.vsText}>vs</Text>
+      <Text style={styles.competitorName}>{item.competitors[1]?.athlete.displayName}</Text>
+    </View>
+  );
 
   return (
     <SafeAreaView style={styles.container}>
-      <View>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginVertical: 20 }}>
-          <View style={{ flex: 4, alignItems: 'flex-start' }}>
-            <Text style={{ color: 'white', fontSize: 24, marginLeft: 10 }}>MATCHES</Text>
-          </View>
-          <View
-            style={{
-              flex: 1,
-              flexDirection: 'row',
-              justifyContent: 'space-evenly',
-              alignItems: 'center',
-            }}>
-            <TouchableOpacity style={{ marginHorizontal: 0 }}>
-              <Ionicons name="settings-outline" size={25} color="white" />
-            </TouchableOpacity>
-            <TouchableOpacity style={{ marginHorizontal: 0 }}>
-              <AntDesign name="search1" size={25} color="white" />
-            </TouchableOpacity>
-          </View>
-        </View>
-      </View>
       <View style={styles.headerContainer}>
         <FlatList
           data={dates}
@@ -230,10 +163,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
-    backgroundColor: 'black',
   },
   headerContainer: {
-    height: 35, // Adjust as needed
+    height: 50, // Adjust as needed
   },
   dateList: {
     flexGrow: 1,
@@ -259,18 +191,17 @@ const styles = StyleSheet.create({
     color: '#007bff',
   },
   eventList: {
-    paddingTop: 10,
+    paddingTop: 20,
   },
   eventContainer: {
     padding: 10,
     marginBottom: 10,
-    backgroundColor: 'black',
+    backgroundColor: '#f8f8f8',
     borderRadius: 5,
   },
   eventName: {
-    fontSize: 24,
+    fontSize: 16,
     marginBottom: 10,
-    color: 'white',
   },
   competitorsContainer: {
     flexDirection: 'row',
@@ -283,31 +214,7 @@ const styles = StyleSheet.create({
     borderColor: '#ccc', // border color for competitors container
   },
   competitorName: {
-    fontSize: 12,
-  },
-  competitorColumn: {
-    alignItems: 'center',
-    flex: 2,
-  },
-  flagImage: {
-    width: 30,
-    height: 20,
-    marginBottom: 5,
-  },
-  resultText: {
-    fontSize: 20,
-    color: 'green', // you can adjust color as needed
-  },
-  scheduledText: {
-    color: 'black',
-  },
-  lossText: {
-    color: 'red',
-  },
-  vsColumn: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    flex: 1,
+    fontSize: 14,
   },
   vsText: {
     fontSize: 14,
