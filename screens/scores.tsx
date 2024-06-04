@@ -208,6 +208,9 @@ const styles = StyleSheet.create({
     marginVertical: 5,
     padding: 10,
     borderRadius: 3,
+    backgroundColor: '#ffffff', // background color for competitors container
+    borderWidth: 1, // border width for competitors container
+    borderColor: '#ccc', // border color for competitors container
   },
   competitorName: {
     fontSize: 14,
