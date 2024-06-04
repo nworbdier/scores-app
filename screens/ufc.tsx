@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import moment from 'moment';
@@ -25,6 +26,7 @@ type Competitor = {
 };
 
 type Competition = {
+  id: any;
   competitors: Competitor[];
 };
 

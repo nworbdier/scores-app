@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { AntDesign, Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -19,14 +20,19 @@ import { RootStackParamList } from '../navigation';
 type ScoresScreenNavigationProps = StackNavigationProp<RootStackParamList, 'Scores'>;
 
 type Athlete = {
+  flag: any;
   displayName: string;
 };
 
 type Competitor = {
+  records: any;
+  winner: any;
   athlete: Athlete;
 };
 
 type Competition = {
+  status: any;
+  id: any;
   competitors: Competitor[];
 };
 
