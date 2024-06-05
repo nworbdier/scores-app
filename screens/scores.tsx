@@ -282,7 +282,6 @@ export default function Scores() {
           horizontal
           contentContainerStyle={styles.dateList}
           showsHorizontalScrollIndicator={false}
-          ref={flatListRef}
         />
       </View>
       <FlatList
