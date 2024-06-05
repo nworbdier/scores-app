@@ -3,7 +3,7 @@ import { AntDesign, Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import moment from 'moment';
-import React, { ReactNode, useEffect, useState } from 'react';
+import React, { ReactNode, useEffect, useState, useRef } from 'react';
 import {
   StyleSheet,
   View,
@@ -36,7 +36,7 @@ type Competition = {
   status: {
     result: any;
     type: { name: string };
-};
+  };
   id: string;
   competitors: Competitor[];
 };
@@ -79,6 +79,8 @@ export default function Scores() {
   const [refreshing, setRefreshing] = useState(false);
   const [selectedDate, setSelectedDate] = useState('');
   const [dates, setDates] = useState<string[]>([]);
+
+  const flatListRef = useRef<FlatList<string>>(null);
 
   const fetchDates = async () => {
     try {
@@ -138,6 +140,13 @@ export default function Scores() {
       fetchEvents(selectedDate);
     }
   }, [selectedDate]);
+
+  useEffect(() => {
+    if (selectedDate && flatListRef.current) {
+      const index = dates.findIndex((date) => date === selectedDate);
+      flatListRef.current.scrollToIndex({ index, animated: true, viewPosition: 0.5 });
+    }
+  }, [selectedDate, dates]);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -273,6 +282,7 @@ export default function Scores() {
           horizontal
           contentContainerStyle={styles.dateList}
           showsHorizontalScrollIndicator={false}
+          ref={flatListRef}
         />
       </View>
       <FlatList
