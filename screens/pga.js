@@ -15,12 +15,23 @@ const PGA = () => {
 
       const extractedData = data.events.map((event) => {
         const players = event.competitions[0].competitors.map((competitor) => {
+          let thru = 0;
+          if (
+            competitor.linescores &&
+            competitor.linescores[0] &&
+            competitor.linescores[0].linescores
+          ) {
+            thru = competitor.linescores.reduce(
+              (count, score) => count + (score.linescores ? score.linescores.length : 0),
+              0
+            );
+          }
           return {
             pl: competitor.order,
             name: competitor.athlete.displayName,
             headshot: competitor.athlete.headshot,
             today: competitor.linescores[0].value,
-            thru: competitor.linescores.filter((score) => score !== null).length,
+            thru,
             tot: competitor.score,
           };
         });
