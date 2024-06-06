@@ -129,7 +129,7 @@ const UFC = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
         <View style={styles.vsColumn}>
           {statusType === 'STATUS_FINAL' ? (
             <View style={styles.resultColumn}>
-              <Text style={[styles.resultText, styles.centeredText]}>
+              <Text style={[styles.resultText2, styles.centeredText]}>
                 {result.shortDisplayName}
               </Text>
               <Text style={[styles.resultDescription, styles.centeredText]}>
@@ -211,17 +211,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   headshotImage: {
-    width: 75,
-    height: 75,
+    width: 60,
+    height: 60,
     borderRadius: 25,
     marginBottom: 10,
   },
   competitorName: {
-    fontSize: 14,
+    fontSize: 12,
     color: 'white',
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 10,
+  },
+  resultText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: 'green',
+  },
+  resultText2: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: 'white',
   },
   vsText: {
     fontSize: 18,
@@ -231,15 +241,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  resultText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: 'white',
-  },
   resultDescription: {
     fontSize: 14,
     color: 'white',
-    marginTop: 2.5,
   },
   centeredText: {
     textAlign: 'center',
