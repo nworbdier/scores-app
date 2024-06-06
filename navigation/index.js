@@ -4,7 +4,6 @@ import { StatusBar } from 'expo-status-bar';
 import React from 'react';
 import { SafeAreaView, StyleSheet, View } from 'react-native';
 
-import { BackButton } from '../components/BackButton';
 import Details from '../screens/details';
 import Scores from '../screens/scores';
 
@@ -18,13 +17,7 @@ export default function RootStack() {
       <NavigationContainer>
         <Stack.Navigator initialRouteName="Scores">
           <Stack.Screen name="Scores" component={Scores} options={{ headerShown: false }} />
-          <Stack.Screen
-            name="Details"
-            component={Details}
-            options={({ navigation }) => ({
-              headerLeft: () => <BackButton onPress={navigation.goBack} />,
-            })}
-          />
+          <Stack.Screen name="Details" component={Details} />
         </Stack.Navigator>
       </NavigationContainer>
     </View>
