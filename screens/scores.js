@@ -12,9 +12,10 @@ import {
   StyleSheet,
 } from 'react-native';
 
+import PGA from './pga';
 import UFC from './ufc';
 
-const sportNames = ['UFC', 'TENNIS', 'MLB', 'NBA', 'WNBA', 'NHL', 'NFL', 'CFB', 'CBB'];
+const sportNames = ['UFC', 'PGA', 'TENNIS', 'MLB', 'NBA', 'WNBA', 'NHL', 'NFL', 'CFB', 'CBB'];
 
 const Scores = () => {
   const [selectedSport, setSelectedSport] = useState('UFC');
@@ -22,7 +23,8 @@ const Scores = () => {
   const [refreshing, setRefreshing] = useState(false);
   const flatListRef = useRef(null);
 
-  const { events, eventDetails, dates, onRefresh, renderCard } = UFC({
+  // Destructure renderUFCComponent from UFC
+  const { renderUFCComponent, dates, onRefresh } = UFC({
     selectedDate,
     setSelectedDate,
     refreshing,
@@ -91,15 +93,8 @@ const Scores = () => {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollViewContent}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
-        <View style={styles.eventNameContainer}>
-          <Text style={styles.eventNameText}>
-            {events.length > 0 ? events[0].name : 'No events'}
-          </Text>
-        </View>
-        {eventDetails &&
-          Object.keys(eventDetails.cards).map((cardKey) => (
-            <View key={cardKey}>{renderCard(cardKey)}</View>
-          ))}
+        {selectedSport === 'PGA' && <PGA />}
+        {selectedSport === 'UFC' && renderUFCComponent()}
       </ScrollView>
     </SafeAreaView>
   );
@@ -134,7 +129,7 @@ const styles = StyleSheet.create({
   },
   sportButton: {
     height: '100%',
-    marginHorizontal: 10,
+    marginHorizontal: 7,
     borderRadius: 5,
     justifyContent: 'center',
     alignItems: 'center',
@@ -152,7 +147,7 @@ const styles = StyleSheet.create({
   },
   dateButton: {
     height: '100%',
-    marginHorizontal: 15,
+    marginHorizontal: 10,
     borderRadius: 5,
     justifyContent: 'center',
     alignItems: 'center',
@@ -165,16 +160,6 @@ const styles = StyleSheet.create({
   selectedDateText: {
     fontWeight: 'bold',
     color: '#FFDB58',
-  },
-  eventNameContainer: {
-    paddingVertical: 10,
-    backgroundColor: 'black',
-  },
-  eventNameText: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: 'white',
-    textAlign: 'left',
   },
   scrollViewContent: {
     paddingHorizontal: 10,

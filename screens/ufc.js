@@ -1,6 +1,6 @@
 import moment from 'moment';
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, Image, Text } from 'react-native';
+import { StyleSheet, View, Image, Text, ScrollView } from 'react-native';
 
 const options = {
   method: 'GET',
@@ -85,12 +85,6 @@ const UFC = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
     setRefreshing(false);
   };
 
-  const renderEventItem = ({ item }) => (
-    <View style={styles.eventContainer}>
-      <Text style={styles.eventName}>{item.name}</Text>
-    </View>
-  );
-
   const renderCompetitionItem = (competition, cardKey) => {
     const statusType = competition.status.type.name;
     const competitor1 = competition.competitors[0];
@@ -172,17 +166,55 @@ const UFC = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
     );
   };
 
+  const renderUFCComponent = () => {
+    return (
+      <ScrollView>
+        <View style={styles.eventNameContainer}>
+          <Text style={styles.eventNameText}>
+            {events.length > 0 ? events[0].name : 'No events'}
+          </Text>
+        </View>
+        {eventDetails &&
+          Object.keys(eventDetails.cards).map((cardKey) => (
+            <View key={cardKey}>{renderCard(cardKey)}</View>
+          ))}
+      </ScrollView>
+    );
+  };
+
   return {
     events,
     eventDetails,
     dates,
     onRefresh,
-    renderEventItem,
-    renderCard,
+    renderUFCComponent,
   };
 };
 
 const styles = StyleSheet.create({
+  competitorsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#141414',
+    marginBottom: 10,
+    paddingVertical: 10,
+    borderRadius: 10,
+  },
+  competitorColumn: {
+    flex: 3,
+    alignItems: 'center',
+  },
+  eventNameContainer: {
+    paddingVertical: 10,
+    backgroundColor: 'black',
+  },
+  eventNameText: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: 'white',
+    textAlign: 'left',
+  },
   cardContainer: {
     marginBottom: 20,
     marginHorizontal: 5,
@@ -192,19 +224,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: 'white',
     marginBottom: 10,
-  },
-  competitorsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#333',
-    marginBottom: 10,
-    paddingVertical: 10,
-    borderRadius: 10,
-  },
-  competitorColumn: {
-    flex: 3,
-    alignItems: 'center',
   },
   vsColumn: {
     flex: 1,
