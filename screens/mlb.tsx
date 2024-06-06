@@ -15,7 +15,7 @@ const findClosestDate = (dates: string[]): string => {
   });
 };
 
-const UFC = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
+const MLB = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
   const [events, setEvents] = useState([]);
   const [eventDetails, setEventDetails] = useState(null);
   const [dates, setDates] = useState<string[]>([]);
@@ -23,7 +23,7 @@ const UFC = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
   const fetchDates = async () => {
     try {
       const response = await fetch(
-        `https://site.api.espn.com/apis/site/v2/sports/mma/ufc/scoreboard?dates=2024`,
+        `https://sports.core.api.espn.com/v2/sports/baseball/leagues/mlb/calendar/whitelist`,
         options
       );
       const result = await response.json();
@@ -200,7 +200,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#333',
     marginBottom: 10,
     paddingVertical: 10,
-    borderRadius: 10,
+    borderRadius: 5,
   },
   competitorColumn: {
     flex: 3,
@@ -252,4 +252,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default UFC;
+export default MLB;
