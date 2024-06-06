@@ -1,11 +1,7 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { AntDesign, Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
 import moment from 'moment';
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
-  StyleSheet,
   View,
   Text,
   FlatList,
@@ -13,21 +9,19 @@ import {
   RefreshControl,
   TouchableOpacity,
   ScrollView,
+  StyleSheet,
 } from 'react-native';
 
-import MLB from './mlb';
 import UFC from './ufc';
-import { RootStackParamList } from '../navigation';
-
-type ScoresScreenNavigationProps = StackNavigationProp<RootStackParamList, 'Scores'>;
 
 const sportNames = ['UFC', 'TENNIS', 'MLB', 'NBA', 'WNBA', 'NHL', 'NFL', 'CFB', 'CBB'];
 
 const Scores = () => {
-  const navigation = useNavigation<ScoresScreenNavigationProps>();
-  const [selectedSport, setSelectedSport] = useState<string>('UFC');
-  const [selectedDate, setSelectedDate] = useState<string>('');
+  const [selectedSport, setSelectedSport] = useState('UFC');
+  const [selectedDate, setSelectedDate] = useState('');
   const [refreshing, setRefreshing] = useState(false);
+  const flatListRef = useRef(null);
+
   const { events, eventDetails, dates, onRefresh, renderCard } = UFC({
     selectedDate,
     setSelectedDate,
@@ -36,15 +30,13 @@ const Scores = () => {
   });
 
   useEffect(() => {
-    if (selectedDate && dates.includes(selectedDate) && flatListRef.current) {
-      const index = dates.findIndex((date) => date === selectedDate);
+    const index = dates.findIndex((date) => date === selectedDate);
+    if (index !== -1 && flatListRef.current) {
       flatListRef.current.scrollToIndex({ index, animated: true, viewPosition: 0.5 });
     }
   }, [selectedDate, dates]);
 
-  const flatListRef = useRef<FlatList<string>>(null);
-
-  const renderSportItem = ({ item }: { item: string }) => (
+  const renderSportItem = ({ item }) => (
     <TouchableOpacity style={styles.sportButton} onPress={() => setSelectedSport(item)}>
       <Text style={[styles.sportText, selectedSport === item && styles.selectedSportText]}>
         {item}
@@ -52,7 +44,7 @@ const Scores = () => {
     </TouchableOpacity>
   );
 
-  const renderDateItem = ({ item }: { item: string }) => (
+  const renderDateItem = ({ item }) => (
     <TouchableOpacity
       style={[styles.dateButton, item === selectedDate && styles.selectedDateButton]}
       onPress={() => setSelectedDate(item)}>
@@ -64,27 +56,15 @@ const Scores = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginVertical: 10 }}>
-          <View style={{ flex: 4, alignItems: 'flex-start' }}>
-            <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 24, marginLeft: 10 }}>
-              Scores
-            </Text>
-          </View>
-          <View
-            style={{
-              flex: 1,
-              flexDirection: 'row',
-              justifyContent: 'space-evenly',
-              alignItems: 'center',
-            }}>
-            <TouchableOpacity>
-              <Ionicons name="settings-outline" size={25} color="white" />
-            </TouchableOpacity>
-            <TouchableOpacity>
-              <AntDesign name="search1" size={25} color="white" />
-            </TouchableOpacity>
-          </View>
+      <View style={styles.header}>
+        <Text style={styles.headerText}>Scores</Text>
+        <View style={styles.headerIcons}>
+          <TouchableOpacity>
+            <Ionicons name="settings-outline" size={25} color="white" />
+          </TouchableOpacity>
+          <TouchableOpacity>
+            <AntDesign name="search1" size={25} color="white" />
+          </TouchableOpacity>
         </View>
       </View>
       <View style={styles.headerContainer}>
@@ -93,18 +73,18 @@ const Scores = () => {
           renderItem={renderSportItem}
           keyExtractor={(item) => item}
           horizontal
-          contentContainerStyle={styles.sportList}
           showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.sportList}
         />
         <FlatList
           data={dates}
           renderItem={renderDateItem}
           keyExtractor={(item) => item}
           horizontal
-          contentContainerStyle={styles.dateList}
           showsHorizontalScrollIndicator={false}
           ref={flatListRef}
-          getItemLayout={(data, index) => ({ length: 100, offset: 100 * index, index })}
+          getItemLayout={(_, index) => ({ length: 100, offset: 100 * index, index })}
+          contentContainerStyle={styles.dateList}
         />
       </View>
       <ScrollView
@@ -130,11 +110,26 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'black',
   },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginVertical: 10,
+  },
+  headerText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 24,
+    marginLeft: 10,
+  },
+  headerIcons: {
+    flexDirection: 'row',
+    justifyContent: 'space-evenly',
+    alignItems: 'center',
+  },
   headerContainer: {
-    height: 70, // Adjusted to accommodate both sport and date lists
+    height: 70,
   },
   sportList: {
-    flexGrow: 1,
     justifyContent: 'center',
   },
   sportButton: {
@@ -150,10 +145,9 @@ const styles = StyleSheet.create({
     color: 'white',
   },
   selectedSportText: {
-    color: '#FFDB58', // Mustard yellow color
+    color: '#FFDB58',
   },
   dateList: {
-    flexGrow: 1,
     justifyContent: 'center',
   },
   dateButton: {

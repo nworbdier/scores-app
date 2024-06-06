@@ -6,7 +6,7 @@ const options = {
   method: 'GET',
 };
 
-const findClosestDate = (dates: string[]): string => {
+const findClosestDate = (dates) => {
   const today = moment();
   return dates.reduce((closestDate, currentDate) => {
     const currentDiff = Math.abs(today.diff(moment(currentDate), 'days'));
@@ -18,7 +18,7 @@ const findClosestDate = (dates: string[]): string => {
 const UFC = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
   const [events, setEvents] = useState([]);
   const [eventDetails, setEventDetails] = useState(null);
-  const [dates, setDates] = useState<string[]>([]);
+  const [dates, setDates] = useState([]);
 
   const fetchDates = async () => {
     try {
@@ -27,7 +27,7 @@ const UFC = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
         options
       );
       const result = await response.json();
-      const calendarDates = result.leagues[0].calendar.map((item: any) => item.startDate);
+      const calendarDates = result.leagues[0].calendar.map((item) => item.startDate);
       setDates(calendarDates);
       if (calendarDates.length > 0) {
         const closestDate = findClosestDate(calendarDates);
@@ -39,7 +39,7 @@ const UFC = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
     }
   };
 
-  const fetchEvents = async (date: string) => {
+  const fetchEvents = async (date) => {
     try {
       const formattedDate = moment(date).format('YYYYMMDD');
       const response = await fetch(
@@ -56,7 +56,7 @@ const UFC = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
     }
   };
 
-  const fetchEventDetails = async (eventId: string) => {
+  const fetchEventDetails = async (eventId) => {
     try {
       const response = await fetch(
         `https://site.web.api.espn.com/apis/common/v3/sports/mma/ufc/fightcenter/${eventId}`,
@@ -85,19 +85,19 @@ const UFC = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
     setRefreshing(false);
   };
 
-  const renderEventItem = ({ item }: { item: any }) => (
+  const renderEventItem = ({ item }) => (
     <View style={styles.eventContainer}>
       <Text style={styles.eventName}>{item.name}</Text>
     </View>
   );
 
-  const renderCompetitionItem = (competition: any, cardKey: string) => {
+  const renderCompetitionItem = (competition, cardKey) => {
     const statusType = competition.status.type.name;
     const competitor1 = competition.competitors[0];
     const competitor2 = competition.competitors[1];
     const result = competition.status.result;
 
-    const getImageSource = (competitor: any) => {
+    const getImageSource = (competitor) => {
       const { headshot, athlete } = competitor.athlete || {};
       return headshot && headshot.href
         ? { uri: headshot.href }
@@ -162,12 +162,12 @@ const UFC = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
     );
   };
 
-  const renderCard = (cardKey: string) => {
+  const renderCard = (cardKey) => {
     const card = eventDetails?.cards[cardKey];
     return (
       <View style={styles.cardContainer} key={cardKey}>
         <Text style={styles.cardName}>{card?.displayName}</Text>
-        {card?.competitions.map((comp: any) => renderCompetitionItem(comp, cardKey))}
+        {card?.competitions.map((comp) => renderCompetitionItem(comp, cardKey))}
       </View>
     );
   };

@@ -3,17 +3,11 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { StatusBar } from 'expo-status-bar';
 import React from 'react';
 import { SafeAreaView, StyleSheet, View } from 'react-native';
-
 import { BackButton } from '../components/BackButton';
 import Details from '../screens/details';
 import Scores from '../screens/scores';
 
-export type RootStackParamList = {
-  Scores: undefined;
-  Details: { name: string };
-};
-
-const Stack = createStackNavigator<RootStackParamList>();
+const Stack = createStackNavigator();
 
 export default function RootStack() {
   return (
