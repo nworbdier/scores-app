@@ -6,6 +6,7 @@ const PGA = () => {
   const [playersData, setPlayersData] = useState([]);
   const [tournamentName, setTournamentName] = useState('');
   const [refreshing, setRefreshing] = useState(false);
+  const [currentEventId, setCurrentEventId] = useState(null);
   const currentDate = new Date().toISOString().slice(0, 10).replace(/-/g, '');
 
   const fetchEventId = async () => {
@@ -64,6 +65,7 @@ const PGA = () => {
   useEffect(() => {
     const initializeData = async () => {
       const eventId = await fetchEventId();
+      setCurrentEventId(eventId);
       if (eventId) {
         await fetchPGAData(eventId);
       }
@@ -74,9 +76,12 @@ const PGA = () => {
 
   const onRefresh = async () => {
     setRefreshing(true);
-    const eventId = await fetchEventId();
-    if (eventId) {
-      await fetchPGAData(eventId);
+    const newEventId = await fetchEventId();
+    if (newEventId !== currentEventId) {
+      setCurrentEventId(newEventId);
+      await fetchPGAData(newEventId);
+    } else {
+      await fetchPGAData(currentEventId);
     }
     setRefreshing(false);
   };
@@ -119,7 +124,13 @@ const PGA = () => {
       renderItem={renderPlayer}
       keyExtractor={(item) => item.pl.toString()}
       contentContainerStyle={styles.listContent}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          tintColor="#888" // Change the tint color to a shade of gray
+        />
+      }
       ListHeaderComponent={renderHeader}
     />
   );
