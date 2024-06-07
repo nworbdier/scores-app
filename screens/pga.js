@@ -7,6 +7,7 @@ const PGA = () => {
   const [tournamentName, setTournamentName] = useState('');
   const [refreshing, setRefreshing] = useState(false);
   const [currentEventId, setCurrentEventId] = useState(null);
+  const [currentData, setCurrentData] = useState(null);
   const currentDate = new Date().toISOString().slice(0, 10).replace(/-/g, '');
 
   const fetchEventId = async () => {
@@ -15,6 +16,7 @@ const PGA = () => {
         `https://site.api.espn.com/apis/site/v2/sports/golf/pga/scoreboard?dates=${currentDate}`
       );
       const data = await response.json();
+      setCurrentData(data); // Set current data
       return data.events[0].id;
     } catch (error) {
       console.error('Error fetching event ID:', error);
@@ -27,6 +29,7 @@ const PGA = () => {
         `https://site.web.api.espn.com/apis/site/v2/sports/golf/leaderboard?league=pga&event=${eventId}`
       );
       const data = await response.json();
+      setCurrentData(data); // Set current data
 
       setTournamentName(data.events[0].tournament.displayName);
 
@@ -107,22 +110,30 @@ const PGA = () => {
     </View>
   );
 
-  const renderHeader = () => (
-    <View>
-      <Text style={styles.tournamentName}>{tournamentName}</Text>
-      <View style={styles.playerRow2}>
-        <View style={styles.leftContainer}>
-          <Text style={styles.headerPlayerPosition}>Pl</Text>
-          <Text style={styles.headerPlayerName}>Player</Text>
-        </View>
-        <View style={styles.rightContainer}>
-          <Text style={styles.headerPlayerToday}>Today</Text>
-          <Text style={styles.headerPlayerThru}>Thru</Text>
-          <Text style={styles.headerPlayerTotal}>Tot</Text>
+  const renderHeader = () => {
+    // Extract the round number from the status period of current data
+    const roundNumber = currentData ? currentData.events[0].competitions[0].status.period : '';
+
+    // Construct the header text based on the round number
+    const headerText = roundNumber ? `R${roundNumber}` : 'Today';
+
+    return (
+      <View>
+        <Text style={styles.tournamentName}>{tournamentName}</Text>
+        <View style={styles.playerRow2}>
+          <View style={styles.leftContainer}>
+            <Text style={styles.headerPlayerPosition}>POS</Text>
+            <Text style={styles.headerPlayerName}>PLAYER</Text>
+          </View>
+          <View style={styles.rightContainer}>
+            <Text style={styles.headerPlayerToday}>{headerText}</Text>
+            <Text style={styles.headerPlayerThru}>THRU</Text>
+            <Text style={styles.headerPlayerTotal}>TOT</Text>
+          </View>
         </View>
       </View>
-    </View>
-  );
+    );
+  };
 
   return (
     <FlatList
