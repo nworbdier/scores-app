@@ -37,11 +37,11 @@ const PGA = () => {
           let thru = competitor.status.thru;
 
           if (competitor.linescores && competitor.linescores.length > 0) {
-            const matchingLineScore = competitor.linescores.find((line) => line.value === period);
-            if (matchingLineScore) {
-              today = matchingLineScore.displayValue || '-';
+            const lineScoreIndex = period - 1;
+            if (lineScoreIndex >= 0 && lineScoreIndex < competitor.linescores.length) {
+              today = competitor.linescores[lineScoreIndex].displayValue || '-';
             }
-            if (today === '-' && competitor.linescores[1]) {
+            if (thru === 0 && competitor.linescores[1]) {
               thru = moment(competitor.linescores[1].teeTime).format('h:mm A');
             }
           }
