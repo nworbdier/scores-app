@@ -148,14 +148,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingVertical: 10,
-    borderBottomWidth: 1,
+    borderBottomWidth: 0.25,
     borderBottomColor: '#ddd',
   },
   playerRow2: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingVertical: 7.5,
-    borderBottomWidth: 1,
+    borderBottomWidth: 0.25,
     borderBottomColor: '#ddd',
   },
   leftContainer: {
