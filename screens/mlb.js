@@ -1,4 +1,3 @@
-import moment from 'moment';
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -120,6 +119,7 @@ const MLB = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
   const formatGameTime = (isoDate) => {
     const date = new Date(isoDate);
     const options = { hour: 'numeric', minute: 'numeric', hour12: true };
+    // eslint-disable-next-line no-undef
     return new Intl.DateTimeFormat('en-US', options).format(date);
   };
 
