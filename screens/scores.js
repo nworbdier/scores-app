@@ -62,7 +62,7 @@ const Scores = () => {
         <Text style={styles.headerText}>Scores</Text>
         <View style={styles.headerIcons}>
           <TouchableOpacity>
-            <Ionicons name="settings-outline" size={25} color="white" />
+            <Ionicons name="settings-outline" size={25} color="white" marginRight={10} />
           </TouchableOpacity>
           <TouchableOpacity>
             <AntDesign name="search1" size={25} color="white" />
@@ -120,6 +120,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-evenly',
     alignItems: 'center',
+    marginRight: 10,
   },
   headerContainer: {
     height: 70,

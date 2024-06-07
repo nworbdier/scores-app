@@ -1,6 +1,16 @@
 import moment from 'moment';
 import React, { useState, useEffect } from 'react';
-import { View, Text, Image, FlatList, StyleSheet, RefreshControl } from 'react-native';
+import {
+  View,
+  Text,
+  Image,
+  FlatList,
+  StyleSheet,
+  RefreshControl,
+  Modal,
+  TouchableOpacity,
+  Button,
+} from 'react-native';
 
 const PGA = () => {
   const [playersData, setPlayersData] = useState([]);
@@ -9,6 +19,9 @@ const PGA = () => {
   const [currentEventId, setCurrentEventId] = useState(null);
   const [currentData, setCurrentData] = useState(null);
   const currentDate = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedPlayer, setSelectedPlayer] = useState(null);
 
   const fetchEventId = async () => {
     try {
@@ -95,8 +108,32 @@ const PGA = () => {
     setRefreshing(false);
   };
 
+  const PlayerModal = ({ visible, player, onClose }) => (
+    <Modal transparent animationType="fade" visible={visible} onRequestClose={onClose}>
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalContent}>
+          <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+            <Text style={styles.closeButtonText}>X</Text>
+          </TouchableOpacity>
+          <Text style={styles.modalPlayerName}>{player?.name}</Text>
+          <Button
+            title="FOLLOW"
+            onPress={() => {
+              /* Implement follow functionality */
+            }}
+          />
+        </View>
+      </View>
+    </Modal>
+  );
+
   const renderPlayer = ({ item }) => (
-    <View style={styles.playerRow}>
+    <TouchableOpacity
+      style={styles.playerRow}
+      onPress={() => {
+        setSelectedPlayer(item);
+        setModalVisible(true);
+      }}>
       <View style={styles.leftContainer}>
         <Text style={styles.playerPosition}>{item.pl}</Text>
         {item.headshot ? <Image source={{ uri: item.headshot }} style={styles.headshot} /> : null}
@@ -107,7 +144,7 @@ const PGA = () => {
         <Text style={styles.playerThru}>{item.thru}</Text>
         <Text style={styles.playerTotal}>{item.tot}</Text>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 
   const renderHeader = () => {
@@ -136,20 +173,23 @@ const PGA = () => {
   };
 
   return (
-    <FlatList
-      data={playersData}
-      renderItem={renderPlayer}
-      keyExtractor={(item) => item.pl.toString()}
-      contentContainerStyle={styles.listContent}
-      refreshControl={
-        <RefreshControl
-          refreshing={refreshing}
-          onRefresh={onRefresh}
-          tintColor="#888" // Change the tint color to a shade of gray
-        />
-      }
-      ListHeaderComponent={renderHeader}
-    />
+    <View style={{ flex: 1 }}>
+      <FlatList
+        data={playersData}
+        renderItem={renderPlayer}
+        keyExtractor={(item) => item.id} // Change to use competitor's ID
+        contentContainerStyle={styles.listContent}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#888" />
+        }
+        ListHeaderComponent={renderHeader}
+      />
+      <PlayerModal
+        visible={modalVisible}
+        player={selectedPlayer}
+        onClose={() => setModalVisible(false)}
+      />
+    </View>
   );
 };
 
@@ -249,6 +289,32 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 10,
     marginHorizontal: 5,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: 300,
+    padding: 20,
+    backgroundColor: 'white',
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+  },
+  closeButtonText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  modalPlayerName: {
+    fontSize: 18,
+    marginBottom: 20,
   },
 });
 
