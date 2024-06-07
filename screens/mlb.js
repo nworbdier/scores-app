@@ -88,6 +88,7 @@ const MLB = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
 
   useEffect(() => {
     fetchDates();
+    fetchGameData(); // Fetch MLB data on component mount
   }, []);
 
   useEffect(() => {

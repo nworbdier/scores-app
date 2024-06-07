@@ -176,9 +176,11 @@ const UFC = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
   const renderUFCComponent = () => {
     return (
       <ScrollView>
-        <View style={styles.eventNameContainer}>
-          <Text style={styles.eventNameText}>{events.length > 0 ? events[0].name : ''}</Text>
-        </View>
+        {events.length > 0 && (
+          <View style={styles.eventNameContainer}>
+            <Text style={styles.eventNameText}>{events[0].name}</Text>
+          </View>
+        )}
         {eventDetails &&
           Object.keys(eventDetails.cards).map((cardKey) => (
             <View key={cardKey}>{renderCard(cardKey)}</View>
