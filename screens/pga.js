@@ -101,10 +101,8 @@ const PGA = () => {
     const newEventId = await fetchEventId();
     if (newEventId !== currentEventId) {
       setCurrentEventId(newEventId);
-      await fetchPGAData(newEventId);
-    } else {
-      await fetchPGAData(currentEventId);
     }
+    await fetchPGAData(newEventId);
     setRefreshing(false);
   };
 
@@ -116,12 +114,7 @@ const PGA = () => {
             <Text style={styles.closeButtonText}>X</Text>
           </TouchableOpacity>
           <Text style={styles.modalPlayerName}>{player?.name}</Text>
-          <Button
-            title="FOLLOW"
-            onPress={() => {
-              /* Implement follow functionality */
-            }}
-          />
+          <Button title="FOLLOW" onPress={() => {}} />
         </View>
       </View>
     </Modal>

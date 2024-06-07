@@ -12,10 +12,11 @@ import {
   StyleSheet,
 } from 'react-native';
 
+import MLB from './mlb';
 import PGA from './pga';
 import UFC from './ufc';
 
-const sportNames = ['UFC', 'PGA', 'TENNIS', 'MLB', 'NBA', 'WNBA', 'NHL', 'NFL', 'CFB', 'CBB'];
+const sportNames = ['UFC', 'PGA', 'MLB', 'TENNIS', 'NBA', 'WNBA', 'NHL', 'NFL', 'CFB', 'CBB'];
 
 const Scores = () => {
   const [selectedSport, setSelectedSport] = useState('UFC');
@@ -24,7 +25,24 @@ const Scores = () => {
   const flatListRef = useRef(null);
 
   // Destructure renderUFCComponent from UFC
-  const { renderUFCComponent, dates, onRefresh } = UFC({
+  const {
+    renderUFCComponent,
+    dates: ufcDates,
+    onRefresh: onUFCRefresh,
+  } = UFC({
+    selectedDate,
+    setSelectedDate,
+    refreshing,
+    setRefreshing,
+  });
+
+  // Destructure MLB component
+  const {
+    renderMLBComponent,
+    dates: mlbDates,
+    onRefresh: onMLBRefresh,
+    fetchDates: fetchMLBDates,
+  } = MLB({
     selectedDate,
     setSelectedDate,
     refreshing,
@@ -32,11 +50,20 @@ const Scores = () => {
   });
 
   useEffect(() => {
-    const index = dates.findIndex((date) => date === selectedDate);
-    if (index !== -1 && flatListRef.current) {
-      flatListRef.current.scrollToIndex({ index, animated: true, viewPosition: 0.5 });
+    if (selectedSport === 'MLB') {
+      fetchMLBDates();
     }
-  }, [selectedDate, dates]);
+  }, [selectedSport]);
+
+  useEffect(() => {
+    if (selectedSport !== 'PGA') {
+      const dates = selectedSport === 'UFC' ? ufcDates : mlbDates;
+      const index = dates.findIndex((date) => date === selectedDate);
+      if (index !== -1 && flatListRef.current) {
+        flatListRef.current.scrollToIndex({ index, animated: true, viewPosition: 0.5 });
+      }
+    }
+  }, [selectedDate, selectedSport, ufcDates, mlbDates]);
 
   const renderSportItem = ({ item }) => (
     <TouchableOpacity style={styles.sportButton} onPress={() => setSelectedSport(item)}>
@@ -55,6 +82,30 @@ const Scores = () => {
       </Text>
     </TouchableOpacity>
   );
+
+  const getDates = () => {
+    switch (selectedSport) {
+      case 'UFC':
+        return ufcDates;
+      case 'MLB':
+        return mlbDates;
+      // Add other cases for other sports if needed
+      default:
+        return [];
+    }
+  };
+
+  const getOnRefresh = () => {
+    switch (selectedSport) {
+      case 'UFC':
+        return onUFCRefresh;
+      case 'MLB':
+        return onMLBRefresh;
+      // Add other cases for other sports if needed
+      default:
+        return () => {};
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -78,23 +129,26 @@ const Scores = () => {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.sportList}
         />
-        <FlatList
-          data={dates}
-          renderItem={renderDateItem}
-          keyExtractor={(item) => item}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          ref={flatListRef}
-          getItemLayout={(_, index) => ({ length: 100, offset: 100 * index, index })}
-          contentContainerStyle={styles.dateList}
-        />
+        {selectedSport !== 'PGA' && (
+          <FlatList
+            data={getDates()}
+            renderItem={renderDateItem}
+            keyExtractor={(item) => item}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            ref={flatListRef}
+            getItemLayout={(_, index) => ({ length: 100, offset: 100 * index, index })}
+            contentContainerStyle={styles.dateList}
+          />
+        )}
       </View>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollViewContent}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={getOnRefresh()} />}>
         {selectedSport === 'PGA' && <PGA />}
         {selectedSport === 'UFC' && renderUFCComponent()}
+        {selectedSport === 'MLB' && renderMLBComponent()}
       </ScrollView>
     </SafeAreaView>
   );
