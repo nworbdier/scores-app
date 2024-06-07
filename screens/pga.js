@@ -47,12 +47,18 @@ const PGA = () => {
             }
           }
 
+          // Find the total score from statistics
+          let totalScore = '-';
+          if (competitor.statistics && competitor.statistics[0]) {
+            totalScore = competitor.statistics[0].displayValue || '-';
+          }
+
           return {
             pl: competitor.status.position.displayName,
             name: competitor.athlete.displayName,
             today,
             thru,
-            tot: competitor.score.displayValue,
+            tot: totalScore,
           };
         });
 
