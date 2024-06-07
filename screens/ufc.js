@@ -158,9 +158,16 @@ const UFC = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
 
   const renderCard = (cardKey) => {
     const card = eventDetails?.cards[cardKey];
+    const cardDate = card?.competitions[0]?.date;
+    const statusType = card?.competitions[0]?.status?.type?.name;
+    const cardTime =
+      cardDate && statusType !== 'STATUS_FINAL' ? moment(cardDate).format('h:mm A') : '';
+
     return (
       <View style={styles.cardContainer} key={cardKey}>
-        <Text style={styles.cardName}>{card?.displayName}</Text>
+        <Text style={styles.cardName}>
+          {card?.displayName} {cardTime && `- ${cardTime}`}
+        </Text>
         {card?.competitions.map((comp) => renderCompetitionItem(comp, cardKey))}
       </View>
     );
@@ -170,9 +177,7 @@ const UFC = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
     return (
       <ScrollView>
         <View style={styles.eventNameContainer}>
-          <Text style={styles.eventNameText}>
-            {events.length > 0 ? events[0].name : 'No events'}
-          </Text>
+          <Text style={styles.eventNameText}>{events.length > 0 ? events[0].name : ''}</Text>
         </View>
         {eventDetails &&
           Object.keys(eventDetails.cards).map((cardKey) => (
