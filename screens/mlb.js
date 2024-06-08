@@ -7,7 +7,6 @@ import {
   Dimensions,
   Image,
   ScrollView,
-  StatusBar,
   RefreshControl,
 } from 'react-native';
 
@@ -124,56 +123,46 @@ const MLB = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
     return new Intl.DateTimeFormat('en-US', options).format(date);
   };
 
-  const renderGroupedItem = ({ item }) => (
-    <View style={styles.itemContainer}>
-      <View style={styles.column}>
-        <Image source={{ uri: item.AwayLogo }} style={styles.image} />
-        <Text style={styles.TextStyle1}>{item.AwayTeam}</Text>
-        {item.Status !== 'STATUS_SCHEDULED' && (
-          <Text style={styles.TextStyle1}>{item.AwayScore}</Text>
-        )}
-      </View>
-      <View style={styles.column2}>
-        {item.Status === 'STATUS_SCHEDULED' ? (
-          <Text style={styles.TextStyle2}>{formatGameTime(item.GameTime)}</Text>
-        ) : item.Status === 'STATUS_FINAL' ? (
-          <Text style={styles.TextStyle2}>{item.StatusShortDetail}</Text>
-        ) : (
-          <View style={styles.gameTime}>
-            <Text style={styles.TextStyle2}>{getNumberWithSuffix(item.Quarter)}</Text>
-          </View>
-        )}
-      </View>
-      <View style={styles.column}>
-        <Image source={{ uri: item.HomeLogo }} style={styles.image} />
-        <Text style={styles.TextStyle1}>{item.HomeTeam}</Text>
-        {item.Status !== 'STATUS_SCHEDULED' && (
-          <Text style={styles.TextStyle1}>{item.HomeScore}</Text>
-        )}
-      </View>
-    </View>
-  );
-
   const renderMLBComponent = () => {
     return (
       <>
-        <StatusBar />
-        <View style={styles.page}>
-          <View style={styles.scoreboard}>
-            <ScrollView
-              contentContainerStyle={styles.scrollViewContent}
-              showsVerticalScrollIndicator={false}
-              refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}>
-              <FlatList
-                data={gameData}
-                renderItem={renderGroupedItem}
-                keyExtractor={(item, index) => index.toString()}
-                contentContainerStyle={styles.listContainer}
-                numColumns={2}
-              />
-            </ScrollView>
-          </View>
-        </View>
+        <FlatList
+          data={gameData}
+          renderItem={({ item, index }) => (
+            <View key={index} style={styles.itemContainer}>
+              <View style={styles.column}>
+                <Image source={{ uri: item.AwayLogo }} style={styles.image} />
+                <Text style={styles.TextStyle1}>{item.AwayTeam}</Text>
+                {item.Status !== 'STATUS_SCHEDULED' && (
+                  <Text style={styles.TextStyle1}>{item.AwayScore}</Text>
+                )}
+              </View>
+              <View style={styles.column2}>
+                {item.Status === 'STATUS_SCHEDULED' ? (
+                  <Text style={styles.TextStyle2}>{formatGameTime(item.GameTime)}</Text>
+                ) : item.Status === 'STATUS_FINAL' ? (
+                  <Text style={styles.TextStyle2}>{item.StatusShortDetail}</Text>
+                ) : (
+                  <View style={styles.gameTime}>
+                    <Text style={styles.TextStyle2}>{getNumberWithSuffix(item.Quarter)}</Text>
+                  </View>
+                )}
+              </View>
+              <View style={styles.column}>
+                <Image source={{ uri: item.HomeLogo }} style={styles.image} />
+                <Text style={styles.TextStyle1}>{item.HomeTeam}</Text>
+                {item.Status !== 'STATUS_SCHEDULED' && (
+                  <Text style={styles.TextStyle1}>{item.HomeScore}</Text>
+                )}
+              </View>
+            </View>
+          )}
+          keyExtractor={(item, index) => index.toString()}
+          contentContainerStyle={styles.listContainer}
+          showsVerticalScrollIndicator={false}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
+          numColumns={2}
+        />
       </>
     );
   };
@@ -202,11 +191,11 @@ const styles = StyleSheet.create({
   itemContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
+    padding: 5,
+    borderWidth: 0.25,
     borderColor: 'white',
-    padding: 5, // Increase the padding
-    borderWidth: 1,
     borderRadius: 10,
-    backgroundColor: 'transparent',
+    backgroundColor: '#141414',
     width: '49%',
     height: '95%',
     marginHorizontal: '.5%',
@@ -255,22 +244,6 @@ const styles = StyleSheet.create({
   },
   scrollViewContent: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-  carouselContainer: {
-    alignItems: 'center',
-  },
-  carouselItem: {
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-    marginHorizontal: 5,
-    backgroundColor: '#FFF',
-    borderRadius: 8,
-  },
-  carouselText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    textAlign: 'center',
   },
   selectedDate: {
     backgroundColor: '#FFF',

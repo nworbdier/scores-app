@@ -9,7 +9,6 @@ import {
   RefreshControl,
   Modal,
   TouchableOpacity,
-  Button,
 } from 'react-native';
 
 const PGA = () => {
@@ -53,13 +52,14 @@ const PGA = () => {
           let today = '-';
           let thru = competitor.status.thru;
 
-          if (competitor.linescores && competitor.linescores.length > 0) {
-            const lineScoreIndex = period - 1;
-            if (lineScoreIndex >= 0 && lineScoreIndex < competitor.linescores.length) {
-              today = competitor.linescores[lineScoreIndex].displayValue || '-';
-            }
-            if (thru === 0 && competitor.linescores[1]) {
-              thru = moment(competitor.linescores[1].teeTime).format('h:mm A');
+          if (competitor.status.type.name === 'STATUS_SCHEDULED') {
+            thru = moment(competitor.status.teeTime).format('h:mm A');
+          } else {
+            if (competitor.linescores && competitor.linescores.length > 0) {
+              const lineScoreIndex = period - 1;
+              if (lineScoreIndex >= 0 && lineScoreIndex < competitor.linescores.length) {
+                today = competitor.linescores[lineScoreIndex].displayValue || '-';
+              }
             }
           }
 
@@ -70,6 +70,7 @@ const PGA = () => {
           }
 
           return {
+            id: competitor.athlete.id, // Assuming competitor has an id field
             pl: competitor.status.position.displayName,
             name: competitor.athlete.displayName,
             today,
@@ -106,19 +107,124 @@ const PGA = () => {
     setRefreshing(false);
   };
 
-  const PlayerModal = ({ visible, player, onClose }) => (
-    <Modal transparent animationType="fade" visible={visible} onRequestClose={onClose}>
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
-          <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-            <Text style={styles.closeButtonText}>X</Text>
-          </TouchableOpacity>
-          <Text style={styles.modalPlayerName}>{player?.name}</Text>
-          <Button title="FOLLOW" onPress={() => {}} />
+  const PlayerModal = ({ visible, player, onClose, statusPeriod }) => {
+    const [selectedRound, setSelectedRound] = useState(`R${statusPeriod || 1}`);
+    const [lineScores, setLineScores] = useState({});
+    const [playerData, setPlayerData] = useState(null);
+
+    useEffect(() => {
+      const fetchPlayerData = async () => {
+        if (!player) return;
+
+        const eventId = currentEventId; // Assuming currentEventId is available in the scope
+        const playerId = player.id;
+
+        try {
+          const response = await fetch(
+            `https://site.web.api.espn.com/apis/site/v2/sports/golf/pga/leaderboard/${eventId}/competitorsummary/${playerId}`
+          );
+          const data = await response.json();
+          setPlayerData(data);
+        } catch (error) {
+          console.error('Error fetching player data:', error);
+        }
+      };
+
+      fetchPlayerData();
+    }, [player]);
+
+    useEffect(() => {
+      const updateScoresForSelectedRound = () => {
+        if (!playerData || !playerData.rounds) return;
+
+        const roundIndex = parseInt(selectedRound.slice(1), 10) - 1;
+        if (playerData.rounds[roundIndex] && playerData.rounds[roundIndex].linescores) {
+          const roundLineScores = playerData.rounds[roundIndex].linescores.map((ls) => ls.value);
+          const outScore = playerData.rounds[roundIndex].outScore;
+          const inScore = playerData.rounds[roundIndex].inScore;
+
+          setLineScores({
+            [selectedRound]: roundLineScores,
+            outScore,
+            inScore,
+          });
+        }
+      };
+
+      updateScoresForSelectedRound();
+    }, [selectedRound, playerData]);
+
+    if (!playerData) {
+      // You can show a loading indicator here
+      return null;
+    }
+
+    return (
+      <Modal transparent animationType="fade" visible={visible} onRequestClose={onClose}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+              <Text style={styles.closeButtonText}>X</Text>
+            </TouchableOpacity>
+            <View style={styles.modalPlayerInfo}>
+              <Image
+                source={{ uri: playerData?.competitor?.headshot }}
+                style={styles.playerHeadshot}
+              />
+              <Text style={styles.modalPlayerName}>{player?.name}</Text>
+            </View>
+            <View style={styles.roundButtonsContainer}>
+              {['R1', 'R2', 'R3', 'R4'].map((round) => (
+                <TouchableOpacity
+                  key={round}
+                  style={[
+                    styles.roundButton,
+                    selectedRound === round && styles.selectedRoundButton,
+                  ]}
+                  onPress={() => setSelectedRound(round)}>
+                  <Text style={styles.roundButtonText}>{round}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <View style={styles.scoresContainer}>
+              <View style={styles.scoreRow}>
+                {[...Array(9).keys()].map((i) => (
+                  <Text key={i} style={styles.scoreCell}>
+                    {i + 1}
+                  </Text>
+                ))}
+                <Text style={[styles.scoreCell, styles.headerCell]}>Out</Text>
+              </View>
+              <View style={styles.scoreRow}>
+                {[...Array(9).keys()].map((i) => (
+                  <Text key={i} style={styles.scoreCell}>
+                    {lineScores[selectedRound] ? lineScores[selectedRound][i] : ''}
+                  </Text>
+                ))}
+                <Text style={styles.scoreCell}>{lineScores.outScore}</Text>
+              </View>
+              <View style={styles.scoreRow}>
+                {[...Array(9).keys()].map((i) => (
+                  <Text key={i} style={styles.scoreCell}>
+                    {i + 10}
+                  </Text>
+                ))}
+                <Text style={[styles.scoreCell, styles.headerCell]}>In</Text>
+              </View>
+              <View style={styles.scoreRow}>
+                {[...Array(9).keys()].map((i) => (
+                  <Text key={i} style={styles.scoreCell}>
+                    {lineScores[selectedRound] ? lineScores[selectedRound][i + 9] : ''}
+                  </Text>
+                ))}
+                <Text style={styles.scoreCell}>{lineScores.inScore}</Text>
+              </View>
+            </View>
+          </View>
         </View>
-      </View>
-    </Modal>
-  );
+      </Modal>
+    );
+  };
 
   const renderPlayer = ({ item }) => (
     <TouchableOpacity
@@ -141,8 +247,15 @@ const PGA = () => {
   );
 
   const renderHeader = () => {
-    // Extract the round number from the status period of current data
-    const roundNumber = currentData ? currentData.events[0].competitions[0].status.period : '';
+    // Extract the round number and status type from the current data
+    const competition = currentData ? currentData.events[0].competitions[0] : null;
+    let roundNumber = competition ? competition.status.period : '';
+    const statusType = competition ? competition.status.type.name : '';
+
+    // If the status type is STATUS_PLAY_COMPLETE, add 1 to the round number
+    if (statusType === 'STATUS_PLAY_COMPLETE') {
+      roundNumber += 1;
+    }
 
     // Construct the header text based on the round number
     const headerText = roundNumber ? `R${roundNumber}` : 'Today';
@@ -170,7 +283,7 @@ const PGA = () => {
       <FlatList
         data={playersData}
         renderItem={renderPlayer}
-        keyExtractor={(item) => item.id} // Change to use competitor's ID
+        keyExtractor={(item) => item.id.toString()} // Assuming competitor's ID is a number
         contentContainerStyle={styles.listContent}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#888" />
@@ -181,6 +294,7 @@ const PGA = () => {
         visible={modalVisible}
         player={selectedPlayer}
         onClose={() => setModalVisible(false)}
+        statusPeriod={selectedPlayer?.statusPeriod}
       />
     </View>
   );
@@ -191,15 +305,18 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     color: 'white',
-    paddingVertical: 10,
+    paddingBottom: 10,
     textAlign: 'left',
   },
   playerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    backgroundColor: '#141414',
+    borderWidth: 0.25,
+    borderColor: 'white',
+    marginBottom: 10,
     paddingVertical: 10,
-    borderBottomWidth: 0.25,
-    borderBottomColor: '#ddd',
+    borderRadius: 10,
   },
   playerRow2: {
     flexDirection: 'row',
@@ -207,6 +324,7 @@ const styles = StyleSheet.create({
     paddingVertical: 7.5,
     borderBottomWidth: 0.25,
     borderBottomColor: '#ddd',
+    marginBottom: 10,
   },
   leftContainer: {
     flexDirection: 'row',
@@ -230,6 +348,7 @@ const styles = StyleSheet.create({
     flex: 4,
     textAlign: 'left',
     fontWeight: 'bold',
+    marginLeft: 5,
   },
   headerPlayerToday: {
     flex: 1,
@@ -290,7 +409,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalContent: {
-    width: 300,
+    width: '80%',
+    height: '75%',
     padding: 20,
     backgroundColor: 'white',
     borderRadius: 10,
@@ -298,16 +418,55 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     position: 'absolute',
-    top: 10,
-    right: 10,
+    top: 20,
+    right: 20,
   },
   closeButtonText: {
     fontSize: 18,
     fontWeight: 'bold',
   },
+  modalPlayerInfo: {
+    marginBottom: 20,
+    alignItems: 'center',
+  },
+  playerHeadshot: {
+    width: 80,
+    height: 80,
+    borderRadius: 40, // For a circular image
+    marginBottom: 10, // Add some spacing between the image and name
+  },
   modalPlayerName: {
     fontSize: 18,
+  },
+  roundButtonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '100%',
     marginBottom: 20,
+  },
+  roundButton: {
+    padding: 10,
+    borderRadius: 5,
+    backgroundColor: 'gray',
+  },
+  selectedRoundButton: {
+    backgroundColor: 'blue',
+  },
+  roundButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+  },
+  scoresContainer: {
+    alignItems: 'center',
+  },
+  scoreRow: {
+    flexDirection: 'row',
+    marginVertical: 10,
+  },
+  scoreCell: {
+    width: 30,
+    textAlign: 'center',
+    color: 'black',
   },
 });
 

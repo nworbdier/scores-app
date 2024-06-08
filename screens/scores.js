@@ -145,6 +145,7 @@ const Scores = () => {
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollViewContent}
+        horizontal={false} // Add this line to restrict horizontal scrolling
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={getOnRefresh()} />}>
         {selectedSport === 'PGA' && <PGA />}
         {selectedSport === 'UFC' && renderUFCComponent()}
