@@ -10,13 +10,17 @@ import {
   TouchableOpacity,
   ScrollView,
   StyleSheet,
+  Dimensions,
 } from 'react-native';
 
 import MLB from './mlb';
+import NBA from './nba';
 import PGA from './pga';
 import UFC from './ufc';
 
-const sportNames = ['UFC', 'PGA', 'MLB', 'TENNIS', 'NBA', 'WNBA', 'NHL', 'NFL', 'CFB', 'CBB'];
+const { width } = Dimensions.get('window');
+
+const sportNames = ['UFC', 'PGA', 'MLB', 'NBA', 'WNBA', 'TENNIS', 'NHL', 'NFL', 'CFB', 'CBB'];
 
 const Scores = () => {
   const [selectedSport, setSelectedSport] = useState('UFC');
@@ -24,7 +28,6 @@ const Scores = () => {
   const [refreshing, setRefreshing] = useState(false);
   const flatListRef = useRef(null);
 
-  // Destructure renderUFCComponent from UFC
   const {
     renderUFCComponent,
     dates: ufcDates,
@@ -36,13 +39,24 @@ const Scores = () => {
     setRefreshing,
   });
 
-  // Destructure MLB component
   const {
     renderMLBComponent,
     dates: mlbDates,
     onRefresh: onMLBRefresh,
     fetchDates: fetchMLBDates,
   } = MLB({
+    selectedDate,
+    setSelectedDate,
+    refreshing,
+    setRefreshing,
+  });
+
+  const {
+    renderNBAComponent,
+    dates: nbaDates,
+    onRefresh: onNBARefresh,
+    fetchDates: fetchNBADates,
+  } = NBA({
     selectedDate,
     setSelectedDate,
     refreshing,
@@ -56,11 +70,17 @@ const Scores = () => {
   }, [selectedSport]);
 
   useEffect(() => {
+    if (selectedSport === 'NBA') {
+      fetchNBADates();
+    }
+  }, [selectedSport]);
+
+  useEffect(() => {
     if (selectedSport !== 'PGA') {
       const dates = selectedSport === 'UFC' ? ufcDates : mlbDates;
       const index = dates.findIndex((date) => date === selectedDate);
       if (index !== -1 && flatListRef.current) {
-        flatListRef.current.scrollToIndex({ index, animated: true, viewPosition: 0.5 });
+        flatListRef.current.scrollToIndex({ index, animated: true, viewPosition: 0 });
       }
     }
   }, [selectedDate, selectedSport, ufcDates, mlbDates]);
@@ -89,6 +109,8 @@ const Scores = () => {
         return ufcDates;
       case 'MLB':
         return mlbDates;
+      case 'NBA':
+        return nbaDates;
       // Add other cases for other sports if needed
       default:
         return [];
@@ -101,6 +123,8 @@ const Scores = () => {
         return onUFCRefresh;
       case 'MLB':
         return onMLBRefresh;
+      case 'NBA':
+        return onNBARefresh;
       // Add other cases for other sports if needed
       default:
         return () => {};
@@ -139,6 +163,7 @@ const Scores = () => {
             ref={flatListRef}
             getItemLayout={(_, index) => ({ length: 100, offset: 100 * index, index })}
             contentContainerStyle={styles.dateList}
+            initialScrollIndex={getDates().findIndex((date) => date === selectedDate)}
           />
         )}
       </View>
@@ -150,6 +175,7 @@ const Scores = () => {
         {selectedSport === 'PGA' && <PGA />}
         {selectedSport === 'UFC' && renderUFCComponent()}
         {selectedSport === 'MLB' && renderMLBComponent()}
+        {selectedSport === 'NBA' && renderNBAComponent()}
       </ScrollView>
     </SafeAreaView>
   );
@@ -202,8 +228,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   dateButton: {
+    width: 100, // Fixed width for each date button
     height: '100%',
-    marginHorizontal: 10,
+    marginHorizontal: 5,
     borderRadius: 5,
     justifyContent: 'center',
     alignItems: 'center',

@@ -192,6 +192,7 @@ const UFC = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
   return {
     events,
     eventDetails,
+    fetchDates,
     dates,
     onRefresh,
     renderUFCComponent,

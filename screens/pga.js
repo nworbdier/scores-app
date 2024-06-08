@@ -85,6 +85,18 @@ const PGA = () => {
     }
   };
 
+  const fetchCompetitorSummary = async (eventId, playerId) => {
+    try {
+      const response = await fetch(
+        `https://site.web.api.espn.com/apis/site/v2/sports/golf/pga/leaderboard/${eventId}/competitorsummary/${playerId}`
+      );
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error fetching competitor summary:', error);
+    }
+  };
+
   useEffect(() => {
     const initializeData = async () => {
       const eventId = await fetchEventId();
@@ -99,11 +111,7 @@ const PGA = () => {
 
   const onRefresh = async () => {
     setRefreshing(true);
-    const newEventId = await fetchEventId();
-    if (newEventId !== currentEventId) {
-      setCurrentEventId(newEventId);
-    }
-    await fetchPGAData(newEventId);
+    await fetchPGAData(currentEventId);
     setRefreshing(false);
   };
 
@@ -137,7 +145,7 @@ const PGA = () => {
       const updateScoresForSelectedRound = () => {
         if (!playerData || !playerData.rounds) return;
 
-        const roundIndex = parseInt(selectedRound.slice(1), 10) - 1;
+        const roundIndex = parseInt(selectedRound.slice(1)) - 1;
         if (playerData.rounds[roundIndex] && playerData.rounds[roundIndex].linescores) {
           const roundLineScores = playerData.rounds[roundIndex].linescores.map((ls) => ls.value);
           const outScore = playerData.rounds[roundIndex].outScore;
@@ -311,12 +319,9 @@ const styles = StyleSheet.create({
   playerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    backgroundColor: '#141414',
-    borderWidth: 0.25,
-    borderColor: 'white',
-    marginBottom: 10,
     paddingVertical: 10,
-    borderRadius: 10,
+    borderBottomWidth: 0.25,
+    borderBottomColor: '#ddd',
   },
   playerRow2: {
     flexDirection: 'row',
@@ -324,7 +329,6 @@ const styles = StyleSheet.create({
     paddingVertical: 7.5,
     borderBottomWidth: 0.25,
     borderBottomColor: '#ddd',
-    marginBottom: 10,
   },
   leftContainer: {
     flexDirection: 'row',
