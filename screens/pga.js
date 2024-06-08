@@ -10,6 +10,7 @@ import {
   Modal,
   TouchableOpacity,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons'; // Assuming you are using expo
 
 const PGA = () => {
   const [playersData, setPlayersData] = useState([]);
@@ -17,21 +18,35 @@ const PGA = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [currentEventId, setCurrentEventId] = useState(null);
   const [currentData, setCurrentData] = useState(null);
-  const currentDate = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+  const currentDate = moment().format('YYYYMMDD');
 
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedPlayer, setSelectedPlayer] = useState(null);
 
-  const fetchEventId = async () => {
+  const [availableTournaments, setAvailableTournaments] = useState([]);
+  const [tournamentModalVisible, setTournamentModalVisible] = useState(false);
+
+  const fetchTournamentCalendar = async () => {
     try {
       const response = await fetch(
         `https://site.api.espn.com/apis/site/v2/sports/golf/pga/scoreboard?dates=${currentDate}`
       );
       const data = await response.json();
+      const calendar = data.leagues[0].calendar;
+      setAvailableTournaments(calendar);
       setCurrentData(data); // Set current data
-      return data.events[0].id;
+
+      // Always use the first event for the current date
+      const firstEvent = data.events[0];
+      if (firstEvent) {
+        setCurrentEventId(firstEvent.id);
+        setTournamentName(firstEvent.name);
+        return firstEvent.id;
+      } else {
+        console.error('No events found for the current date.');
+      }
     } catch (error) {
-      console.error('Error fetching PGA event ID:', error);
+      console.error('Error fetching PGA tournament calendar:', error);
     }
   };
 
@@ -40,11 +55,11 @@ const PGA = () => {
       const response = await fetch(
         `https://site.web.api.espn.com/apis/site/v2/sports/golf/leaderboard?league=pga&event=${eventId}`
       );
-      console.log('Fetch PGA  Data URL:', response.url); // Logging the URL
       const data = await response.json();
       setCurrentData(data); // Set current data
 
-      setTournamentName(data.events[0].tournament.displayName);
+      const eventDetails = data.events[0];
+      setTournamentName(eventDetails.tournament.displayName);
 
       const players = data.events[0].competitions[0].competitors
         .sort((a, b) => a.sortOrder - b.sortOrder)
@@ -88,7 +103,7 @@ const PGA = () => {
 
   useEffect(() => {
     const initializeData = async () => {
-      const eventId = await fetchEventId();
+      const eventId = await fetchTournamentCalendar();
       setCurrentEventId(eventId);
       if (eventId) {
         await fetchPGAData(eventId);
@@ -102,6 +117,17 @@ const PGA = () => {
     setRefreshing(true);
     await fetchPGAData(currentEventId);
     setRefreshing(false);
+  };
+
+  const handleTournamentChange = async (itemValue) => {
+    const selectedTournament = availableTournaments.find(
+      (tournament) => tournament.id === itemValue
+    );
+    if (selectedTournament) {
+      setCurrentEventId(selectedTournament.id);
+      setTournamentName(selectedTournament.label);
+      await fetchPGAData(selectedTournament.id);
+    }
   };
 
   const PlayerModal = ({ visible, player, onClose, statusPeriod }) => {
@@ -258,8 +284,10 @@ const PGA = () => {
     const headerText = roundNumber ? `R${roundNumber}` : 'Today';
 
     return (
-      <View>
-        <Text style={styles.tournamentName}>{tournamentName}</Text>
+      <View style={{ flex: 1 }}>
+        <TouchableOpacity style={styles.tournamentDropdown} onPress={() => setModalVisible(true)}>
+          <Text style={styles.tournamentName}>{tournamentName}</Text>
+        </TouchableOpacity>
         <View style={styles.playerRow2}>
           <View style={styles.leftContainer}>
             <Text style={styles.headerPlayerPosition}>POS</Text>
@@ -298,6 +326,14 @@ const PGA = () => {
 };
 
 const styles = StyleSheet.create({
+  tournamentDropdown: {
+    marginVertical: 10,
+    marginHorizontal: 10,
+    borderRadius: 5, // Add a border radius for a better look
+  },
+  pickerStyle: {
+    color: 'black', // Set the text color to black
+  },
   tournamentName: {
     fontSize: 20,
     fontWeight: 'bold',

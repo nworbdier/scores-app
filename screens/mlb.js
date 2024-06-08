@@ -96,20 +96,6 @@ const MLB = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
     setRefreshing(false);
   };
 
-  const getNumberWithSuffix = (number) => {
-    const lastDigit = number % 10;
-    const suffix =
-      lastDigit === 1 && number !== 11
-        ? 'st'
-        : lastDigit === 2 && number !== 12
-          ? 'nd'
-          : lastDigit === 3 && number !== 13
-            ? 'rd'
-            : 'th';
-
-    return `${number}${suffix}`;
-  };
-
   const formatGameTime = (isoDate) => {
     const date = new Date(isoDate);
     const options = { hour: 'numeric', minute: 'numeric', hour12: true };
