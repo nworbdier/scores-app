@@ -80,7 +80,7 @@ const Scores = () => {
       const dates = selectedSport === 'UFC' ? ufcDates : mlbDates;
       const index = dates.findIndex((date) => date === selectedDate);
       if (index !== -1 && flatListRef.current) {
-        flatListRef.current.scrollToIndex({ index, animated: true, viewPosition: 0 });
+        flatListRef.current.scrollToIndex({ index, animated: true, viewPosition: 0.5 });
       }
     }
   }, [selectedDate, selectedSport, ufcDates, mlbDates]);
@@ -164,6 +164,8 @@ const Scores = () => {
             getItemLayout={(_, index) => ({ length: 100, offset: 100 * index, index })}
             contentContainerStyle={styles.dateList}
             initialScrollIndex={getDates().findIndex((date) => date === selectedDate)}
+            snapToAlignment="center"
+            snapToInterval={100}
           />
         )}
       </View>
