@@ -40,6 +40,7 @@ const PGA = () => {
       const response = await fetch(
         `https://site.web.api.espn.com/apis/site/v2/sports/golf/leaderboard?league=pga&event=${eventId}`
       );
+      console.log('Fetch PGA  Data URL:', response.url); // Logging the URL
       const data = await response.json();
       setCurrentData(data); // Set current data
 
@@ -82,18 +83,6 @@ const PGA = () => {
       setPlayersData(players);
     } catch (error) {
       console.error('Error fetching PGA data:', error);
-    }
-  };
-
-  const fetchCompetitorSummary = async (eventId, playerId) => {
-    try {
-      const response = await fetch(
-        `https://site.web.api.espn.com/apis/site/v2/sports/golf/pga/leaderboard/${eventId}/competitorsummary/${playerId}`
-      );
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      console.error('Error fetching PGA competitor summary:', error);
     }
   };
 

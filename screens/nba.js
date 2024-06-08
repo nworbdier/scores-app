@@ -30,20 +30,24 @@ const NBA = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
       const dates = data.eventDate.dates.map((date) => formatToYYYYMMDD(date));
 
       setDates(dates);
-
-      // Initialize with today's date
-      const today = new Date();
-      const formattedToday = formatToYYYYMMDD(today);
-      setSelectedDate(formattedToday);
     } catch (error) {
       console.error('Error in fetchNBADates:', error);
     }
   };
 
-  const fetchGameData = async (date = selectedDate) => {
+  const fetchGameData = async () => {
     try {
+      let formattedDate;
+
+      // Check if selectedDate is valid and in the correct format
+      if (selectedDate && /^\d{8}$/.test(selectedDate)) {
+        formattedDate = selectedDate;
+      } else {
+        return;
+      }
+
       const response = await fetch(
-        `https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates=${date}`
+        `https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates=${formattedDate}`
       );
 
       console.log('Fetch NBA Game Data URL:', response.url); // Logging the URL
@@ -77,14 +81,12 @@ const NBA = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
   };
 
   useEffect(() => {
-    fetchDates();
-    fetchGameData(); // Fetch NBA data on component mount
-  }, []);
-
-  useEffect(() => {
-    if (selectedDate) {
-      fetchGameData();
-    }
+    const fetchData = async () => {
+      await fetchDates();
+      const formattedDate = formatToYYYYMMDD(selectedDate);
+      await fetchGameData(formattedDate);
+    };
+    fetchData();
   }, [selectedDate]);
 
   const handleRefresh = async () => {

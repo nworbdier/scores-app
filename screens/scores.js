@@ -13,16 +13,59 @@ const sportNames = ['UFC', 'PGA', 'MLB', 'NBA', 'WNBA', 'TENNIS', 'NHL', 'NFL', 
 
 const Scores = () => {
   const [selectedSport, setSelectedSport] = useState('PGA');
-  const [selectedDate, setSelectedDate] = useState(moment().format('YYYYMMDD'));
+  const [ufcSelectedDate, setUfcSelectedDate] = useState(moment().format('YYYYMMDD'));
+  const [mlbSelectedDate, setMlbSelectedDate] = useState(moment().format('YYYYMMDD'));
+  const [nbaSelectedDate, setNbaSelectedDate] = useState(moment().format('YYYYMMDD'));
+  const [wnbaSelectedDate, setWnbaSelectedDate] = useState(moment().format('YYYYMMDD'));
   const [refreshing, setRefreshing] = useState(false);
+  const [resetting, setResetting] = useState(false);
+
+  const getSelectedDate = () => {
+    switch (selectedSport) {
+      case 'UFC':
+        return ufcSelectedDate;
+      case 'MLB':
+        return mlbSelectedDate;
+      case 'NBA':
+        return nbaSelectedDate;
+      case 'WNBA':
+        return wnbaSelectedDate;
+      default:
+        return moment().format('YYYYMMDD');
+    }
+  };
+
+  const setSelectedDate = (date) => {
+    switch (selectedSport) {
+      case 'UFC':
+        setUfcSelectedDate(date);
+        break;
+      case 'MLB':
+        setMlbSelectedDate(date);
+        break;
+      case 'NBA':
+        setNbaSelectedDate(date);
+        break;
+      case 'WNBA':
+        setWnbaSelectedDate(date);
+        break;
+      default:
+        break;
+    }
+  };
+
+  const resetSelectedDate = () => {
+    const today = moment().format('YYYYMMDD');
+    setSelectedDate(today);
+  };
 
   const {
     renderUFCComponent,
     dates: ufcDates,
     fetchDates: fetchUFCDates,
   } = UFC({
-    selectedDate,
-    setSelectedDate,
+    selectedDate: ufcSelectedDate,
+    setSelectedDate: setUfcSelectedDate,
     refreshing,
     setRefreshing,
   });
@@ -32,8 +75,8 @@ const Scores = () => {
     dates: mlbDates,
     fetchDates: fetchMLBDates,
   } = MLB({
-    selectedDate,
-    setSelectedDate,
+    selectedDate: mlbSelectedDate,
+    setSelectedDate: setMlbSelectedDate,
     refreshing,
     setRefreshing,
   });
@@ -43,32 +86,42 @@ const Scores = () => {
     dates: nbaDates,
     fetchDates: fetchNBADates,
   } = NBA({
-    selectedDate,
-    setSelectedDate,
+    selectedDate: nbaSelectedDate,
+    setSelectedDate: setNbaSelectedDate,
     refreshing,
     setRefreshing,
   });
+
   const {
     renderWNBAComponent,
     dates: wnbaDates,
     fetchDates: fetchWNBADates,
   } = WNBA({
-    selectedDate,
-    setSelectedDate,
+    selectedDate: wnbaSelectedDate,
+    setSelectedDate: setWnbaSelectedDate,
     refreshing,
     setRefreshing,
   });
 
+  const renderPGAComponent = () => {
+    return <PGA />;
+  };
+
   useEffect(() => {
-    if (selectedSport === 'MLB') {
-      fetchMLBDates();
-    } else if (selectedSport === 'NBA') {
-      fetchNBADates();
-    } else if (selectedSport === 'UFC') {
-      fetchUFCDates();
-    } else if (selectedSport === 'WNBA') {
-      fetchWNBADates();
-    }
+    setResetting(true);
+    resetSelectedDate(); // Reset the selected date to today's date whenever the sport changes
+    setTimeout(() => {
+      if (selectedSport === 'MLB') {
+        fetchMLBDates();
+      } else if (selectedSport === 'NBA') {
+        fetchNBADates();
+      } else if (selectedSport === 'UFC') {
+        fetchUFCDates();
+      } else if (selectedSport === 'WNBA') {
+        fetchWNBADates();
+      }
+      setResetting(false);
+    }, 500); // Delay of 0.5 seconds
   }, [selectedSport]);
 
   const renderSportItem = ({ item }) => (
@@ -81,9 +134,9 @@ const Scores = () => {
 
   const renderDateItem = ({ item }) => (
     <TouchableOpacity
-      style={[styles.dateButton, item === selectedDate && styles.selectedDateButton]}
+      style={[styles.dateButton, item === getSelectedDate() && styles.selectedDateButton]}
       onPress={() => setSelectedDate(item)}>
-      <Text style={[styles.dateText, item === selectedDate && styles.selectedDateText]}>
+      <Text style={[styles.dateText, item === getSelectedDate() && styles.selectedDateText]}>
         {moment(item).format('MMM D')}
       </Text>
     </TouchableOpacity>
@@ -144,11 +197,15 @@ const Scores = () => {
           paddingHorizontal: 10,
           paddingBottom: 10,
         }}>
-        {selectedSport === 'PGA' && <PGA />}
-        {selectedSport === 'UFC' && renderUFCComponent()}
-        {selectedSport === 'MLB' && renderMLBComponent()}
-        {selectedSport === 'NBA' && renderNBAComponent()}
-        {selectedSport === 'WNBA' && renderWNBAComponent()}
+        {!resetting && (
+          <>
+            {selectedSport === 'PGA' && renderPGAComponent()}
+            {selectedSport === 'UFC' && renderUFCComponent()}
+            {selectedSport === 'MLB' && renderMLBComponent()}
+            {selectedSport === 'NBA' && renderNBAComponent()}
+            {selectedSport === 'WNBA' && renderWNBAComponent()}
+          </>
+        )}
       </View>
     </SafeAreaView>
   );

@@ -20,6 +20,22 @@ const UFC = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
   const [eventDetails, setEventDetails] = useState(null);
   const [dates, setDates] = useState([]);
 
+  const formatToYYYYMMDD = (dateString) => {
+    const date = new Date(dateString);
+    const year = date.getFullYear();
+    let month = date.getMonth() + 1;
+    let day = date.getDate();
+
+    if (month < 10) {
+      month = `0${month}`;
+    }
+    if (day < 10) {
+      day = `0${day}`;
+    }
+
+    return `${year}${month}${day}`;
+  };
+
   const fetchDates = async () => {
     try {
       const response = await fetch(
@@ -29,30 +45,33 @@ const UFC = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
       const result = await response.json();
       const calendarDates = result.leagues[0].calendar.map((item) => item.startDate);
       setDates(calendarDates);
-      if (calendarDates.length > 0) {
-        const closestDate = findClosestDate(calendarDates);
-        setSelectedDate(closestDate);
-        fetchEvents(closestDate);
-      }
+
+      // Find the closest date
+      const closestDate = findClosestDate(calendarDates);
+
+      // Set the selected date to the closest date
+      setSelectedDate(closestDate);
     } catch (error) {
-      console.error('Error fetching UFC player data:', error);
+      console.error('Error fetching UFC dates:', error);
     }
   };
 
-  const fetchEvents = async (date) => {
+  const fetchEvents = async (selectedDate) => {
     try {
-      const formattedDate = moment(date).format('YYYYMMDD');
+      // Use the selectedDate state instead of the dates parameter
+      const formattedDate = formatToYYYYMMDD(selectedDate);
       const response = await fetch(
         `https://site.api.espn.com/apis/site/v2/sports/mma/ufc/scoreboard?dates=${formattedDate}`,
         options
       );
+      console.log('Fetch UFC Events Data URL:', response.url); // Logging the URL
       const result = await response.json();
       setEvents(result.events);
-      if (result.events.length > 0) {
-        fetchEventDetails(result.events[0].id);
+      if (result.events && result.events.length > 0) {
+        await fetchEventDetails(result.events[0].id);
       }
     } catch (error) {
-      console.error(error);
+      console.error('Error fetching UFC events:', error);
     }
   };
 
@@ -62,6 +81,7 @@ const UFC = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
         `https://site.web.api.espn.com/apis/common/v3/sports/mma/ufc/fightcenter/${eventId}`,
         options
       );
+      console.log('Fetch UFC Event Details URL:', response.url); // Logging the URL
       const result = await response.json();
       setEventDetails(result);
     } catch (error) {

@@ -35,10 +35,19 @@ const MLB = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
     }
   };
 
-  const fetchGameData = async (date = selectedDate) => {
+  const fetchGameData = async () => {
     try {
+      let formattedDate;
+
+      // Check if selectedDate is valid and in the correct format
+      if (selectedDate && /^\d{8}$/.test(selectedDate)) {
+        formattedDate = selectedDate;
+      } else {
+        return;
+      }
+
       const response = await fetch(
-        `https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard?dates=${date}`
+        `https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard?dates=${formattedDate}`
       );
 
       console.log('Fetch MLB Game Data URL:', response.url); // Logging the URL
@@ -62,6 +71,7 @@ const MLB = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
           StatusShortDetail: event.competitions[0].status.type.shortDetail,
           DisplayClock: event.status.displayClock,
           Quarter: event.status.period,
+          outsText: event.competitions[0].outsText,
         };
       });
 
@@ -72,15 +82,12 @@ const MLB = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
   };
 
   useEffect(() => {
-    fetchDates();
-    fetchGameData();
-  }, []);
-
-  useEffect(() => {
-    if (selectedDate) {
-      fetchGameData();
-      console.log('Here');
-    }
+    const fetchData = async () => {
+      await fetchDates();
+      const formattedDate = formatToYYYYMMDD(selectedDate);
+      await fetchGameData(formattedDate);
+    };
+    fetchData();
   }, [selectedDate]);
 
   const handleRefresh = async () => {
@@ -131,7 +138,16 @@ const MLB = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
                   <Text style={styles.TextStyle2}>{item.StatusShortDetail}</Text>
                 ) : (
                   <View style={styles.gameTime}>
-                    <Text style={styles.TextStyle2}>{getNumberWithSuffix(item.Quarter)}</Text>
+                    {item.StatusShortDetail.includes('Top') && (
+                      <Text style={styles.TextStyle2}>Top {item.Quarter}</Text>
+                    )}
+                    {item.StatusShortDetail.includes('Mid') && (
+                      <Text style={styles.TextStyle2}>Mid {item.Quarter}</Text>
+                    )}
+                    {item.StatusShortDetail.includes('Bot') && (
+                      <Text style={styles.TextStyle2}>Bot {item.Quarter}</Text>
+                    )}
+                    <Text style={styles.TextStyle3}>{item.outsText}</Text>
                   </View>
                 )}
               </View>
@@ -187,6 +203,14 @@ const styles = StyleSheet.create({
     fontWeight: 'normal',
     color: 'white',
     textAlign: 'center',
+    marginBottom: 2,
+  },
+  TextStyle3: {
+    fontSize: 12,
+    fontWeight: 'normal',
+    color: 'white',
+    textAlign: 'center',
+    marginTop: 2,
   },
   column: {
     flex: 1,
