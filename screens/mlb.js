@@ -1,16 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  Dimensions,
-  Image,
-  ScrollView,
-  RefreshControl,
-} from 'react-native';
-
-const windowWidth = Dimensions.get('window').width;
+import { View, Text, StyleSheet, FlatList, Image, RefreshControl } from 'react-native';
 
 const MLB = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
   const [gameData, setGameData] = useState([]);
