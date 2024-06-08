@@ -41,13 +41,8 @@ const MLB = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
       const dates = data.eventDate.dates.map((date) => formatToYYYYMMDD(date));
 
       setDates(dates);
-
-      // Initialize with today's date
-      const today = new Date();
-      const formattedToday = formatToYYYYMMDD(today);
-      setSelectedDate(formattedToday);
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error in fetchMLBDates:', error);
     }
   };
 
@@ -56,6 +51,8 @@ const MLB = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
       const response = await fetch(
         `https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard?dates=${date}`
       );
+
+      console.log('Fetch MLB Game Data URL:', response.url); // Logging the URL
 
       if (!response.ok) {
         throw new Error('Network response was not ok');
@@ -81,18 +78,19 @@ const MLB = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
 
       setGameData(gameData);
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error in fetchMLBGameData:', error);
     }
   };
 
   useEffect(() => {
     fetchDates();
-    fetchGameData(); // Fetch MLB data on component mount
+    fetchGameData();
   }, []);
 
   useEffect(() => {
     if (selectedDate) {
       fetchGameData();
+      console.log('Here');
     }
   }, [selectedDate]);
 
@@ -160,7 +158,9 @@ const MLB = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
           keyExtractor={(item, index) => index.toString()}
           contentContainerStyle={styles.listContainer}
           showsVerticalScrollIndicator={false}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor="#888" />
+          }
           numColumns={2}
         />
       </>
@@ -186,7 +186,6 @@ const styles = StyleSheet.create({
   listContainer: {
     alignSelf: 'center',
     padding: 10,
-    width: windowWidth,
   },
   itemContainer: {
     flexDirection: 'row',

@@ -31,7 +31,7 @@ const PGA = () => {
       setCurrentData(data); // Set current data
       return data.events[0].id;
     } catch (error) {
-      console.error('Error fetching event ID:', error);
+      console.error('Error fetching PGA event ID:', error);
     }
   };
 
@@ -93,7 +93,7 @@ const PGA = () => {
       const data = await response.json();
       return data;
     } catch (error) {
-      console.error('Error fetching competitor summary:', error);
+      console.error('Error fetching PGA competitor summary:', error);
     }
   };
 
@@ -134,7 +134,7 @@ const PGA = () => {
           const data = await response.json();
           setPlayerData(data);
         } catch (error) {
-          console.error('Error fetching player data:', error);
+          console.error('Error fetching PGA player data:', error);
         }
       };
 

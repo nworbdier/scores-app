@@ -47,7 +47,7 @@ const NBA = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
       const formattedToday = formatToYYYYMMDD(today);
       setSelectedDate(formattedToday);
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error in fetchNBADates:', error);
     }
   };
 
@@ -56,6 +56,8 @@ const NBA = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
       const response = await fetch(
         `https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates=${date}`
       );
+
+      console.log('Fetch NBA Game Data URL:', response.url); // Logging the URL
 
       if (!response.ok) {
         throw new Error('Network response was not ok');
@@ -81,7 +83,7 @@ const NBA = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
 
       setGameData(gameData);
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error in fetchNBAGameData:', error);
     }
   };
 

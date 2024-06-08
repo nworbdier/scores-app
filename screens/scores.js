@@ -1,37 +1,25 @@
 import { AntDesign, Ionicons } from '@expo/vector-icons';
 import moment from 'moment';
-import React, { useState, useRef, useEffect } from 'react';
-import {
-  View,
-  Text,
-  FlatList,
-  SafeAreaView,
-  RefreshControl,
-  TouchableOpacity,
-  ScrollView,
-  StyleSheet,
-  Dimensions,
-} from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, FlatList, SafeAreaView, TouchableOpacity, StyleSheet } from 'react-native';
 
 import MLB from './mlb';
 import NBA from './nba';
 import PGA from './pga';
 import UFC from './ufc';
 
-const { width } = Dimensions.get('window');
-
 const sportNames = ['UFC', 'PGA', 'MLB', 'NBA', 'WNBA', 'TENNIS', 'NHL', 'NFL', 'CFB', 'CBB'];
 
 const Scores = () => {
-  const [selectedSport, setSelectedSport] = useState('UFC');
-  const [selectedDate, setSelectedDate] = useState('');
+  const [selectedSport, setSelectedSport] = useState('PGA');
+  const [selectedDate, setSelectedDate] = useState(moment().format('YYYYMMDD'));
   const [refreshing, setRefreshing] = useState(false);
-  const flatListRef = useRef(null);
 
   const {
     renderUFCComponent,
     dates: ufcDates,
     onRefresh: onUFCRefresh,
+    fetchDates: fetchUFCDates,
   } = UFC({
     selectedDate,
     setSelectedDate,
@@ -66,24 +54,12 @@ const Scores = () => {
   useEffect(() => {
     if (selectedSport === 'MLB') {
       fetchMLBDates();
-    }
-  }, [selectedSport]);
-
-  useEffect(() => {
-    if (selectedSport === 'NBA') {
+    } else if (selectedSport === 'NBA') {
       fetchNBADates();
+    } else if (selectedSport === 'UFC') {
+      fetchUFCDates();
     }
   }, [selectedSport]);
-
-  useEffect(() => {
-    if (selectedSport !== 'PGA') {
-      const dates = selectedSport === 'UFC' ? ufcDates : mlbDates;
-      const index = dates.findIndex((date) => date === selectedDate);
-      if (index !== -1 && flatListRef.current) {
-        flatListRef.current.scrollToIndex({ index, animated: true, viewPosition: 0.5 });
-      }
-    }
-  }, [selectedDate, selectedSport, ufcDates, mlbDates]);
 
   const renderSportItem = ({ item }) => (
     <TouchableOpacity style={styles.sportButton} onPress={() => setSelectedSport(item)}>
@@ -98,7 +74,7 @@ const Scores = () => {
       style={[styles.dateButton, item === selectedDate && styles.selectedDateButton]}
       onPress={() => setSelectedDate(item)}>
       <Text style={[styles.dateText, item === selectedDate && styles.selectedDateText]}>
-        {moment(item).format('MMM DD')}
+        {moment(item).format('MMM D')}
       </Text>
     </TouchableOpacity>
   );
@@ -111,7 +87,6 @@ const Scores = () => {
         return mlbDates;
       case 'NBA':
         return nbaDates;
-      // Add other cases for other sports if needed
       default:
         return [];
     }
@@ -153,32 +128,29 @@ const Scores = () => {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.sportList}
         />
-        {selectedSport !== 'PGA' && (
+        {selectedSport !== 'PGA' && getDates().length > 0 && (
           <FlatList
             data={getDates()}
             renderItem={renderDateItem}
             keyExtractor={(item) => item}
             horizontal
             showsHorizontalScrollIndicator={false}
-            ref={flatListRef}
-            getItemLayout={(_, index) => ({ length: 100, offset: 100 * index, index })}
             contentContainerStyle={styles.dateList}
-            initialScrollIndex={getDates().findIndex((date) => date === selectedDate)}
-            snapToAlignment="center"
-            snapToInterval={100}
           />
         )}
       </View>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollViewContent}
-        horizontal={false} // Add this line to restrict horizontal scrolling
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={getOnRefresh()} />}>
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: 'black',
+          paddingHorizontal: 10,
+          paddingBottom: 10,
+        }}>
         {selectedSport === 'PGA' && <PGA />}
         {selectedSport === 'UFC' && renderUFCComponent()}
-        {selectedSport === 'MLB' && renderMLBComponent()}
+        {selectedSport === 'MLB' && renderMLBComponent(selectedDate)}
         {selectedSport === 'NBA' && renderNBAComponent()}
-      </ScrollView>
+      </View>
     </SafeAreaView>
   );
 };
@@ -230,12 +202,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   dateButton: {
-    width: 100, // Fixed width for each date button
+    width: 75, // 10% of screen width
     height: '100%',
     marginHorizontal: 5,
     borderRadius: 5,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  selectedDateButton: {
+    position: 'absolute',
   },
   dateText: {
     fontSize: 16,
@@ -245,10 +220,6 @@ const styles = StyleSheet.create({
   selectedDateText: {
     fontWeight: 'bold',
     color: '#FFDB58',
-  },
-  scrollViewContent: {
-    paddingHorizontal: 10,
-    paddingBottom: 10,
   },
 });
 

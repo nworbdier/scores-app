@@ -1,6 +1,6 @@
 import moment from 'moment';
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, Image, Text, ScrollView } from 'react-native';
+import { StyleSheet, View, Image, Text, FlatList, RefreshControl } from 'react-native';
 
 const options = {
   method: 'GET',
@@ -35,7 +35,7 @@ const UFC = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
         fetchEvents(closestDate);
       }
     } catch (error) {
-      console.error(error);
+      console.error('Error fetching UFC player data:', error);
     }
   };
 
@@ -65,7 +65,7 @@ const UFC = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
       const result = await response.json();
       setEventDetails(result);
     } catch (error) {
-      console.error(error);
+      console.error('Error fetching UFC event details:', error);
     }
   };
 
@@ -175,17 +175,21 @@ const UFC = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
 
   const renderUFCComponent = () => {
     return (
-      <ScrollView>
-        {events.length > 0 && (
-          <View style={styles.eventNameContainer}>
-            <Text style={styles.eventNameText}>{events[0].name}</Text>
+      <FlatList
+        data={events}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <View style={styles.cardContainer}>
+            <Text style={styles.cardName}>{item.name}</Text>
+            {Object.keys(eventDetails.cards).map((cardKey) => (
+              <View key={cardKey}>{renderCard(cardKey)}</View>
+            ))}
           </View>
         )}
-        {eventDetails &&
-          Object.keys(eventDetails.cards).map((cardKey) => (
-            <View key={cardKey}>{renderCard(cardKey)}</View>
-          ))}
-      </ScrollView>
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#888" />
+        }
+      />
     );
   };
 
