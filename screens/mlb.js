@@ -133,6 +133,9 @@ const MLB = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
                     {item.StatusShortDetail.includes('Bot') && (
                       <Text style={styles.TextStyle2}>Bot {item.Quarter}</Text>
                     )}
+                    {item.StatusShortDetail.includes('End') && (
+                      <Text style={styles.TextStyle2}>End {item.Quarter}</Text>
+                    )}
                     <Text style={styles.TextStyle3}>{item.outsText}</Text>
                   </View>
                 )}
