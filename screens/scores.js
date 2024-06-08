@@ -7,6 +7,7 @@ import MLB from './mlb';
 import NBA from './nba';
 import PGA from './pga';
 import UFC from './ufc';
+import WNBA from './wnba';
 
 const sportNames = ['UFC', 'PGA', 'MLB', 'NBA', 'WNBA', 'TENNIS', 'NHL', 'NFL', 'CFB', 'CBB'];
 
@@ -18,7 +19,6 @@ const Scores = () => {
   const {
     renderUFCComponent,
     dates: ufcDates,
-    onRefresh: onUFCRefresh,
     fetchDates: fetchUFCDates,
   } = UFC({
     selectedDate,
@@ -30,7 +30,6 @@ const Scores = () => {
   const {
     renderMLBComponent,
     dates: mlbDates,
-    onRefresh: onMLBRefresh,
     fetchDates: fetchMLBDates,
   } = MLB({
     selectedDate,
@@ -42,9 +41,18 @@ const Scores = () => {
   const {
     renderNBAComponent,
     dates: nbaDates,
-    onRefresh: onNBARefresh,
     fetchDates: fetchNBADates,
   } = NBA({
+    selectedDate,
+    setSelectedDate,
+    refreshing,
+    setRefreshing,
+  });
+  const {
+    renderWNBAComponent,
+    dates: wnbaDates,
+    fetchDates: fetchWNBADates,
+  } = WNBA({
     selectedDate,
     setSelectedDate,
     refreshing,
@@ -58,6 +66,8 @@ const Scores = () => {
       fetchNBADates();
     } else if (selectedSport === 'UFC') {
       fetchUFCDates();
+    } else if (selectedSport === 'WNBA') {
+      fetchWNBADates();
     }
   }, [selectedSport]);
 
@@ -87,22 +97,10 @@ const Scores = () => {
         return mlbDates;
       case 'NBA':
         return nbaDates;
+      case 'WNBA':
+        return wnbaDates;
       default:
         return [];
-    }
-  };
-
-  const getOnRefresh = () => {
-    switch (selectedSport) {
-      case 'UFC':
-        return onUFCRefresh;
-      case 'MLB':
-        return onMLBRefresh;
-      case 'NBA':
-        return onNBARefresh;
-      // Add other cases for other sports if needed
-      default:
-        return () => {};
     }
   };
 
@@ -148,8 +146,9 @@ const Scores = () => {
         }}>
         {selectedSport === 'PGA' && <PGA />}
         {selectedSport === 'UFC' && renderUFCComponent()}
-        {selectedSport === 'MLB' && renderMLBComponent(selectedDate)}
+        {selectedSport === 'MLB' && renderMLBComponent()}
         {selectedSport === 'NBA' && renderNBAComponent()}
+        {selectedSport === 'WNBA' && renderWNBAComponent()}
       </View>
     </SafeAreaView>
   );

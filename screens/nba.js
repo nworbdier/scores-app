@@ -160,9 +160,10 @@ const NBA = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
             </View>
           )}
           keyExtractor={(item, index) => index.toString()}
-          contentContainerStyle={styles.listContainer}
           showsVerticalScrollIndicator={false}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor="#888" />
+          }
           numColumns={2}
         />
       </>
@@ -178,29 +179,16 @@ const NBA = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
 };
 
 const styles = StyleSheet.create({
-  page: {
-    flex: 1,
-  },
-  scoreboard: {
-    flex: 1,
-    alignItems: 'space-evenly',
-  },
-  listContainer: {
-    alignSelf: 'center',
-    padding: 10,
-    width: windowWidth,
-  },
   itemContainer: {
+    flex: 1,
     flexDirection: 'row',
     justifyContent: 'space-around',
     padding: 5,
     borderWidth: 0.25,
     borderColor: 'white',
     borderRadius: 10,
+    margin: 3,
     backgroundColor: '#141414',
-    width: '49%',
-    height: '95%',
-    marginHorizontal: '.5%',
   },
   TextStyle1: {
     fontSize: 14,

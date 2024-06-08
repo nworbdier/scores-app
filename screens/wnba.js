@@ -12,7 +12,7 @@ import {
 
 const windowWidth = Dimensions.get('window').width;
 
-const MLB = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
+const WNBA = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
   const [gameData, setGameData] = useState([]);
   const [dates, setDates] = useState([]);
 
@@ -35,24 +35,29 @@ const MLB = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
   const fetchDates = async () => {
     try {
       const response = await fetch(
-        `https://sports.core.api.espn.com/v2/sports/baseball/leagues/mlb/calendar/whitelist`
+        `https://sports.core.api.espn.com/v2/sports/basketball/leagues/wnba/calendar/whitelist`
       );
       const data = await response.json();
       const dates = data.eventDate.dates.map((date) => formatToYYYYMMDD(date));
 
       setDates(dates);
+
+      // Initialize with today's date
+      const today = new Date();
+      const formattedToday = formatToYYYYMMDD(today);
+      setSelectedDate(formattedToday);
     } catch (error) {
-      console.error('Error in fetchMLBDates:', error);
+      console.error('Error in fetchNBADates:', error);
     }
   };
 
   const fetchGameData = async (date = selectedDate) => {
     try {
       const response = await fetch(
-        `https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard?dates=${date}`
+        `https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/scoreboard?dates=${date}`
       );
 
-      console.log('Fetch MLB Game Data URL:', response.url); // Logging the URL
+      console.log('Fetch NBA Game Data URL:', response.url); // Logging the URL
 
       if (!response.ok) {
         throw new Error('Network response was not ok');
@@ -78,19 +83,18 @@ const MLB = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
 
       setGameData(gameData);
     } catch (error) {
-      console.error('Error in fetchMLBGameData:', error);
+      console.error('Error in fetchNBAGameData:', error);
     }
   };
 
   useEffect(() => {
     fetchDates();
-    fetchGameData();
+    fetchGameData(); // Fetch NBA data on component mount
   }, []);
 
   useEffect(() => {
     if (selectedDate) {
       fetchGameData();
-      console.log('Here');
     }
   }, [selectedDate]);
 
@@ -121,7 +125,7 @@ const MLB = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
     return new Intl.DateTimeFormat('en-US', options).format(date);
   };
 
-  const renderMLBComponent = () => {
+  const renderWNBAComponent = () => {
     return (
       <>
         <FlatList
@@ -167,7 +171,7 @@ const MLB = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
   };
 
   return {
-    renderMLBComponent,
+    renderWNBAComponent,
     dates,
     onRefresh: handleRefresh,
     fetchDates,
@@ -246,4 +250,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default MLB;
+export default WNBA;
