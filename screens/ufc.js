@@ -66,7 +66,7 @@ const UFC = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
       );
       console.log('Fetch UFC Events Data URL:', response.url); // Logging the URL
       const result = await response.json();
-      setEvents(result.events);
+      setEvents(result.events || []); // Ensure events is always an array
       if (result.events && result.events.length > 0) {
         await fetchEventDetails(result.events[0].id);
       }
@@ -110,6 +110,10 @@ const UFC = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
     const competitor1 = competition.competitors[0];
     const competitor2 = competition.competitors[1];
     const result = competition.status.result;
+    const isInProgress = statusType === 'STATUS_IN_PROGRESS';
+    const period = competition.status.period;
+    const displayClock = competition.status.displayClock;
+    const competitionTypeText = competition.type.text; // Change 'x' to the appropriate variable containing your data
 
     const getImageSource = (competitor) => {
       const { headshot, athlete } = competitor.athlete || {};
@@ -133,21 +137,23 @@ const UFC = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
               statusType === 'STATUS_SCHEDULED' && styles.scheduledText,
               !competitor1.winner && statusType !== 'STATUS_SCHEDULED' && styles.lossText,
             ]}>
-            {statusType === 'STATUS_SCHEDULED'
-              ? competitor1.displayRecord
-              : competitor1.winner
-                ? 'W'
-                : 'L'}
+            {isInProgress
+              ? '-'
+              : statusType === 'STATUS_SCHEDULED'
+                ? competitor1.displayRecord
+                : competitor1.winner
+                  ? 'W'
+                  : 'L'}
           </Text>
         </View>
         <View style={styles.vsColumn}>
-          {statusType === 'STATUS_FINAL' ? (
+          {statusType === 'STATUS_FINAL' || isInProgress ? (
             <View style={styles.resultColumn}>
               <Text style={[styles.resultText2, styles.centeredText]}>
-                {result.shortDisplayName}
+                {isInProgress ? `R${period}` : result.shortDisplayName}
               </Text>
               <Text style={[styles.resultDescription, styles.centeredText]}>
-                {result.description}
+                {isInProgress ? displayClock : result.description}
               </Text>
             </View>
           ) : (
@@ -165,11 +171,13 @@ const UFC = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
               statusType === 'STATUS_SCHEDULED' && styles.scheduledText,
               !competitor2.winner && statusType !== 'STATUS_SCHEDULED' && styles.lossText,
             ]}>
-            {statusType === 'STATUS_SCHEDULED'
-              ? competitor2.displayRecord
-              : competitor2.winner
-                ? 'W'
-                : 'L'}
+            {isInProgress
+              ? '-'
+              : statusType === 'STATUS_SCHEDULED'
+                ? competitor2.displayRecord
+                : competitor2.winner
+                  ? 'W'
+                  : 'L'}
           </Text>
         </View>
       </View>
@@ -195,21 +203,29 @@ const UFC = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
 
   const renderUFCComponent = () => {
     return (
-      <FlatList
-        data={events}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <View style={styles.cardContainer}>
-            <Text style={styles.cardName}>{item.name}</Text>
-            {Object.keys(eventDetails.cards).map((cardKey) => (
-              <View key={cardKey}>{renderCard(cardKey)}</View>
-            ))}
+      <View style={{ flex: 1 }}>
+        {events && events.length > 0 ? (
+          <FlatList
+            data={events}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <View style={styles.cardContainer}>
+                <Text style={styles.cardName}>{item.name}</Text>
+                {Object.keys(eventDetails?.cards || {}).map((cardKey) => (
+                  <View key={cardKey}>{renderCard(cardKey)}</View>
+                ))}
+              </View>
+            )}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#888" />
+            }
+          />
+        ) : (
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+            <Text>No fights available</Text>
           </View>
         )}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#888" />
-        }
-      />
+      </View>
     );
   };
 
@@ -312,6 +328,11 @@ const styles = StyleSheet.create({
   },
   lossText: {
     color: 'red',
+  },
+  competitionTypeText: {
+    fontSize: 12,
+    color: 'white',
+    fontWeight: 'bold',
   },
 });
 

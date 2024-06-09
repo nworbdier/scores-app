@@ -118,46 +118,52 @@ const NBA = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
 
   const renderNBAComponent = () => {
     return (
-      <>
-        <FlatList
-          data={gameData}
-          renderItem={({ item, index }) => (
-            <View key={index} style={styles.itemContainer}>
-              <View style={styles.column}>
-                <Image source={{ uri: item.AwayLogo }} style={styles.image} />
-                <Text style={styles.TextStyle1}>{item.AwayTeam}</Text>
-                {item.Status !== 'STATUS_SCHEDULED' && (
-                  <Text style={styles.TextStyle1}>{item.AwayScore}</Text>
-                )}
+      <View style={{ flex: 1 }}>
+        {gameData.length > 0 ? (
+          <FlatList
+            data={gameData}
+            renderItem={({ item, index }) => (
+              <View key={index} style={styles.itemContainer}>
+                <View style={styles.column}>
+                  <Image source={{ uri: item.AwayLogo }} style={styles.image} />
+                  <Text style={styles.TextStyle1}>{item.AwayTeam}</Text>
+                  {item.Status !== 'STATUS_SCHEDULED' && (
+                    <Text style={styles.TextStyle1}>{item.AwayScore}</Text>
+                  )}
+                </View>
+                <View style={styles.column2}>
+                  {item.Status === 'STATUS_SCHEDULED' ? (
+                    <Text style={styles.TextStyle2}>{formatGameTime(item.GameTime)}</Text>
+                  ) : item.Status === 'STATUS_FINAL' ? (
+                    <Text style={styles.TextStyle2}>{item.StatusShortDetail}</Text>
+                  ) : (
+                    <View style={styles.gameTime}>
+                      <Text style={styles.TextStyle2}>{getNumberWithSuffix(item.Quarter)}</Text>
+                    </View>
+                  )}
+                </View>
+                <View style={styles.column}>
+                  <Image source={{ uri: item.HomeLogo }} style={styles.image} />
+                  <Text style={styles.TextStyle1}>{item.HomeTeam}</Text>
+                  {item.Status !== 'STATUS_SCHEDULED' && (
+                    <Text style={styles.TextStyle1}>{item.HomeScore}</Text>
+                  )}
+                </View>
               </View>
-              <View style={styles.column2}>
-                {item.Status === 'STATUS_SCHEDULED' ? (
-                  <Text style={styles.TextStyle2}>{formatGameTime(item.GameTime)}</Text>
-                ) : item.Status === 'STATUS_FINAL' ? (
-                  <Text style={styles.TextStyle2}>{item.StatusShortDetail}</Text>
-                ) : (
-                  <View style={styles.gameTime}>
-                    <Text style={styles.TextStyle2}>{getNumberWithSuffix(item.Quarter)}</Text>
-                  </View>
-                )}
-              </View>
-              <View style={styles.column}>
-                <Image source={{ uri: item.HomeLogo }} style={styles.image} />
-                <Text style={styles.TextStyle1}>{item.HomeTeam}</Text>
-                {item.Status !== 'STATUS_SCHEDULED' && (
-                  <Text style={styles.TextStyle1}>{item.HomeScore}</Text>
-                )}
-              </View>
-            </View>
-          )}
-          keyExtractor={(item, index) => index.toString()}
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor="#888" />
-          }
-          numColumns={2}
-        />
-      </>
+            )}
+            keyExtractor={(item, index) => index.toString()}
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor="#888" />
+            }
+            numColumns={2}
+          />
+        ) : (
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+            <Text>No games available</Text>
+          </View>
+        )}
+      </View>
     );
   };
 
@@ -202,7 +208,6 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     backgroundColor: 'transparent',
     borderColor: 'transparent',
-    marginBottom: 5,
   },
   gameTime: {
     flexDirection: 'column',

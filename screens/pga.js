@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons'; // Assuming you are using expo
 import moment from 'moment';
 import React, { useState, useEffect } from 'react';
 import {
@@ -10,7 +11,6 @@ import {
   Modal,
   TouchableOpacity,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons'; // Assuming you are using expo
 
 const PGA = () => {
   const [playersData, setPlayersData] = useState([]);
@@ -55,6 +55,8 @@ const PGA = () => {
       const response = await fetch(
         `https://site.web.api.espn.com/apis/site/v2/sports/golf/leaderboard?league=pga&event=${eventId}`
       );
+
+      // console.log('URL:', response.url);
       const data = await response.json();
       setCurrentData(data); // Set current data
 
@@ -134,7 +136,38 @@ const PGA = () => {
       setCurrentEventId(selectedTournament.id);
       setTournamentName(selectedTournament.label);
       await fetchPGAData(selectedTournament.id);
+      setTournamentModalVisible(false); // Close the modal after selection
     }
+  };
+
+  const TournamentModal = ({ visible, tournaments, selectedTournament, onClose, onSelect }) => {
+    return (
+      <Modal transparent animationType="fade" visible={visible} onRequestClose={onClose}>
+        <View style={styles.modalOverlay2}>
+          <View style={styles.modalContent2}>
+            <FlatList
+              data={tournaments}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={[
+                    styles.tournamentItem,
+                    selectedTournament === item.id && styles.selectedTournamentItem,
+                  ]}
+                  onPress={() => onSelect(item.id)}>
+                  <Text style={styles.tournamentItemText}>{item.label}</Text>
+                </TouchableOpacity>
+              )}
+              keyExtractor={(item) => item.id.toString()}
+              contentContainerStyle={styles.tournamentList}
+              showsVerticalScrollIndicator={false}
+            />
+            <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+              <Text style={styles.closeButtonText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+    );
   };
 
   const PlayerModal = ({ visible, player, onClose, statusPeriod }) => {
@@ -277,23 +310,23 @@ const PGA = () => {
   );
 
   const renderHeader = () => {
-    // Extract the round number and status type from the current data
     const competition = currentData ? currentData.events[0].competitions[0] : null;
     let roundNumber = competition ? competition.status.period : '';
     const statusType = competition ? competition.status.type.name : '';
 
-    // If the status type is STATUS_PLAY_COMPLETE, add 1 to the round number
     if (statusType === 'STATUS_PLAY_COMPLETE') {
       roundNumber += 1;
     }
 
-    // Construct the header text based on the round number
     const headerText = roundNumber ? `R${roundNumber}` : 'Today';
 
     return (
       <View style={{ flex: 1 }}>
-        <TouchableOpacity style={styles.tournamentDropdown} onPress={() => setModalVisible(true)}>
-          <Text style={styles.tournamentName}>{tournamentName}</Text>
+        <TouchableOpacity onPress={() => setTournamentModalVisible(true)}>
+          <View style={styles.tournamentDropdown}>
+            <Text style={styles.tournamentName}>{tournamentName}</Text>
+            <Ionicons name="caret-down" size={15} color="white" marginLeft={5} />
+          </View>
         </TouchableOpacity>
         <View style={styles.playerRow2}>
           <View style={styles.leftContainer}>
@@ -306,22 +339,35 @@ const PGA = () => {
             <Text style={styles.headerPlayerTotal}>TOT</Text>
           </View>
         </View>
+        <TournamentModal
+          visible={tournamentModalVisible}
+          tournaments={availableTournaments}
+          selectedTournament={currentEventId}
+          onClose={() => setTournamentModalVisible(false)}
+          onSelect={handleTournamentChange}
+        />
       </View>
     );
   };
 
   return (
     <View style={{ flex: 1 }}>
-      <FlatList
-        data={playersData}
-        renderItem={renderPlayer}
-        keyExtractor={(item) => item.id.toString()} // Assuming competitor's ID is a number
-        contentContainerStyle={styles.listContent}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#888" />
-        }
-        ListHeaderComponent={renderHeader}
-      />
+      {playersData.length > 0 ? (
+        <FlatList
+          data={playersData}
+          renderItem={renderPlayer}
+          keyExtractor={(item) => item.id.toString()}
+          contentContainerStyle={styles.listContent}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#888" />
+          }
+          ListHeaderComponent={renderHeader}
+        />
+      ) : (
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <Text>No players available</Text>
+        </View>
+      )}
       <PlayerModal
         visible={modalVisible}
         player={selectedPlayer}
@@ -337,6 +383,8 @@ const styles = StyleSheet.create({
     marginVertical: 10,
     marginHorizontal: 10,
     borderRadius: 5, // Add a border radius for a better look
+    flexDirection: 'row',
+    alignContent: 'center',
   },
   pickerStyle: {
     color: 'black', // Set the text color to black
@@ -345,7 +393,6 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     color: 'white',
-    paddingBottom: 10,
     textAlign: 'left',
   },
   playerRow: {
@@ -447,9 +494,22 @@ const styles = StyleSheet.create({
   modalContent: {
     width: '80%',
     height: '75%',
-    padding: 20,
+    padding: 10,
     backgroundColor: 'white',
     borderRadius: 10,
+    alignItems: 'center',
+  },
+  modalOverlay2: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  modalContent2: {
+    width: '100%',
+    height: '80%',
+    padding: 20,
+    backgroundColor: 'white',
+    borderTopLeftRadius: 10,
+    borderTopRightRadius: 10,
     alignItems: 'center',
   },
   closeButton: {
@@ -503,6 +563,23 @@ const styles = StyleSheet.create({
     width: 30,
     textAlign: 'center',
     color: 'black',
+  },
+  tournamentList: {
+    alignItems: 'center',
+  },
+  tournamentItem: {
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ddd',
+    width: '100%',
+    alignItems: 'flex-start',
+  },
+  selectedTournamentItem: {
+    backgroundColor: '#ddd',
+  },
+  tournamentItemText: {
+    fontSize: 16,
+    textAlign: 'left',
   },
 });
 
