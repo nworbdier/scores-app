@@ -67,14 +67,21 @@ const PGA = () => {
           const period = competitor.status.period;
           let today = '-';
           let thru = competitor.status.thru;
+          let position = competitor.status.position.displayName;
 
-          if (competitor.status.type.name === 'STATUS_SCHEDULED') {
-            thru = moment(competitor.status.teeTime).format('h:mm A');
+          if (competitor.status.displayValue === 'CUT') {
+            position = 'MC';
+            today = '-';
+            thru = 'CUT';
           } else {
-            if (competitor.linescores && competitor.linescores.length > 0) {
-              const lineScoreIndex = period - 1;
-              if (lineScoreIndex >= 0 && lineScoreIndex < competitor.linescores.length) {
-                today = competitor.linescores[lineScoreIndex].displayValue || '-';
+            if (competitor.status.type.name === 'STATUS_SCHEDULED') {
+              thru = moment(competitor.status.teeTime).format('h:mm A');
+            } else {
+              if (competitor.linescores && competitor.linescores.length > 0) {
+                const lineScoreIndex = period - 1;
+                if (lineScoreIndex >= 0 && lineScoreIndex < competitor.linescores.length) {
+                  today = competitor.linescores[lineScoreIndex].displayValue || '-';
+                }
               }
             }
           }
@@ -87,7 +94,7 @@ const PGA = () => {
 
           return {
             id: competitor.athlete.id, // Assuming competitor has an id field
-            pl: competitor.status.position.displayName,
+            pl: position,
             name: competitor.athlete.displayName,
             today,
             thru,

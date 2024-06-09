@@ -185,7 +185,7 @@ const UFC = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
 
     return (
       <View style={styles.cardContainer} key={cardKey}>
-        <Text style={styles.cardName}>
+        <Text style={styles.cardName2}>
           {card?.displayName} {cardTime && `- ${cardTime}`}
         </Text>
         {card?.competitions.map((comp) => renderCompetitionItem(comp, cardKey))}
@@ -229,11 +229,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     backgroundColor: '#141414',
-    borderWidth: 0.25,
+    borderWidth: 0.5,
     borderColor: 'white',
     marginBottom: 10,
     paddingVertical: 10,
-    borderRadius: 10,
+    borderRadius: 5,
   },
   competitorColumn: {
     flex: 3,
@@ -254,6 +254,12 @@ const styles = StyleSheet.create({
     marginHorizontal: 5,
   },
   cardName: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: 'white',
+    marginVertical: 10,
+  },
+  cardName2: {
     fontSize: 16,
     fontWeight: 'bold',
     color: 'white',
@@ -295,7 +301,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   resultDescription: {
-    fontSize: 14,
+    fontSize: 12,
     color: 'white',
   },
   centeredText: {
