@@ -50,7 +50,7 @@ const MLB = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
         `https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard?dates=${formattedDate}`
       );
 
-      console.log('Fetch MLB Game Data URL:', response.url); // Logging the URL
+      // console.log('Fetch MLB Game Data URL:', response.url); // Logging the URL
 
       if (!response.ok) {
         throw new Error('Network response was not ok');

@@ -21,19 +21,8 @@ const UFC = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
   const [dates, setDates] = useState([]);
 
   const formatToYYYYMMDD = (dateString) => {
-    const date = new Date(dateString);
-    const year = date.getFullYear();
-    let month = date.getMonth() + 1;
-    let day = date.getDate();
-
-    if (month < 10) {
-      month = `0${month}`;
-    }
-    if (day < 10) {
-      day = `0${day}`;
-    }
-
-    return `${year}${month}${day}`;
+    const date = moment(dateString);
+    return date.format('YYYYMMDD');
   };
 
   const fetchDates = async () => {
@@ -47,10 +36,11 @@ const UFC = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
       setDates(calendarDates);
 
       // Find the closest date
-      const closestDate = findClosestDate(calendarDates);
+      const closestDate = formatToYYYYMMDD(findClosestDate(calendarDates));
 
       // Set the selected date to the closest date
       setSelectedDate(closestDate);
+      // console.log(`Closest date: ${closestDate}`);
     } catch (error) {
       console.error('Error fetching UFC dates:', error);
     }
@@ -64,7 +54,7 @@ const UFC = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
         `https://site.api.espn.com/apis/site/v2/sports/mma/ufc/scoreboard?dates=${formattedDate}`,
         options
       );
-      console.log('Fetch UFC Events Data URL:', response.url); // Logging the URL
+      // console.log('Fetch UFC Events Data URL:', response.url); // Logging the URL
       const result = await response.json();
       setEvents(result.events || []); // Ensure events is always an array
       if (result.events && result.events.length > 0) {
@@ -81,7 +71,7 @@ const UFC = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
         `https://site.web.api.espn.com/apis/common/v3/sports/mma/ufc/fightcenter/${eventId}`,
         options
       );
-      console.log('Fetch UFC Event Details URL:', response.url); // Logging the URL
+      // console.log('Fetch UFC Event Details URL:', response.url); // Logging the URL
       const result = await response.json();
       setEventDetails(result);
     } catch (error) {

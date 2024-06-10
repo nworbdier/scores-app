@@ -61,7 +61,10 @@ const Scores = () => {
     const selectedIndex = dates.findIndex((d) => d === date);
 
     // Update the index state
-    setIndex(selectedIndex >= 0 ? selectedIndex : 0); // Ensure index is not -1
+    const newIndex = selectedIndex >= 0 ? selectedIndex : 0; // Ensure index is not -1
+    console.log('Index before update:', index); // Add this line
+    setIndex(newIndex);
+    console.log('Index after update:', newIndex); // Add this line
   };
 
   const resetSelectedDate = () => {
@@ -120,6 +123,7 @@ const Scores = () => {
   useEffect(() => {
     setResetting(true);
     resetSelectedDate(); // Reset the selected date to today's date whenever the sport changes
+    setIndex(0); // Set the index to 0 initially
     setTimeout(() => {
       if (selectedSport === 'MLB') {
         fetchMLBDates();
@@ -131,6 +135,15 @@ const Scores = () => {
         fetchWNBADates();
       }
       setResetting(false);
+
+      // Calculate the new index for today's date
+      const dates = getDates();
+      let newIndex = dates.findIndex((date) => date === moment().format('YYYYMMDD'));
+      if (newIndex < 0) {
+        newIndex = 0; // If today's date is not found, default to the first date
+      }
+      todayIndex.current = newIndex;
+      setIndex(newIndex); // Update the index to the new today's index
     }, 500); // Delay of 0.5 seconds
   }, [selectedSport]);
 
