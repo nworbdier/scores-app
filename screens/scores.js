@@ -1,6 +1,6 @@
 import { AntDesign, Ionicons } from '@expo/vector-icons';
 import moment from 'moment';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, FlatList, SafeAreaView, TouchableOpacity, StyleSheet } from 'react-native';
 
 import MLB from './mlb';
@@ -12,6 +12,8 @@ import WNBA from './wnba';
 const sportNames = ['UFC', 'PGA', 'MLB', 'NBA', 'WNBA', 'TENNIS', 'NHL', 'NFL', 'CFB', 'CBB'];
 
 const Scores = () => {
+  const ref = useRef();
+  const [index, setIndex] = useState(0);
   const [selectedSport, setSelectedSport] = useState('PGA');
   const [ufcSelectedDate, setUfcSelectedDate] = useState(moment().format('YYYYMMDD'));
   const [mlbSelectedDate, setMlbSelectedDate] = useState(moment().format('YYYYMMDD'));
@@ -19,6 +21,7 @@ const Scores = () => {
   const [wnbaSelectedDate, setWnbaSelectedDate] = useState(moment().format('YYYYMMDD'));
   const [refreshing, setRefreshing] = useState(false);
   const [resetting, setResetting] = useState(false);
+  const todayIndex = useRef(0);
 
   const getSelectedDate = () => {
     switch (selectedSport) {
@@ -52,6 +55,13 @@ const Scores = () => {
       default:
         break;
     }
+
+    // Calculate the index of the selected date in the dates array
+    const dates = getDates();
+    const selectedIndex = dates.findIndex((d) => d === date);
+
+    // Update the index state
+    setIndex(selectedIndex >= 0 ? selectedIndex : 0); // Ensure index is not -1
   };
 
   const resetSelectedDate = () => {
@@ -124,6 +134,19 @@ const Scores = () => {
     }, 500); // Delay of 0.5 seconds
   }, [selectedSport]);
 
+  useEffect(() => {
+    const dates = getDates();
+    let newIndex = dates.findIndex((date) => date === moment().format('YYYYMMDD'));
+    if (newIndex < 0) {
+      newIndex = 0; // If today's date is not found, default to the first date
+    }
+    todayIndex.current = newIndex;
+  }, [selectedSport]);
+
+  useEffect(() => {
+    ref.current?.scrollToIndex({ index, animated: true, viewPosition: 0.5 });
+  }, [index]);
+
   const renderSportItem = ({ item }) => (
     <TouchableOpacity style={styles.sportButton} onPress={() => setSelectedSport(item)}>
       <Text style={[styles.sportText, selectedSport === item && styles.selectedSportText]}>
@@ -135,7 +158,9 @@ const Scores = () => {
   const renderDateItem = ({ item }) => (
     <TouchableOpacity
       style={[styles.dateButton, item === getSelectedDate() && styles.selectedDateButton]}
-      onPress={() => setSelectedDate(item)}>
+      onPress={() => setSelectedDate(item)}
+      activeOpacity={1} // Set activeOpacity to 1 to disable opacity change on press
+    >
       <Text style={[styles.dateText, item === getSelectedDate() && styles.selectedDateText]}>
         {moment(item).format('MMM D')}
       </Text>
@@ -179,14 +204,22 @@ const Scores = () => {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.sportList}
         />
-        {selectedSport !== 'PGA' && getDates().length > 0 && (
+        {selectedSport !== 'PGA' && getDates().length > 0 && todayIndex.current !== undefined && (
           <FlatList
+            ref={ref}
+            initialScrollIndex={todayIndex.current >= 0 ? todayIndex.current : 0}
             data={getDates()}
             renderItem={renderDateItem}
             keyExtractor={(item) => item}
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.dateList}
+            onScrollToIndexFailed={(info) => {
+              const wait = new Promise((resolve) => setTimeout(resolve, 500));
+              wait.then(() => {
+                ref.current?.scrollToIndex({ index: info.index, animated: true });
+              });
+            }}
           />
         )}
       </View>
@@ -265,9 +298,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  selectedDateButton: {
-    position: 'absolute',
-  },
+  selectedDateButton: {},
   dateText: {
     fontSize: 16,
     fontWeight: 'bold',
