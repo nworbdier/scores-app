@@ -352,22 +352,16 @@ const PGA = () => {
 
   return (
     <View style={{ flex: 1 }}>
-      {playersData.length > 0 ? (
-        <FlatList
-          data={playersData}
-          renderItem={renderPlayer}
-          keyExtractor={(item) => item.id.toString()}
-          contentContainerStyle={styles.listContent}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#888" />
-          }
-          ListHeaderComponent={renderHeader}
-        />
-      ) : (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <Text>No players available</Text>
-        </View>
-      )}
+      <FlatList
+        data={playersData}
+        renderItem={renderPlayer}
+        keyExtractor={(item) => item.id.toString()}
+        contentContainerStyle={styles.listContent}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#888" />
+        }
+        ListHeaderComponent={renderHeader}
+      />
       <PlayerModal
         visible={modalVisible}
         player={selectedPlayer}

@@ -1,7 +1,15 @@
 import { AntDesign, Ionicons } from '@expo/vector-icons';
 import moment from 'moment';
-import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, FlatList, SafeAreaView, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import {
+  View,
+  Text,
+  FlatList,
+  SafeAreaView,
+  TouchableOpacity,
+  StyleSheet,
+  ActivityIndicator,
+} from 'react-native';
 
 import MLB from './mlb';
 import NBA from './nba';
@@ -11,60 +19,35 @@ import WNBA from './wnba';
 
 const sportNames = ['UFC', 'PGA', 'MLB', 'NBA', 'WNBA', 'TENNIS', 'NHL', 'NFL', 'CFB', 'CBB'];
 
+const ITEM_WIDTH = 75; // Define a fixed width for date items
+
 const Scores = () => {
   const ref = useRef();
   const [index, setIndex] = useState(0);
   const [selectedSport, setSelectedSport] = useState('PGA');
-  const [ufcSelectedDate, setUfcSelectedDate] = useState(moment().format('YYYYMMDD'));
-  const [mlbSelectedDate, setMlbSelectedDate] = useState(moment().format('YYYYMMDD'));
-  const [nbaSelectedDate, setNbaSelectedDate] = useState(moment().format('YYYYMMDD'));
-  const [wnbaSelectedDate, setWnbaSelectedDate] = useState(moment().format('YYYYMMDD'));
+  const [selectedDates, setSelectedDates] = useState({
+    UFC: moment().format('YYYYMMDD'),
+    MLB: moment().format('YYYYMMDD'),
+    NBA: moment().format('YYYYMMDD'),
+    WNBA: moment().format('YYYYMMDD'),
+  });
   const [refreshing, setRefreshing] = useState(false);
   const [resetting, setResetting] = useState(false);
-  const todayIndex = useRef(0);
+  const [loading, setLoading] = useState(true);
+  const [dateListLoading, setDateListLoading] = useState(false);
 
-  const getSelectedDate = () => {
-    switch (selectedSport) {
-      case 'UFC':
-        return ufcSelectedDate;
-      case 'MLB':
-        return mlbSelectedDate;
-      case 'NBA':
-        return nbaSelectedDate;
-      case 'WNBA':
-        return wnbaSelectedDate;
-      default:
-        return moment().format('YYYYMMDD');
-    }
-  };
+  const getSelectedDate = () => selectedDates[selectedSport] || moment().format('YYYYMMDD');
 
   const setSelectedDate = (date) => {
-    switch (selectedSport) {
-      case 'UFC':
-        setUfcSelectedDate(date);
-        break;
-      case 'MLB':
-        setMlbSelectedDate(date);
-        break;
-      case 'NBA':
-        setNbaSelectedDate(date);
-        break;
-      case 'WNBA':
-        setWnbaSelectedDate(date);
-        break;
-      default:
-        break;
-    }
+    setSelectedDates((prevDates) => ({
+      ...prevDates,
+      [selectedSport]: date,
+    }));
 
-    // Calculate the index of the selected date in the dates array
     const dates = getDates();
     const selectedIndex = dates.findIndex((d) => d === date);
-
-    // Update the index state
-    const newIndex = selectedIndex >= 0 ? selectedIndex : 0; // Ensure index is not -1
-    console.log('Index before update:', index);
-    setIndex(newIndex);
-    console.log('Index after update:', newIndex);
+    console.log(`Selected index for ${selectedSport}:`, selectedIndex);
+    setIndex(selectedIndex >= 0 ? selectedIndex : 0);
   };
 
   const resetSelectedDate = () => {
@@ -72,13 +55,70 @@ const Scores = () => {
     setSelectedDate(today);
   };
 
+  // Inside your onScrollToIndexFailed function
+  const onScrollToIndexFailed = useCallback((info) => {
+    const wait = new Promise((resolve) => setTimeout(resolve, 5000));
+    wait.then(() => {
+      const offset = ITEM_WIDTH * info.index;
+      try {
+        ref.current?.scrollToOffset({ offset, animated: false });
+        // Set dateListLoading to false after a delay to wait for the animation to finish
+        setTimeout(() => {
+          setDateListLoading(false);
+        }, 500); // Adjust the delay time as needed
+      } catch (e) {
+        console.warn('Scroll to index failed:', e);
+      }
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!resetting) {
+      const newIndex = getDates().findIndex((date) => date === moment().format('YYYYMMDD'));
+      setIndex(newIndex >= 0 ? newIndex : 0);
+    }
+  }, [selectedSport, resetting, selectedDates]);
+
+  useEffect(() => {
+    setResetting(true);
+    resetSelectedDate();
+    const fetchDates = async () => {
+      if (selectedSport === 'MLB') await fetchMLBDates();
+      else if (selectedSport === 'NBA') await fetchNBADates();
+      else if (selectedSport === 'UFC') await fetchUFCDates();
+      else if (selectedSport === 'WNBA') await fetchWNBADates();
+      setResetting(false);
+    };
+    fetchDates();
+  }, [selectedSport]);
+
+  useEffect(() => {
+    const dates = getDates();
+    const newIndex = dates.findIndex((date) => date === moment().format('YYYYMMDD'));
+    setIndex(newIndex >= 0 ? newIndex : 0);
+  }, [selectedSport]);
+
+  useEffect(() => {
+    if (ref.current && !resetting) {
+      try {
+        ref.current.scrollToIndex({ index, animated: false, viewPosition: 0.5 });
+        // Set loading to false after a delay to wait for the animation to finish
+        setTimeout(() => {
+          setLoading(false);
+        }, 500); // Adjust the delay time as needed
+      } catch (e) {
+        console.warn('Scroll to index failed:', e);
+      }
+    }
+  }, [index, resetting]);
+
   const {
     renderUFCComponent,
     dates: ufcDates,
     fetchDates: fetchUFCDates,
   } = UFC({
-    selectedDate: ufcSelectedDate,
-    setSelectedDate: setUfcSelectedDate,
+    selectedDate: selectedDates.UFC,
+    setSelectedDate: (date) => setSelectedDate(date),
     refreshing,
     setRefreshing,
   });
@@ -88,8 +128,8 @@ const Scores = () => {
     dates: mlbDates,
     fetchDates: fetchMLBDates,
   } = MLB({
-    selectedDate: mlbSelectedDate,
-    setSelectedDate: setMlbSelectedDate,
+    selectedDate: selectedDates.MLB,
+    setSelectedDate: (date) => setSelectedDate(date),
     refreshing,
     setRefreshing,
   });
@@ -99,8 +139,8 @@ const Scores = () => {
     dates: nbaDates,
     fetchDates: fetchNBADates,
   } = NBA({
-    selectedDate: nbaSelectedDate,
-    setSelectedDate: setNbaSelectedDate,
+    selectedDate: selectedDates.NBA,
+    setSelectedDate: (date) => setSelectedDate(date),
     refreshing,
     setRefreshing,
   });
@@ -110,8 +150,8 @@ const Scores = () => {
     dates: wnbaDates,
     fetchDates: fetchWNBADates,
   } = WNBA({
-    selectedDate: wnbaSelectedDate,
-    setSelectedDate: setWnbaSelectedDate,
+    selectedDate: selectedDates.WNBA,
+    setSelectedDate: (date) => setSelectedDate(date),
     refreshing,
     setRefreshing,
   });
@@ -119,40 +159,6 @@ const Scores = () => {
   const renderPGAComponent = () => {
     return <PGA />;
   };
-
-  useEffect(() => {
-    const resetAndFetchDates = async () => {
-      setResetting(true);
-      resetSelectedDate(); // Reset the selected date to today's date whenever the sport changes
-      setIndex(0); // Set the index to 0 initially
-
-      if (selectedSport === 'MLB') {
-        await fetchMLBDates();
-      } else if (selectedSport === 'NBA') {
-        await fetchNBADates();
-      } else if (selectedSport === 'UFC') {
-        await fetchUFCDates();
-      } else if (selectedSport === 'WNBA') {
-        await fetchWNBADates();
-      }
-
-      // Calculate the new index for today's date
-      const dates = getDates();
-      let newIndex = dates.findIndex((date) => date === moment().format('YYYYMMDD'));
-      if (newIndex < 0) {
-        newIndex = 0; // If today's date is not found, default to the first date
-      }
-      todayIndex.current = newIndex;
-      setIndex(newIndex); // Update the index to the new today's index
-      setResetting(false);
-    };
-
-    resetAndFetchDates();
-  }, [selectedSport]);
-
-  useEffect(() => {
-    ref.current?.scrollToIndex({ index, animated: true, viewPosition: 0.5 });
-  }, [index]);
 
   const renderSportItem = ({ item }) => (
     <TouchableOpacity style={styles.sportButton} onPress={() => setSelectedSport(item)}>
@@ -162,12 +168,12 @@ const Scores = () => {
     </TouchableOpacity>
   );
 
+  // Inside your renderDateItem function
   const renderDateItem = ({ item }) => (
     <TouchableOpacity
       style={[styles.dateButton, item === getSelectedDate() && styles.selectedDateButton]}
       onPress={() => setSelectedDate(item)}
-      activeOpacity={1} // Set activeOpacity to 1 to disable opacity change on press
-    >
+      activeOpacity={1}>
       <Text style={[styles.dateText, item === getSelectedDate() && styles.selectedDateText]}>
         {moment(item).format('MMM D')}
       </Text>
@@ -211,23 +217,29 @@ const Scores = () => {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.sportList}
         />
-        {selectedSport !== 'PGA' && getDates().length > 0 && todayIndex.current !== undefined && (
-          <FlatList
-            ref={ref}
-            initialScrollIndex={todayIndex.current >= 0 ? todayIndex.current : 0}
-            data={getDates()}
-            renderItem={renderDateItem}
-            keyExtractor={(item) => item}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.dateList}
-            onScrollToIndexFailed={(info) => {
-              const wait = new Promise((resolve) => setTimeout(resolve, 500));
-              wait.then(() => {
-                ref.current?.scrollToIndex({ index: info.index, animated: true });
-              });
-            }}
-          />
+        {selectedSport !== 'PGA' && getDates().length > 0 && (
+          <>
+            {dateListLoading ? (
+              <ActivityIndicator size="large" color="white" />
+            ) : (
+              <FlatList
+                ref={ref}
+                data={getDates()} // Pass the dates data for the selected sport
+                getItemLayout={(data, index) => ({
+                  length: ITEM_WIDTH,
+                  offset: ITEM_WIDTH * index,
+                  index,
+                })}
+                initialScrollIndex={index}
+                renderItem={renderDateItem}
+                keyExtractor={(item) => item}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.dateList}
+                onScrollToIndexFailed={onScrollToIndexFailed}
+              />
+            )}
+          </>
         )}
       </View>
       <View
@@ -298,14 +310,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   dateButton: {
-    width: 75, // 10% of screen width
+    width: ITEM_WIDTH,
     height: '100%',
-    marginHorizontal: 5,
     borderRadius: 5,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  selectedDateButton: {},
   dateText: {
     fontSize: 16,
     fontWeight: 'bold',
