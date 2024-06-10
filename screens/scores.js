@@ -141,11 +141,11 @@ const Scores = () => {
       newIndex = 0; // If today's date is not found, default to the first date
     }
     todayIndex.current = newIndex;
-  }, [selectedSport]);
+  }, [selectedSport, getDates]);
 
   useEffect(() => {
     ref.current?.scrollToIndex({ index, animated: true, viewPosition: 0.5 });
-  }, [index]);
+  }, [index, ref.current]);
 
   const renderSportItem = ({ item }) => (
     <TouchableOpacity style={styles.sportButton} onPress={() => setSelectedSport(item)}>
