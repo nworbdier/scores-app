@@ -1,7 +1,17 @@
+import { useNavigation } from '@react-navigation/native';
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, Image, RefreshControl } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  Image,
+  RefreshControl,
+  TouchableOpacity,
+} from 'react-native';
 
 const MLB = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
+  const navigation = useNavigation();
   const [gameData, setGameData] = useState([]);
   const [dates, setDates] = useState([]);
 
@@ -110,44 +120,49 @@ const MLB = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
           <FlatList
             data={gameData}
             renderItem={({ item, index }) => (
-              <View key={index} style={styles.itemContainer}>
-                <View style={styles.column}>
-                  <Image source={{ uri: item.AwayLogo }} style={styles.image} />
-                  <Text style={styles.TextStyle1}>{item.AwayTeam}</Text>
-                  {item.Status !== 'STATUS_SCHEDULED' && (
-                    <Text style={styles.TextStyle1}>{item.AwayScore}</Text>
-                  )}
-                </View>
-                <View style={styles.column2}>
-                  {item.Status === 'STATUS_SCHEDULED' ? (
-                    <Text style={styles.TextStyle2}>{formatGameTime(item.GameTime)}</Text>
-                  ) : item.Status === 'STATUS_FINAL' ? (
-                    <Text style={styles.TextStyle2}>{item.StatusShortDetail}</Text>
-                  ) : (
-                    <View style={styles.gameTime}>
-                      {item.StatusShortDetail.includes('Top') && (
-                        <Text style={styles.TextStyle2}>Top {item.Quarter}</Text>
-                      )}
-                      {item.StatusShortDetail.includes('Mid') && (
-                        <Text style={styles.TextStyle2}>Mid {item.Quarter}</Text>
-                      )}
-                      {item.StatusShortDetail.includes('Bot') && (
-                        <Text style={styles.TextStyle2}>Bot {item.Quarter}</Text>
-                      )}
-                      {item.StatusShortDetail.includes('End') && (
-                        <Text style={styles.TextStyle2}>End {item.Quarter}</Text>
-                      )}
-                      <Text style={styles.TextStyle3}>{item.outsText}</Text>
-                    </View>
-                  )}
-                </View>
-                <View style={styles.column}>
-                  <Image source={{ uri: item.HomeLogo }} style={styles.image} />
-                  <Text style={styles.TextStyle1}>{item.HomeTeam}</Text>
-                  {item.Status !== 'STATUS_SCHEDULED' && (
-                    <Text style={styles.TextStyle1}>{item.HomeScore}</Text>
-                  )}
-                </View>
+              <View key={index} style={{ flex: 1 }}>
+                <TouchableOpacity
+                  style={styles.itemContainer}
+                  onPress={() => navigation.navigate('MLBDetails', { eventId: item.id })} // Pass event ID
+                >
+                  <View style={styles.column}>
+                    <Image source={{ uri: item.AwayLogo }} style={styles.image} />
+                    <Text style={styles.TextStyle1}>{item.AwayTeam}</Text>
+                    {item.Status !== 'STATUS_SCHEDULED' && (
+                      <Text style={styles.TextStyle1}>{item.AwayScore}</Text>
+                    )}
+                  </View>
+                  <View style={styles.column2}>
+                    {item.Status === 'STATUS_SCHEDULED' ? (
+                      <Text style={styles.TextStyle2}>{formatGameTime(item.GameTime)}</Text>
+                    ) : item.Status === 'STATUS_FINAL' ? (
+                      <Text style={styles.TextStyle2}>{item.StatusShortDetail}</Text>
+                    ) : (
+                      <View style={styles.gameTime}>
+                        {item.StatusShortDetail.includes('Top') && (
+                          <Text style={styles.TextStyle2}>Top {item.Quarter}</Text>
+                        )}
+                        {item.StatusShortDetail.includes('Mid') && (
+                          <Text style={styles.TextStyle2}>Mid {item.Quarter}</Text>
+                        )}
+                        {item.StatusShortDetail.includes('Bot') && (
+                          <Text style={styles.TextStyle2}>Bot {item.Quarter}</Text>
+                        )}
+                        {item.StatusShortDetail.includes('End') && (
+                          <Text style={styles.TextStyle2}>End {item.Quarter}</Text>
+                        )}
+                        <Text style={styles.TextStyle3}>{item.outsText}</Text>
+                      </View>
+                    )}
+                  </View>
+                  <View style={styles.column}>
+                    <Image source={{ uri: item.HomeLogo }} style={styles.image} />
+                    <Text style={styles.TextStyle1}>{item.HomeTeam}</Text>
+                    {item.Status !== 'STATUS_SCHEDULED' && (
+                      <Text style={styles.TextStyle1}>{item.HomeScore}</Text>
+                    )}
+                  </View>
+                </TouchableOpacity>
               </View>
             )}
             keyExtractor={(item, index) => index.toString()}
@@ -184,7 +199,7 @@ const styles = StyleSheet.create({
     borderColor: 'white',
     borderRadius: 5,
     margin: 3,
-    backgroundColor: '#141414',
+    backgroundColor: 'black',
   },
   TextStyle1: {
     fontSize: 14,
