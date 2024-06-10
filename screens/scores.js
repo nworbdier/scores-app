@@ -62,9 +62,9 @@ const Scores = () => {
 
     // Update the index state
     const newIndex = selectedIndex >= 0 ? selectedIndex : 0; // Ensure index is not -1
-    console.log('Index before update:', index); // Add this line
+    console.log('Index before update:', index);
     setIndex(newIndex);
-    console.log('Index after update:', newIndex); // Add this line
+    console.log('Index after update:', newIndex);
   };
 
   const resetSelectedDate = () => {
@@ -121,20 +121,20 @@ const Scores = () => {
   };
 
   useEffect(() => {
-    setResetting(true);
-    resetSelectedDate(); // Reset the selected date to today's date whenever the sport changes
-    setIndex(0); // Set the index to 0 initially
-    setTimeout(() => {
+    const resetAndFetchDates = async () => {
+      setResetting(true);
+      resetSelectedDate(); // Reset the selected date to today's date whenever the sport changes
+      setIndex(0); // Set the index to 0 initially
+
       if (selectedSport === 'MLB') {
-        fetchMLBDates();
+        await fetchMLBDates();
       } else if (selectedSport === 'NBA') {
-        fetchNBADates();
+        await fetchNBADates();
       } else if (selectedSport === 'UFC') {
-        fetchUFCDates();
+        await fetchUFCDates();
       } else if (selectedSport === 'WNBA') {
-        fetchWNBADates();
+        await fetchWNBADates();
       }
-      setResetting(false);
 
       // Calculate the new index for today's date
       const dates = getDates();
@@ -144,21 +144,15 @@ const Scores = () => {
       }
       todayIndex.current = newIndex;
       setIndex(newIndex); // Update the index to the new today's index
-    }, 500); // Delay of 0.5 seconds
+      setResetting(false);
+    };
+
+    resetAndFetchDates();
   }, [selectedSport]);
 
   useEffect(() => {
-    const dates = getDates();
-    let newIndex = dates.findIndex((date) => date === moment().format('YYYYMMDD'));
-    if (newIndex < 0) {
-      newIndex = 0; // If today's date is not found, default to the first date
-    }
-    todayIndex.current = newIndex;
-  }, [selectedSport, getDates]);
-
-  useEffect(() => {
     ref.current?.scrollToIndex({ index, animated: true, viewPosition: 0.5 });
-  }, [index, ref.current]);
+  }, [index]);
 
   const renderSportItem = ({ item }) => (
     <TouchableOpacity style={styles.sportButton} onPress={() => setSelectedSport(item)}>
