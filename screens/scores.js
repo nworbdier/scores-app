@@ -105,7 +105,7 @@ const Scores = () => {
         // Set loading to false after a delay to wait for the animation to finish
         setTimeout(() => {
           setLoading(false);
-        }, 500); // Adjust the delay time as needed
+        }, 5000); // Adjust the delay time as needed
       } catch (e) {
         console.warn('Scroll to index failed:', e);
       }

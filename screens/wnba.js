@@ -50,7 +50,7 @@ const WNBA = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
         `https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/scoreboard?dates=${formattedDate}`
       );
 
-      // console.log('Fetch WNBA Game Data URL:', response.url); // Logging the URL
+      console.log('Fetch WNBA Game Data URL:', response.url); // Logging the URL
 
       if (!response.ok) {
         throw new Error('Network response was not ok');

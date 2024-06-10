@@ -54,7 +54,7 @@ const UFC = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
         `https://site.api.espn.com/apis/site/v2/sports/mma/ufc/scoreboard?dates=${formattedDate}`,
         options
       );
-      // console.log('Fetch UFC Events Data URL:', response.url); // Logging the URL
+      console.log('Fetch UFC Events Data URL:', response.url); // Logging the URL
       const result = await response.json();
       setEvents(result.events || []); // Ensure events is always an array
       if (result.events && result.events.length > 0) {
@@ -103,7 +103,6 @@ const UFC = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
     const isInProgress = statusType === 'STATUS_IN_PROGRESS';
     const period = competition.status.period;
     const displayClock = competition.status.displayClock;
-    const competitionTypeText = competition.type.text; // Change 'x' to the appropriate variable containing your data
 
     const getImageSource = (competitor) => {
       const { headshot, athlete } = competitor.athlete || {};
