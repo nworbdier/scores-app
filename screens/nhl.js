@@ -31,10 +31,8 @@ const NHL = () => {
   const navigation = useNavigation();
   const [gameData, setGameData] = useState([]);
   const [dates, setDates] = useState([]);
-  const [datesFetched, setDatesFetched] = useState(false);
   const [selectedDate, setSelectedDate] = useState(moment().format('YYYYMMDD'));
   const [refreshing, setRefreshing] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [dateListLoading, setDateListLoading] = useState(false);
   const [index, setIndex] = useState(0);
   const ref = useRef();

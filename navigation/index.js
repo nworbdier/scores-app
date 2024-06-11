@@ -4,13 +4,13 @@ import { StatusBar } from 'expo-status-bar';
 import React from 'react';
 import { SafeAreaView, StyleSheet, View } from 'react-native';
 
+import SportSelector from '../components/sportselector'; // Import the MLBDetails screen
 import Scores from '../screens/home';
-import MLBDetails from '../screens/mlbdetails';
 import MLB from '../screens/mlb';
+import MLBDetails from '../screens/mlbdetails';
 import NBA from '../screens/nba';
 import NHL from '../screens/nhl';
 import PGA from '../screens/pga';
-import SportSelector from '../components/sportselector'; // Import the MLBDetails screen
 import UFC from '../screens/ufc';
 import WNBA from '../screens/wnba';
 
