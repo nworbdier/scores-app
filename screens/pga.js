@@ -1,6 +1,6 @@
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, AntDesign } from '@expo/vector-icons';
 import moment from 'moment';
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,24 +8,23 @@ import {
   SafeAreaView,
   TouchableOpacity,
   StyleSheet,
-  ActivityIndicator,
   RefreshControl,
   Modal,
   Image,
 } from 'react-native';
-import { AntDesign } from 'react-native-vector-icons';
 
 import NavBar from '../components/navbar'; // Import the NavBar component
 
 const ITEM_WIDTH = 75;
 
 const findClosestDate = (dates) => {
+  if (dates.length === 0) return null;
   const today = moment();
   return dates.reduce((closestDate, currentDate) => {
     const currentDiff = Math.abs(today.diff(moment(currentDate), 'days'));
     const closestDiff = Math.abs(today.diff(moment(closestDate), 'days'));
     return currentDiff < closestDiff ? currentDate : closestDate;
-  });
+  }, dates[0]);
 };
 
 const PGA = () => {
@@ -96,6 +95,8 @@ const PGA = () => {
         `https://site.web.api.espn.com/apis/site/v2/sports/golf/leaderboard?league=pga&event=${eventId}`
       );
 
+      console.log('Response URL:', response.url);
+
       const data = await response.json();
       setCurrentData(data); // Set current data
 
@@ -133,10 +134,15 @@ const PGA = () => {
             totalScore = competitor.statistics[0].displayValue || '-';
           }
 
+          // Add (A) if the player is an amateur
+          const playerName = competitor.amateur
+            ? `${competitor.athlete.displayName} (A)`
+            : competitor.athlete.displayName;
+
           return {
             id: competitor.athlete.id, // Assuming competitor has an id field
             pl: position,
-            name: competitor.athlete.displayName,
+            name: playerName,
             today,
             thru,
             tot: totalScore,
