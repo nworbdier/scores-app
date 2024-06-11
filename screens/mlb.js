@@ -160,7 +160,7 @@ const MLB = () => {
     </TouchableOpacity>
   );
 
-  const renderNBAComponent = () => {
+  const renderMLBComponent = () => {
     return (
       <View style={{ flex: 1 }}>
         {gameData.length > 0 ? (
@@ -226,7 +226,7 @@ const MLB = () => {
     );
   };
 
-  const renderNBADates = () => {
+  const renderMLBDates = () => {
     return (
       <FlatList
         ref={ref}
@@ -262,7 +262,7 @@ const MLB = () => {
         </View>
       </View>
       <View style={styles.headerContainer}>
-        {dateListLoading ? <ActivityIndicator size="large" color="white" /> : renderNBADates()}
+        {dateListLoading ? <ActivityIndicator size="large" color="white" /> : renderMLBDates()}
       </View>
       <View
         style={{
@@ -271,7 +271,7 @@ const MLB = () => {
           paddingHorizontal: 10,
           paddingBottom: 10,
         }}>
-        {renderNBAComponent()}
+        {renderMLBComponent()}
       </View>
       <NavBar />
     </View>

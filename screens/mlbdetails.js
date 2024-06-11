@@ -1,6 +1,8 @@
 import moment from 'moment';
 import React, { useState, useEffect } from 'react';
-import { View, Text, Image, StyleSheet } from 'react-native';
+import { View, Text, Image, StyleSheet, SafeAreaView } from 'react-native';
+
+import NavBar from '../components/navbar'; // Import the NavBar component
 
 const MLBDetails = ({ route }) => {
   const { eventId } = route.params; // Get the eventId from the navigation route parameters
@@ -35,6 +37,7 @@ const MLBDetails = ({ route }) => {
 
   return (
     <View style={styles.container}>
+      <SafeAreaView style={styles.safeAreaContainer} />
       <View style={styles.matchupContainer}>
         <View style={styles.column}>
           <View style={styles.teamContainer}>
@@ -76,6 +79,7 @@ const MLBDetails = ({ route }) => {
           </View>
         </View>
       </View>
+      <NavBar />
     </View>
   );
 };
@@ -83,14 +87,16 @@ const MLBDetails = ({ route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
+    backgroundColor: 'black',
+  },
+  safeAreaContainer: {
     backgroundColor: 'black',
   },
   matchupContainer: {
+    flex: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
   },
   column: {
     flex: 1,
@@ -122,6 +128,7 @@ const styles = StyleSheet.create({
     color: 'white',
   },
   vsContainer: {
+    alignSelf: 'center',
     alignItems: 'center',
   },
   vsText: {
