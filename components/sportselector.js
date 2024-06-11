@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons'; // Import Ionicons
 import { useNavigation } from '@react-navigation/native'; // Import useNavigation
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Modal } from 'react-native';
 
 import { useModal } from './modalcontext'; // Import your context
@@ -22,16 +22,21 @@ const sportNames = [
 const SportSelector = () => {
   const { isModalVisible, toggleModal } = useModal(); // Get the state and toggle function from context
   const navigation = useNavigation(); // Use the useNavigation hook to get the navigation object
+  const [selectedSport, setSelectedSport] = useState('MLB'); // State to keep track of the selected sport
 
   const navigateToSport = (sport) => {
-    console.log('Navigating to:', sport);
+    setSelectedSport(sport); // Set the selected sport
     navigation.navigate(sport);
     toggleModal(); // Close the modal after navigating
   };
 
   const renderSportItem = ({ item }) => (
-    <TouchableOpacity style={styles.sportButton} onPress={() => navigateToSport(item)}>
-      <Text style={styles.sportText}>{item}</Text>
+    <TouchableOpacity
+      style={[styles.sportButton, item === selectedSport]} // Apply selected style conditionally
+      onPress={() => navigateToSport(item)}>
+      <Text style={[styles.sportText, item === selectedSport && styles.selectedSportText]}>
+        {item}
+      </Text>
     </TouchableOpacity>
   );
 
@@ -46,7 +51,7 @@ const SportSelector = () => {
         <View style={styles.container}>
           <View style={styles.header}>
             <TouchableOpacity onPress={toggleModal} style={styles.closeButton}>
-              <Ionicons name="close" size={24} color="white" />
+              <Ionicons name="close" size={30} color="white" />
             </TouchableOpacity>
           </View>
           <FlatList
@@ -69,21 +74,13 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   container: {
-    width: '100%',
     height: '20%',
     backgroundColor: 'black',
-
-    justifyContent: 'flex-start',
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
     alignItems: 'center',
-  },
-  headerText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: 'white',
   },
   closeButton: {
     marginRight: 30,
@@ -107,6 +104,9 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: 'white',
     fontWeight: 'bold',
+  },
+  selectedSportText: {
+    color: '#FFDB58', // Highlight color for selected sport text
   },
 });
 
