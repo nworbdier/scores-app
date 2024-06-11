@@ -1,5 +1,9 @@
+import { Ionicons } from '@expo/vector-icons'; // Import Ionicons
+import { useNavigation } from '@react-navigation/native'; // Import useNavigation
 import React from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Modal } from 'react-native';
+
+import { useModal } from './modalcontext'; // Import your context
 
 const sportNames = [
   'UFC',
@@ -15,10 +19,14 @@ const sportNames = [
   'CBB',
 ].reverse();
 
-const SportSelector = ({ navigation }) => {
+const SportSelector = () => {
+  const { isModalVisible, toggleModal } = useModal(); // Get the state and toggle function from context
+  const navigation = useNavigation(); // Use the useNavigation hook to get the navigation object
+
   const navigateToSport = (sport) => {
     console.log('Navigating to:', sport);
     navigation.navigate(sport);
+    toggleModal(); // Close the modal after navigating
   };
 
   const renderSportItem = ({ item }) => (
@@ -28,32 +36,57 @@ const SportSelector = ({ navigation }) => {
   );
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.headerText}>Select a Sport</Text>
-      <FlatList
-        data={sportNames}
-        renderItem={renderSportItem}
-        keyExtractor={(item) => item}
-        contentContainerStyle={styles.sportList}
-      />
-    </View>
+    <Modal
+      animationType="slide"
+      transparent={true}
+      visible={isModalVisible}
+      onRequestClose={toggleModal} // Close the modal on request
+    >
+      <View style={styles.modalContainer}>
+        <View style={styles.container}>
+          <FlatList
+            data={sportNames}
+            renderItem={renderSportItem}
+            keyExtractor={(item) => item}
+            contentContainerStyle={styles.sportList}
+          />
+          <View style={styles.header}>
+            <TouchableOpacity onPress={toggleModal} style={styles.closeButton}>
+              <Ionicons name="close" size={24} color="white" />
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  modalContainer: {
     flex: 1,
-    flexDirection: 'column',
+    justifyContent: 'flex-end',
+    alignItems: 'flex-end',
+  },
+  container: {
+    width: '40%',
+    height: '100%',
     backgroundColor: 'black',
     padding: 20,
-    justifyContent: 'flex-end',
+    justifyContent: 'flex-start',
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
   },
   headerText: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 20,
     color: 'white',
-    textAlign: 'center',
+  },
+  closeButton: {
+    padding: 10,
   },
   sportList: {
     flexGrow: 1,

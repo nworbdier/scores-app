@@ -34,7 +34,7 @@ const WNBA = () => {
   const [selectedDate, setSelectedDate] = useState(moment().format('YYYYMMDD'));
   const [refreshing, setRefreshing] = useState(false);
   const [dateListLoading, setDateListLoading] = useState(false);
-  const [index, setIndex] = useState(0);
+  const [index, setIndex] = useState(5);
   const ref = useRef();
 
   const formatToYYYYMMDD = (dateString) => {

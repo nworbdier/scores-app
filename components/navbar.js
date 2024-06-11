@@ -3,8 +3,11 @@ import { useNavigation } from '@react-navigation/native';
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 
+import { useModal } from './modalcontext'; // Import your context
+
 const NavBar = () => {
   const navigation = useNavigation();
+  const { toggleModal } = useModal(); // Get the toggle function from context
 
   return (
     <View style={styles.container}>
@@ -16,10 +19,10 @@ const NavBar = () => {
         <Ionicons name="home-outline" size={24} color="white" />
         <Text style={styles.text}>Home</Text>
       </TouchableOpacity>
-
       <TouchableOpacity
         style={styles.iconContainer}
-        onPress={() => navigation.navigate('SportSelector')}>
+        onPress={toggleModal} // Use the toggle function to show the modal
+      >
         <Ionicons name="trophy-outline" size={24} color="white" />
         <Text style={styles.text}>Sports</Text>
       </TouchableOpacity>
