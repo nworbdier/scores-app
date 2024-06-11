@@ -12,19 +12,19 @@ const NavBar = () => {
   return (
     <View style={styles.container}>
       <TouchableOpacity style={styles.iconContainer} onPress={() => navigation.navigate('News')}>
-        <Ionicons name="newspaper-outline" size={24} color="white" />
-        <Text style={styles.text}>News</Text>
+        <Ionicons name="newspaper-outline" size={30} color="white" />
+        {/* <Text style={styles.text}>News</Text> */}
       </TouchableOpacity>
       <TouchableOpacity style={styles.iconContainer} onPress={() => navigation.navigate('Scores')}>
-        <Ionicons name="home-outline" size={24} color="white" />
-        <Text style={styles.text}>Home</Text>
+        <Ionicons name="home-outline" size={30} color="white" />
+        {/* <Text style={styles.text}>Home</Text> */}
       </TouchableOpacity>
       <TouchableOpacity
         style={styles.iconContainer}
         onPress={toggleModal} // Use the toggle function to show the modal
       >
-        <Ionicons name="trophy-outline" size={24} color="white" />
-        <Text style={styles.text}>Sports</Text>
+        <Ionicons name="trophy-outline" size={30} color="white" />
+        {/* <Text style={styles.text}>Sports</Text> */}
       </TouchableOpacity>
     </View>
   );
