@@ -17,7 +17,7 @@ const sportNames = [
   'NFL',
   'CFB',
   'CBB',
-].reverse();
+];
 
 const SportSelector = () => {
   const { isModalVisible, toggleModal } = useModal(); // Get the state and toggle function from context
@@ -44,17 +44,18 @@ const SportSelector = () => {
     >
       <View style={styles.modalContainer}>
         <View style={styles.container}>
-          <FlatList
-            data={sportNames}
-            renderItem={renderSportItem}
-            keyExtractor={(item) => item}
-            contentContainerStyle={styles.sportList}
-          />
           <View style={styles.header}>
             <TouchableOpacity onPress={toggleModal} style={styles.closeButton}>
               <Ionicons name="close" size={24} color="white" />
             </TouchableOpacity>
           </View>
+          <FlatList
+            data={sportNames}
+            renderItem={renderSportItem}
+            keyExtractor={(item) => item}
+            contentContainerStyle={styles.sportList}
+            horizontal
+          />
         </View>
       </View>
     </Modal>
@@ -68,17 +69,16 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   container: {
-    width: '40%',
-    height: '100%',
+    width: '100%',
+    height: '20%',
     backgroundColor: 'black',
-    padding: 20,
+
     justifyContent: 'flex-start',
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
     alignItems: 'center',
-    marginBottom: 20,
   },
   headerText: {
     fontSize: 24,
@@ -86,7 +86,8 @@ const styles = StyleSheet.create({
     color: 'white',
   },
   closeButton: {
-    padding: 10,
+    marginRight: 30,
+    marginTop: 30,
   },
   sportList: {
     flexGrow: 1,
@@ -100,13 +101,12 @@ const styles = StyleSheet.create({
     borderColor: 'black',
     borderRadius: 5,
     marginVertical: 5,
-    width: '100%',
     alignItems: 'center',
-    backgroundColor: '#333',
   },
   sportText: {
     fontSize: 18,
     color: 'white',
+    fontWeight: 'bold',
   },
 });
 

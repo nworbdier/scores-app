@@ -1,6 +1,6 @@
 import { AntDesign, Ionicons } from '@expo/vector-icons';
 import moment from 'moment';
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import {
   StyleSheet,
   View,
@@ -37,6 +37,7 @@ const UFC = () => {
   const [events, setEvents] = useState([]);
   const [eventDetails, setEventDetails] = useState(null);
   const [dates, setDates] = useState([]);
+  const [datesFetched, setDatesFetched] = useState(false);
   const [index, setIndex] = useState(0);
   const [dateListLoading, setDateListLoading] = useState(true);
 
@@ -55,6 +56,7 @@ const UFC = () => {
       const closestDate = findClosestDate(dates);
       const newIndex = dates.findIndex((date) => date === closestDate);
       setDates(dates);
+      setDatesFetched(true); // Set the flag to true
       setIndex(newIndex);
       setSelectedDate(closestDate);
       setDateListLoading(false);
@@ -116,37 +118,34 @@ const UFC = () => {
     }
   }, [selectedDate]);
 
-  useEffect(() => {
-    if (ref.current && dates.length > 0 && !dateListLoading) {
-      const selectedIndex = dates.findIndex((d) => d === selectedDate);
-      setIndex(selectedIndex >= 0 ? selectedIndex : 0);
-      try {
-        ref.current.scrollToIndex({ index: selectedIndex, animated: true, viewPosition: 0.5 });
-      } catch (e) {
-        console.warn('Scroll to index failed:', e);
-      }
-    }
-  }, [dates, selectedDate, dateListLoading]);
-
   const onRefresh = async () => {
     setRefreshing(true);
     await fetchEvents(selectedDate);
     setRefreshing(false);
   };
 
-  const onScrollToIndexFailed = async (info) => {
-    const wait = new Promise((resolve) => setTimeout(resolve, 5000));
-    await wait;
-    const offset = ITEM_WIDTH * info.index;
-    try {
-      ref.current?.scrollToOffset({ offset, animated: true });
-      setTimeout(() => {
-        setDateListLoading(false);
-      }, 500);
-    } catch (e) {
-      console.warn('Scroll to index failed:', e);
+  useEffect(() => {
+    if (ref.current && datesFetched) {
+      // Check if dates have been fetched
+      const wait = new Promise((resolve) => setTimeout(resolve, 1000));
+      wait.then(() => {
+        ref.current.scrollToIndex({ index, animated: true, viewPosition: 0.5 });
+      });
     }
-  };
+  }, [index, ref, datesFetched]);
+
+  const onScrollToIndexFailed = useCallback((info) => {
+    const wait = new Promise((resolve) => setTimeout(resolve, 1000));
+    wait.then(() => {
+      const offset = ITEM_WIDTH * info.index;
+      try {
+        ref.current?.scrollToOffset({ offset, animated: true, viewPosition: 0.5 });
+        setDateListLoading(false);
+      } catch (e) {
+        console.warn('Scroll to index failed:', e);
+      }
+    });
+  }, []);
 
   const renderCompetitionItem = (competition, cardKey) => {
     const statusType = competition.status.type.name;
