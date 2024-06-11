@@ -26,7 +26,7 @@ export default function RootStack() {
       <ModalProvider>
         <NavigationContainer>
           <View style={styles.container}>
-            <Stack.Navigator initialRouteName="Scores">
+            <Stack.Navigator initialRouteName="MLB">
               <Stack.Screen name="Scores" component={Scores} options={{ headerShown: false }} />
               <Stack.Screen name="MLB" component={MLB} options={{ headerShown: false }} />
               <Stack.Screen
