@@ -38,7 +38,7 @@ const SportSelector = () => {
   return (
     <Modal
       animationType="slide"
-      transparent={true}
+      transparent
       visible={isModalVisible}
       onRequestClose={toggleModal} // Close the modal on request
     >

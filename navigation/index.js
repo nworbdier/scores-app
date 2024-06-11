@@ -5,7 +5,6 @@ import React from 'react';
 import { SafeAreaView, StyleSheet, View } from 'react-native';
 
 import { ModalProvider } from '../components/modalcontext'; // Adjusted path
-import NavBar from '../components/navbar'; // Import the NavBar
 import SportSelector from '../components/sportselector'; // Import the SportSelector modal
 import Scores from '../screens/home';
 import MLB from '../screens/mlb';
@@ -21,10 +20,10 @@ const Stack = createStackNavigator();
 
 export default function RootStack() {
   return (
-    <ModalProvider>
-      <View style={styles.app}>
-        <StatusBar style="light" />
-        <SafeAreaView style={styles.safeArea} />
+    <View style={styles.app}>
+      <StatusBar style="light" />
+      <SafeAreaView style={styles.safeArea} />
+      <ModalProvider>
         <NavigationContainer>
           <View style={styles.container}>
             <Stack.Navigator initialRouteName="Scores">
@@ -45,8 +44,8 @@ export default function RootStack() {
             <SportSelector />
           </View>
         </NavigationContainer>
-      </View>
-    </ModalProvider>
+      </ModalProvider>
+    </View>
   );
 }
 
