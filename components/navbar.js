@@ -36,8 +36,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     alignItems: 'center',
     backgroundColor: '#141414',
-    paddingTop: 10,
-    paddingBottom: 25,
+    paddingTop: 15,
+    paddingBottom: 45,
   },
   iconContainer: {
     alignItems: 'center',

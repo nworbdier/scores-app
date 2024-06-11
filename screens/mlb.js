@@ -87,9 +87,11 @@ const MLB = () => {
           HomeTeam: event.competitions[0].competitors[0].team.abbreviation,
           HomeLogo: event.competitions[0].competitors[0].team.logo,
           HomeScore: event.competitions[0].competitors[0].score,
+          HomeTeamRecordSummary: event.competitions[0].competitors[0].records[0].summary,
           AwayTeam: event.competitions[0].competitors[1].team.abbreviation,
           AwayLogo: event.competitions[0].competitors[1].team.logo,
           AwayScore: event.competitions[0].competitors[1].score,
+          AwayTeamRecordSummary: event.competitions[0].competitors[1].records[0].summary,
           GameTime: event.competitions[0].date,
           Status: event.competitions[0].status.type.name,
           StatusShortDetail: event.competitions[0].status.type.shortDetail,
@@ -174,7 +176,9 @@ const MLB = () => {
                   <View style={styles.column}>
                     <Image source={{ uri: item.AwayLogo }} style={styles.image} />
                     <Text style={styles.TextStyle1}>{item.AwayTeam}</Text>
-                    {item.Status !== 'STATUS_SCHEDULED' && (
+                    {item.Status === 'STATUS_SCHEDULED' ? (
+                      <Text style={styles.TextStyle1}>{item.AwayTeamRecordSummary}</Text>
+                    ) : (
                       <Text style={styles.TextStyle1}>{item.AwayScore}</Text>
                     )}
                   </View>
@@ -203,7 +207,9 @@ const MLB = () => {
                   <View style={styles.column}>
                     <Image source={{ uri: item.HomeLogo }} style={styles.image} />
                     <Text style={styles.TextStyle1}>{item.HomeTeam}</Text>
-                    {item.Status !== 'STATUS_SCHEDULED' && (
+                    {item.Status === 'STATUS_SCHEDULED' ? (
+                      <Text style={styles.TextStyle1}>{item.HomeTeamRecordSummary}</Text>
+                    ) : (
                       <Text style={styles.TextStyle1}>{item.HomeScore}</Text>
                     )}
                   </View>

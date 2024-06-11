@@ -1,6 +1,6 @@
 import { Ionicons, AntDesign } from '@expo/vector-icons';
 import moment from 'moment';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -43,6 +43,10 @@ const PGA = () => {
 
   const [dates, setDates] = useState([]);
   const [selectedDate, setSelectedDate] = useState(currentDate);
+
+  const [closestDateIndex, setClosestDateIndex] = useState(0); // Initialize with 0
+
+  const flatListRef = useRef();
 
   const formatToYYYYMMDD = (dateString) => {
     const date = new Date(dateString);
@@ -185,6 +189,23 @@ const PGA = () => {
     }
   };
 
+  useEffect(() => {
+    const index = dates.indexOf(selectedDate);
+    setClosestDateIndex(index);
+  }, [dates, selectedDate]);
+
+  const onScrollToIndexFailed = useCallback((info) => {
+    const wait = new Promise((resolve) => setTimeout(resolve, 500));
+    wait.then(() => {
+      const offset = ITEM_WIDTH * info.index;
+      try {
+        flatListRef.current?.scrollToOffset({ offset, animated: true });
+      } catch (e) {
+        console.warn('Scroll to index failed:', e);
+      }
+    });
+  }, []);
+
   const renderPlayer = ({ item }) => (
     <TouchableOpacity
       style={styles.playerRow}
@@ -241,17 +262,28 @@ const PGA = () => {
           selectedTournament={currentEventId}
           onClose={() => setTournamentModalVisible(false)}
           onSelect={handleTournamentChange}
+          initialScrollIndex={closestDateIndex}
+          flatListRef={flatListRef} // Pass the reference to the FlatList
         />
       </View>
     );
   };
 
-  const TournamentModal = ({ visible, tournaments, selectedTournament, onClose, onSelect }) => {
+  const TournamentModal = ({
+    visible,
+    tournaments,
+    selectedTournament,
+    onClose,
+    onSelect,
+    initialScrollIndex,
+    flatListRef,
+  }) => {
     return (
       <Modal transparent animationType="fade" visible={visible} onRequestClose={onClose}>
         <View style={styles.modalOverlay2}>
           <View style={styles.modalContent2}>
             <FlatList
+              ref={flatListRef}
               data={tournaments}
               renderItem={({ item }) => (
                 <TouchableOpacity
@@ -266,6 +298,8 @@ const PGA = () => {
               keyExtractor={(item) => item.id.toString()}
               contentContainerStyle={styles.tournamentList}
               showsVerticalScrollIndicator={false}
+              initialScrollIndex={initialScrollIndex}
+              onScrollToIndexFailed={onScrollToIndexFailed}
             />
             <TouchableOpacity style={styles.closeButton} onPress={onClose}>
               <Text style={styles.closeButtonText}>Close</Text>
