@@ -8,6 +8,7 @@ const sportNames = [
   'NBA',
   'WNBA',
   'NHL',
+  'PFL',
   'TENNIS',
   'NFL',
   'CFB',
