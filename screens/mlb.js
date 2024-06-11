@@ -153,7 +153,7 @@ const MLB = () => {
 
   const renderDateItem = ({ item }) => (
     <TouchableOpacity
-      style={[styles.dateButton, item === selectedDate && styles.selectedDateButton]}
+      style={[styles.dateButton, item === selectedDate]}
       onPress={() => setSelectedDate(item)}
       activeOpacity={1}>
       <Text style={[styles.dateText, item === selectedDate && styles.selectedDateText]}>
@@ -275,7 +275,6 @@ const MLB = () => {
           flex: 1,
           backgroundColor: 'black',
           paddingHorizontal: 10,
-          paddingBottom: 10,
         }}>
         {renderMLBComponent()}
       </View>

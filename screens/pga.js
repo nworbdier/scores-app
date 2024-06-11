@@ -121,7 +121,10 @@ const PGA = () => {
             thru = 'CUT';
           } else {
             if (competitor.status.type.name === 'STATUS_SCHEDULED') {
-              thru = moment(competitor.status.teeTime).format('h:mm A');
+              thru =
+                competitor.status.startHole === 10
+                  ? `${moment(competitor.status.teeTime).format('h:mm A')}*`
+                  : moment(competitor.status.teeTime).format('h:mm A');
             } else {
               if (competitor.linescores && competitor.linescores.length > 0) {
                 const lineScoreIndex = period - 1;
@@ -401,6 +404,14 @@ const PGA = () => {
               <View style={styles.scoreRow}>
                 {[...Array(9).keys()].map((i) => (
                   <Text key={i} style={styles.scoreCell}>
+                    -
+                  </Text>
+                ))}
+                <Text style={styles.scoreCell}>27</Text>
+              </View>
+              <View style={styles.scoreRow}>
+                {[...Array(9).keys()].map((i) => (
+                  <Text key={i} style={styles.scoreCell}>
                     {lineScores[selectedRound] ? lineScores[selectedRound][i] : ''}
                   </Text>
                 ))}
@@ -413,6 +424,14 @@ const PGA = () => {
                   </Text>
                 ))}
                 <Text style={[styles.scoreCell, styles.headerCell]}>In</Text>
+              </View>
+              <View style={styles.scoreRow}>
+                {[...Array(9).keys()].map((i) => (
+                  <Text key={i} style={styles.scoreCell}>
+                    -
+                  </Text>
+                ))}
+                <Text style={styles.scoreCell}>27</Text>
               </View>
               <View style={styles.scoreRow}>
                 {[...Array(9).keys()].map((i) => (

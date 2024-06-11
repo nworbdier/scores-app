@@ -293,7 +293,6 @@ const WNBA = () => {
           flex: 1,
           backgroundColor: 'black',
           paddingHorizontal: 10,
-          paddingBottom: 10,
         }}>
         {renderNBAComponent()}
       </View>
