@@ -1,16 +1,32 @@
-import { Ionicons } from '@expo/vector-icons'; // Assuming you are using expo
+import { Ionicons } from '@expo/vector-icons';
 import moment from 'moment';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
-  Image,
   FlatList,
+  SafeAreaView,
+  TouchableOpacity,
   StyleSheet,
+  ActivityIndicator,
   RefreshControl,
   Modal,
-  TouchableOpacity,
+  Image,
 } from 'react-native';
+import { AntDesign } from 'react-native-vector-icons';
+
+import NavBar from '../components/navbar'; // Import the NavBar component
+
+const ITEM_WIDTH = 75;
+
+const findClosestDate = (dates) => {
+  const today = moment();
+  return dates.reduce((closestDate, currentDate) => {
+    const currentDiff = Math.abs(today.diff(moment(currentDate), 'days'));
+    const closestDiff = Math.abs(today.diff(moment(closestDate), 'days'));
+    return currentDiff < closestDiff ? currentDate : closestDate;
+  });
+};
 
 const PGA = () => {
   const [playersData, setPlayersData] = useState([]);
@@ -26,21 +42,45 @@ const PGA = () => {
   const [availableTournaments, setAvailableTournaments] = useState([]);
   const [tournamentModalVisible, setTournamentModalVisible] = useState(false);
 
+  const [dates, setDates] = useState([]);
+  const [selectedDate, setSelectedDate] = useState(currentDate);
+
+  const formatToYYYYMMDD = (dateString) => {
+    const date = new Date(dateString);
+    const year = date.getFullYear();
+    let month = date.getMonth() + 1;
+    let day = date.getDate();
+
+    if (month < 10) {
+      month = `0${month}`;
+    }
+    if (day < 10) {
+      day = `0${day}`;
+    }
+
+    return `${year}${month}${day}`;
+  };
+
   const fetchTournamentCalendar = async () => {
     try {
       const response = await fetch(
-        `https://site.api.espn.com/apis/site/v2/sports/golf/pga/scoreboard?dates=${currentDate}`
+        `https://site.api.espn.com/apis/site/v2/sports/golf/pga/scoreboard`
       );
       const data = await response.json();
       const calendar = data.leagues[0].calendar;
       setAvailableTournaments(calendar);
       setCurrentData(data); // Set current data
 
+      const dates = calendar.map((item) => formatToYYYYMMDD(item.date));
+      setDates(dates);
+
+      const closestDate = findClosestDate(dates);
+      setSelectedDate(closestDate);
+
       // Always use the first event for the current date
       const firstEvent = data.events[0];
       if (firstEvent) {
         setCurrentEventId(firstEvent.id);
-        setTournamentName(firstEvent.name);
         return firstEvent.id;
       } else {
         console.error('No events found for the current date.');
@@ -56,12 +96,11 @@ const PGA = () => {
         `https://site.web.api.espn.com/apis/site/v2/sports/golf/leaderboard?league=pga&event=${eventId}`
       );
 
-      // console.log('URL:', response.url);
       const data = await response.json();
       setCurrentData(data); // Set current data
 
       const eventDetails = data.events[0];
-      setTournamentName(eventDetails.tournament.displayName);
+      setTournamentName(eventDetails.tournament.displayName); // Set tournament name
 
       const players = data.events[0].competitions[0].competitors
         .sort((a, b) => a.sortOrder - b.sortOrder)
@@ -138,6 +177,67 @@ const PGA = () => {
       await fetchPGAData(selectedTournament.id);
       setTournamentModalVisible(false); // Close the modal after selection
     }
+  };
+
+  const renderPlayer = ({ item }) => (
+    <TouchableOpacity
+      style={styles.playerRow}
+      onPress={() => {
+        setSelectedPlayer(item);
+        setModalVisible(true);
+      }}>
+      <View style={styles.leftContainer}>
+        <Text style={styles.playerPosition}>{item.pl}</Text>
+        {item.headshot ? <Image source={{ uri: item.headshot }} style={styles.headshot} /> : null}
+        <Text style={styles.playerName}>{item.name}</Text>
+      </View>
+      <View style={styles.rightContainer}>
+        <Text style={styles.playerToday}>{item.today}</Text>
+        <Text style={styles.playerThru}>{item.thru}</Text>
+        <Text style={styles.playerTotal}>{item.tot}</Text>
+      </View>
+    </TouchableOpacity>
+  );
+
+  const renderHeader = () => {
+    const competition = currentData ? currentData.events[0].competitions[0] : null;
+    let roundNumber = competition ? competition.status.period : '';
+    const statusType = competition ? competition.status.type.name : '';
+
+    if (statusType === 'STATUS_PLAY_COMPLETE') {
+      roundNumber += 1;
+    }
+
+    const headerText = roundNumber ? `R${roundNumber}` : 'Today';
+
+    return (
+      <View style={{ flex: 1 }}>
+        <TouchableOpacity onPress={() => setTournamentModalVisible(true)}>
+          <View style={styles.tournamentDropdown}>
+            <Text style={styles.tournamentName}>{tournamentName}</Text>
+            <Ionicons name="caret-down" size={15} color="white" marginLeft={5} />
+          </View>
+        </TouchableOpacity>
+        <View style={styles.playerRow2}>
+          <View style={styles.leftContainer}>
+            <Text style={styles.headerPlayerPosition}>POS</Text>
+            <Text style={styles.headerPlayerName}>PLAYER</Text>
+          </View>
+          <View style={styles.rightContainer}>
+            <Text style={styles.headerPlayerToday}>{headerText}</Text>
+            <Text style={styles.headerPlayerThru}>THRU</Text>
+            <Text style={styles.headerPlayerTotal}>TOT</Text>
+          </View>
+        </View>
+        <TournamentModal
+          visible={tournamentModalVisible}
+          tournaments={availableTournaments}
+          selectedTournament={currentEventId}
+          onClose={() => setTournamentModalVisible(false)}
+          onSelect={handleTournamentChange}
+        />
+      </View>
+    );
   };
 
   const TournamentModal = ({ visible, tournaments, selectedTournament, onClose, onSelect }) => {
@@ -289,106 +389,81 @@ const PGA = () => {
     );
   };
 
-  const renderPlayer = ({ item }) => (
-    <TouchableOpacity
-      style={styles.playerRow}
-      onPress={() => {
-        setSelectedPlayer(item);
-        setModalVisible(true);
-      }}>
-      <View style={styles.leftContainer}>
-        <Text style={styles.playerPosition}>{item.pl}</Text>
-        {item.headshot ? <Image source={{ uri: item.headshot }} style={styles.headshot} /> : null}
-        <Text style={styles.playerName}>{item.name}</Text>
-      </View>
-      <View style={styles.rightContainer}>
-        <Text style={styles.playerToday}>{item.today}</Text>
-        <Text style={styles.playerThru}>{item.thru}</Text>
-        <Text style={styles.playerTotal}>{item.tot}</Text>
-      </View>
-    </TouchableOpacity>
-  );
-
-  const renderHeader = () => {
-    const competition = currentData ? currentData.events[0].competitions[0] : null;
-    let roundNumber = competition ? competition.status.period : '';
-    const statusType = competition ? competition.status.type.name : '';
-
-    if (statusType === 'STATUS_PLAY_COMPLETE') {
-      roundNumber += 1;
-    }
-
-    const headerText = roundNumber ? `R${roundNumber}` : 'Today';
-
-    return (
-      <View style={{ flex: 1 }}>
-        <TouchableOpacity onPress={() => setTournamentModalVisible(true)}>
-          <View style={styles.tournamentDropdown}>
-            <Text style={styles.tournamentName}>{tournamentName}</Text>
-            <Ionicons name="caret-down" size={15} color="white" marginLeft={5} />
-          </View>
-        </TouchableOpacity>
-        <View style={styles.playerRow2}>
-          <View style={styles.leftContainer}>
-            <Text style={styles.headerPlayerPosition}>POS</Text>
-            <Text style={styles.headerPlayerName}>PLAYER</Text>
-          </View>
-          <View style={styles.rightContainer}>
-            <Text style={styles.headerPlayerToday}>{headerText}</Text>
-            <Text style={styles.headerPlayerThru}>THRU</Text>
-            <Text style={styles.headerPlayerTotal}>TOT</Text>
-          </View>
+  return (
+    <View style={styles.container}>
+      <SafeAreaView style={styles.safeAreaContainer} />
+      <View style={styles.header}>
+        <Text style={styles.headerText}>PGA</Text>
+        <View style={styles.headerIcons}>
+          <TouchableOpacity>
+            <Ionicons name="settings-outline" size={25} color="white" marginRight={10} />
+          </TouchableOpacity>
+          <TouchableOpacity>
+            <AntDesign name="search1" size={25} color="white" />
+          </TouchableOpacity>
         </View>
-        <TournamentModal
-          visible={tournamentModalVisible}
-          tournaments={availableTournaments}
-          selectedTournament={currentEventId}
-          onClose={() => setTournamentModalVisible(false)}
-          onSelect={handleTournamentChange}
+      </View>
+      <View style={{ flex: 1, backgroundColor: 'black', paddingHorizontal: 10, paddingBottom: 10 }}>
+        <FlatList
+          data={playersData}
+          renderItem={renderPlayer}
+          keyExtractor={(item) => item.id.toString()}
+          contentContainerStyle={styles.listContent}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#888" />
+          }
+          ListHeaderComponent={renderHeader}
+        />
+        <PlayerModal
+          visible={modalVisible}
+          player={selectedPlayer}
+          onClose={() => setModalVisible(false)}
+          statusPeriod={selectedPlayer?.statusPeriod}
         />
       </View>
-    );
-  };
-
-  return (
-    <View style={{ flex: 1 }}>
-      <FlatList
-        data={playersData}
-        renderItem={renderPlayer}
-        keyExtractor={(item) => item.id.toString()}
-        contentContainerStyle={styles.listContent}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#888" />
-        }
-        ListHeaderComponent={renderHeader}
-      />
-      <PlayerModal
-        visible={modalVisible}
-        player={selectedPlayer}
-        onClose={() => setModalVisible(false)}
-        statusPeriod={selectedPlayer?.statusPeriod}
-      />
+      <NavBar />
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  tournamentDropdown: {
-    marginVertical: 10,
-    marginHorizontal: 10,
-    borderRadius: 5, // Add a border radius for a better look
-    flexDirection: 'row',
-    alignContent: 'center',
+  container: {
+    flex: 1,
+    backgroundColor: 'black',
   },
-  pickerStyle: {
-    color: 'black', // Set the text color to black
+  safeAreaContainer: {
+    backgroundColor: 'black',
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginVertical: 10,
+  },
+  headerText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 24,
+    marginLeft: 10,
+  },
+  headerIcons: {
+    flexDirection: 'row',
+    justifyContent: 'space-evenly',
+    alignItems: 'center',
+    marginRight: 10,
+  },
+  headerContainer: {
+    height: 70,
+  },
+  tournamentDropdown: {
+    flexDirection: 'row',
+    marginVertical: 15,
   },
   tournamentName: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: 22,
     color: 'white',
-    textAlign: 'left',
+    fontWeight: 'bold',
   },
+
   playerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -557,6 +632,9 @@ const styles = StyleSheet.create({
     width: 30,
     textAlign: 'center',
     color: 'black',
+  },
+  headerCell: {
+    fontWeight: 'bold',
   },
   tournamentList: {
     alignItems: 'center',

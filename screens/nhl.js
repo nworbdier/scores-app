@@ -27,7 +27,7 @@ const findClosestDate = (dates) => {
   });
 };
 
-const WNBA = () => {
+const NHL = () => {
   const navigation = useNavigation();
   const [gameData, setGameData] = useState([]);
   const [dates, setDates] = useState([]);
@@ -58,7 +58,7 @@ const WNBA = () => {
   const fetchDates = async () => {
     try {
       const response = await fetch(
-        `https://sports.core.api.espn.com/v2/sports/basketball/leagues/wnba/calendar/whitelist`
+        `https://sports.core.api.espn.com/v2/sports/hockey/leagues/nhl/calendar/whitelist`
       );
       const data = await response.json();
       const dates = data.eventDate.dates.map((date) => formatToYYYYMMDD(date));
@@ -86,7 +86,7 @@ const WNBA = () => {
       }
 
       const response = await fetch(
-        `https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/scoreboard?dates=${formattedDate}`
+        `https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/scoreboard?dates=${formattedDate}`
       );
 
       if (!response.ok) {
@@ -277,7 +277,7 @@ const WNBA = () => {
     <View style={styles.container}>
       <SafeAreaView style={styles.safeAreaContainer} />
       <View style={styles.header}>
-        <Text style={styles.headerText}>WNBA</Text>
+        <Text style={styles.headerText}>NHL</Text>
         <View style={styles.headerIcons}>
           <TouchableOpacity>
             <Ionicons name="settings-outline" size={25} color="white" marginRight={10} />
@@ -413,4 +413,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default WNBA;
+export default NHL;

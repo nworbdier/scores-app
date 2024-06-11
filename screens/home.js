@@ -1,6 +1,6 @@
 import { AntDesign, Ionicons } from '@expo/vector-icons';
 import moment from 'moment';
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -11,26 +11,17 @@ import {
   ActivityIndicator,
 } from 'react-native';
 
-import MLB from './mlb';
-import NBA from './nba';
-import PGA from './pga';
-import UFC from './ufc';
-import WNBA from './wnba';
+import NavBar from '../components/navbar';
 
-const sportNames = ['UFC', 'PGA', 'MLB', 'NBA', 'WNBA', 'TENNIS', 'NHL', 'NFL', 'CFB', 'CBB'];
+const sportNames = ['TENNIS', 'NFL', 'CFB', 'CBB'];
 
-const ITEM_WIDTH = 75; // Define a fixed width for date items
+const ITEM_WIDTH = 75;
 
 const Scores = () => {
   const ref = useRef();
   const [index, setIndex] = useState(0);
-  const [selectedSport, setSelectedSport] = useState('PGA');
-  const [selectedDates, setSelectedDates] = useState({
-    UFC: moment().format('YYYYMMDD'),
-    MLB: moment().format('YYYYMMDD'),
-    NBA: moment().format('YYYYMMDD'),
-    WNBA: moment().format('YYYYMMDD'),
-  });
+  const [selectedSport, setSelectedSport] = useState('TENNIS');
+  const [selectedDates, setSelectedDates] = useState({});
   const [refreshing, setRefreshing] = useState(false);
   const [resetting, setResetting] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -46,7 +37,6 @@ const Scores = () => {
 
     const dates = getDates();
     const selectedIndex = dates.findIndex((d) => d === date);
-    console.log(`Selected index for ${selectedSport}:`, selectedIndex);
     setIndex(selectedIndex >= 0 ? selectedIndex : 0);
   };
 
@@ -55,22 +45,19 @@ const Scores = () => {
     setSelectedDate(today);
   };
 
-  // Inside your onScrollToIndexFailed function
-  const onScrollToIndexFailed = useCallback((info) => {
+  const onScrollToIndexFailed = async (info) => {
     const wait = new Promise((resolve) => setTimeout(resolve, 5000));
-    wait.then(() => {
-      const offset = ITEM_WIDTH * info.index;
-      try {
-        ref.current?.scrollToOffset({ offset, animated: false });
-        // Set dateListLoading to false after a delay to wait for the animation to finish
-        setTimeout(() => {
-          setDateListLoading(false);
-        }, 500); // Adjust the delay time as needed
-      } catch (e) {
-        console.warn('Scroll to index failed:', e);
-      }
-    });
-  }, []);
+    await wait;
+    const offset = ITEM_WIDTH * info.index;
+    try {
+      ref.current?.scrollToOffset({ offset, animated: true });
+      setTimeout(() => {
+        setDateListLoading(false);
+      }, 500);
+    } catch (e) {
+      console.warn('Scroll to index failed:', e);
+    }
+  };
 
   useEffect(() => {
     if (!resetting) {
@@ -83,10 +70,6 @@ const Scores = () => {
     setResetting(true);
     resetSelectedDate();
     const fetchDates = async () => {
-      if (selectedSport === 'MLB') await fetchMLBDates();
-      else if (selectedSport === 'NBA') await fetchNBADates();
-      else if (selectedSport === 'UFC') await fetchUFCDates();
-      else if (selectedSport === 'WNBA') await fetchWNBADates();
       setResetting(false);
     };
     fetchDates();
@@ -101,64 +84,15 @@ const Scores = () => {
   useEffect(() => {
     if (ref.current && !resetting) {
       try {
-        ref.current.scrollToIndex({ index, animated: false, viewPosition: 0.5 });
-        // Set loading to false after a delay to wait for the animation to finish
+        ref.current.scrollToIndex({ index, animated: true, viewPosition: 0.5 });
         setTimeout(() => {
           setLoading(false);
-        }, 5000); // Adjust the delay time as needed
+        }, 5000);
       } catch (e) {
         console.warn('Scroll to index failed:', e);
       }
     }
   }, [index, resetting]);
-
-  const {
-    renderUFCComponent,
-    dates: ufcDates,
-    fetchDates: fetchUFCDates,
-  } = UFC({
-    selectedDate: selectedDates.UFC,
-    setSelectedDate: (date) => setSelectedDate(date),
-    refreshing,
-    setRefreshing,
-  });
-
-  const {
-    renderMLBComponent,
-    dates: mlbDates,
-    fetchDates: fetchMLBDates,
-  } = MLB({
-    selectedDate: selectedDates.MLB,
-    setSelectedDate: (date) => setSelectedDate(date),
-    refreshing,
-    setRefreshing,
-  });
-
-  const {
-    renderNBAComponent,
-    dates: nbaDates,
-    fetchDates: fetchNBADates,
-  } = NBA({
-    selectedDate: selectedDates.NBA,
-    setSelectedDate: (date) => setSelectedDate(date),
-    refreshing,
-    setRefreshing,
-  });
-
-  const {
-    renderWNBAComponent,
-    dates: wnbaDates,
-    fetchDates: fetchWNBADates,
-  } = WNBA({
-    selectedDate: selectedDates.WNBA,
-    setSelectedDate: (date) => setSelectedDate(date),
-    refreshing,
-    setRefreshing,
-  });
-
-  const renderPGAComponent = () => {
-    return <PGA />;
-  };
 
   const renderSportItem = ({ item }) => (
     <TouchableOpacity style={styles.sportButton} onPress={() => setSelectedSport(item)}>
@@ -168,7 +102,6 @@ const Scores = () => {
     </TouchableOpacity>
   );
 
-  // Inside your renderDateItem function
   const renderDateItem = ({ item }) => (
     <TouchableOpacity
       style={[styles.dateButton, item === getSelectedDate() && styles.selectedDateButton]}
@@ -182,26 +115,19 @@ const Scores = () => {
 
   const getDates = () => {
     switch (selectedSport) {
-      case 'UFC':
-        return ufcDates;
-      case 'MLB':
-        return mlbDates;
-      case 'NBA':
-        return nbaDates;
-      case 'WNBA':
-        return wnbaDates;
       default:
         return [];
     }
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
+      <SafeAreaView style={styles.safeAreaContainer} />
       <View style={styles.header}>
         <Text style={styles.headerText}>Scores</Text>
         <View style={styles.headerIcons}>
           <TouchableOpacity>
-            <Ionicons name="settings-outline" size={25} color="white" marginRight={10} />
+            <Ionicons name="settings-outline" size={25} color="white" />
           </TouchableOpacity>
           <TouchableOpacity>
             <AntDesign name="search1" size={25} color="white" />
@@ -217,14 +143,14 @@ const Scores = () => {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.sportList}
         />
-        {selectedSport !== 'PGA' && getDates().length > 0 && (
+        {getDates().length > 0 && (
           <>
             {dateListLoading ? (
               <ActivityIndicator size="large" color="white" />
             ) : (
               <FlatList
                 ref={ref}
-                data={getDates()} // Pass the dates data for the selected sport
+                data={getDates()}
                 getItemLayout={(data, index) => ({
                   length: ITEM_WIDTH,
                   offset: ITEM_WIDTH * index,
@@ -248,24 +174,19 @@ const Scores = () => {
           backgroundColor: 'black',
           paddingHorizontal: 10,
           paddingBottom: 10,
-        }}>
-        {!resetting && (
-          <>
-            {selectedSport === 'PGA' && renderPGAComponent()}
-            {selectedSport === 'UFC' && renderUFCComponent()}
-            {selectedSport === 'MLB' && renderMLBComponent()}
-            {selectedSport === 'NBA' && renderNBAComponent()}
-            {selectedSport === 'WNBA' && renderWNBAComponent()}
-          </>
-        )}
-      </View>
-    </SafeAreaView>
+        }}
+      />
+      <NavBar />
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: 'black',
+  },
+  safeAreaContainer: {
     backgroundColor: 'black',
   },
   header: {

@@ -1,9 +1,43 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, Image, RefreshControl } from 'react-native';
+import { AntDesign, Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import moment from 'moment';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  Image,
+  RefreshControl,
+  TouchableOpacity,
+  ActivityIndicator,
+  SafeAreaView,
+} from 'react-native';
 
-const NBA = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
+import NavBar from '../components/navbar'; // Import the NavBar component
+
+const ITEM_WIDTH = 75;
+
+const findClosestDate = (dates) => {
+  const today = moment();
+  return dates.reduce((closestDate, currentDate) => {
+    const currentDiff = Math.abs(today.diff(moment(currentDate), 'days'));
+    const closestDiff = Math.abs(today.diff(moment(closestDate), 'days'));
+    return currentDiff < closestDiff ? currentDate : closestDate;
+  });
+};
+
+const NBA = () => {
+  const navigation = useNavigation();
   const [gameData, setGameData] = useState([]);
   const [dates, setDates] = useState([]);
+  const [datesFetched, setDatesFetched] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(moment().format('YYYYMMDD'));
+  const [refreshing, setRefreshing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [dateListLoading, setDateListLoading] = useState(false);
+  const [index, setIndex] = useState(0);
+  const ref = useRef();
 
   const formatToYYYYMMDD = (dateString) => {
     const date = new Date(dateString);
@@ -28,10 +62,16 @@ const NBA = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
       );
       const data = await response.json();
       const dates = data.eventDate.dates.map((date) => formatToYYYYMMDD(date));
-
+      const closestDate = findClosestDate(dates);
+      const newIndex = dates.findIndex((date) => date === closestDate);
       setDates(dates);
+      setIndex(newIndex);
+      setSelectedDate(closestDate);
+      setDateListLoading(false);
     } catch (error) {
-      console.error('Error in fetchNBADates:', error);
+      console.error('Error fetching dates:', error);
+      setDates([]);
+      setDateListLoading(false);
     }
   };
 
@@ -39,7 +79,6 @@ const NBA = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
     try {
       let formattedDate;
 
-      // Check if selectedDate is valid and in the correct format
       if (selectedDate && /^\d{8}$/.test(selectedDate)) {
         formattedDate = selectedDate;
       } else {
@@ -49,8 +88,6 @@ const NBA = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
       const response = await fetch(
         `https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates=${formattedDate}`
       );
-
-      console.log('Fetch NBA Game Data URL:', response.url); // Logging the URL
 
       if (!response.ok) {
         throw new Error('Network response was not ok');
@@ -83,30 +120,52 @@ const NBA = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
   useEffect(() => {
     const fetchData = async () => {
       await fetchDates();
-      const formattedDate = formatToYYYYMMDD(selectedDate);
-      await fetchGameData(formattedDate);
+      const closestDate = findClosestDate(dates);
+      setSelectedDate(closestDate);
+      await fetchGameData(closestDate);
     };
     fetchData();
+  }, []);
+
+  useEffect(() => {
+    fetchDates();
+  }, []);
+
+  useEffect(() => {
+    if (selectedDate) {
+      fetchGameData(selectedDate);
+    }
   }, [selectedDate]);
+
+  useEffect(() => {
+    if (ref.current && dates.length > 0 && !dateListLoading) {
+      const selectedIndex = dates.findIndex((d) => d === selectedDate);
+      setIndex(selectedIndex >= 0 ? selectedIndex : 0);
+      try {
+        ref.current.scrollToIndex({ index: selectedIndex, animated: true, viewPosition: 0.5 });
+      } catch (e) {
+        console.warn('Scroll to index failed:', e);
+      }
+    }
+  }, [dates, selectedDate, dateListLoading]);
+
+  const onScrollToIndexFailed = useCallback((info) => {
+    const wait = new Promise((resolve) => setTimeout(resolve, 500));
+    wait.then(() => {
+      const offset = ITEM_WIDTH * info.index;
+      try {
+        ref.current?.scrollToOffset({ offset, animated: true, viewPosition: 0.5 });
+        setDateListLoading(false);
+      } catch (e) {
+        console.warn('Scroll to index failed:', e);
+      }
+    });
+  }, []);
 
   const handleRefresh = async () => {
     setRefreshing(true);
     await fetchGameData();
     setRefreshing(false);
-  };
-
-  const getNumberWithSuffix = (number) => {
-    const lastDigit = number % 10;
-    const suffix =
-      lastDigit === 1 && number !== 11
-        ? 'st'
-        : lastDigit === 2 && number !== 12
-          ? 'nd'
-          : lastDigit === 3 && number !== 13
-            ? 'rd'
-            : 'th';
-
-    return `${number}${suffix}`;
   };
 
   const formatGameTime = (isoDate) => {
@@ -116,6 +175,17 @@ const NBA = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
     return new Intl.DateTimeFormat('en-US', options).format(date);
   };
 
+  const renderDateItem = ({ item }) => (
+    <TouchableOpacity
+      style={[styles.dateButton, item === selectedDate && styles.selectedDateButton]}
+      onPress={() => setSelectedDate(item)}
+      activeOpacity={1}>
+      <Text style={[styles.dateText, item === selectedDate && styles.selectedDateText]}>
+        {moment(item).format('MMM D')}
+      </Text>
+    </TouchableOpacity>
+  );
+
   const renderNBAComponent = () => {
     return (
       <View style={{ flex: 1 }}>
@@ -123,32 +193,47 @@ const NBA = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
           <FlatList
             data={gameData}
             renderItem={({ item, index }) => (
-              <View key={index} style={styles.itemContainer}>
-                <View style={styles.column}>
-                  <Image source={{ uri: item.AwayLogo }} style={styles.image} />
-                  <Text style={styles.TextStyle1}>{item.AwayTeam}</Text>
-                  {item.Status !== 'STATUS_SCHEDULED' && (
-                    <Text style={styles.TextStyle1}>{item.AwayScore}</Text>
-                  )}
-                </View>
-                <View style={styles.column2}>
-                  {item.Status === 'STATUS_SCHEDULED' ? (
-                    <Text style={styles.TextStyle2}>{formatGameTime(item.GameTime)}</Text>
-                  ) : item.Status === 'STATUS_FINAL' ? (
-                    <Text style={styles.TextStyle2}>{item.StatusShortDetail}</Text>
-                  ) : (
-                    <View style={styles.gameTime}>
-                      <Text style={styles.TextStyle2}>{getNumberWithSuffix(item.Quarter)}</Text>
-                    </View>
-                  )}
-                </View>
-                <View style={styles.column}>
-                  <Image source={{ uri: item.HomeLogo }} style={styles.image} />
-                  <Text style={styles.TextStyle1}>{item.HomeTeam}</Text>
-                  {item.Status !== 'STATUS_SCHEDULED' && (
-                    <Text style={styles.TextStyle1}>{item.HomeScore}</Text>
-                  )}
-                </View>
+              <View key={index} style={{ flex: 1 }}>
+                <TouchableOpacity
+                  style={styles.itemContainer}
+                  onPress={() => navigation.navigate('NBADetails', { eventId: item.id })}>
+                  <View style={styles.column}>
+                    <Image source={{ uri: item.AwayLogo }} style={styles.image} />
+                    <Text style={styles.TextStyle1}>{item.AwayTeam}</Text>
+                    {item.Status !== 'STATUS_SCHEDULED' && (
+                      <Text style={styles.TextStyle1}>{item.AwayScore}</Text>
+                    )}
+                  </View>
+                  <View style={styles.column2}>
+                    {item.Status === 'STATUS_SCHEDULED' ? (
+                      <Text style={styles.TextStyle2}>{formatGameTime(item.GameTime)}</Text>
+                    ) : item.Status === 'STATUS_FINAL' ? (
+                      <Text style={styles.TextStyle2}>{item.StatusShortDetail}</Text>
+                    ) : (
+                      <View style={styles.gameTime}>
+                        {item.StatusShortDetail.includes('Top') && (
+                          <Text style={styles.TextStyle2}>Top {item.Quarter}</Text>
+                        )}
+                        {item.StatusShortDetail.includes('Mid') && (
+                          <Text style={styles.TextStyle2}>Mid {item.Quarter}</Text>
+                        )}
+                        {item.StatusShortDetail.includes('Bot') && (
+                          <Text style={styles.TextStyle2}>Bot {item.Quarter}</Text>
+                        )}
+                        {item.StatusShortDetail.includes('End') && (
+                          <Text style={styles.TextStyle2}>End {item.Quarter}</Text>
+                        )}
+                      </View>
+                    )}
+                  </View>
+                  <View style={styles.column}>
+                    <Image source={{ uri: item.HomeLogo }} style={styles.image} />
+                    <Text style={styles.TextStyle1}>{item.HomeTeam}</Text>
+                    {item.Status !== 'STATUS_SCHEDULED' && (
+                      <Text style={styles.TextStyle1}>{item.HomeScore}</Text>
+                    )}
+                  </View>
+                </TouchableOpacity>
               </View>
             )}
             keyExtractor={(item, index) => index.toString()}
@@ -167,15 +252,105 @@ const NBA = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
     );
   };
 
-  return {
-    renderNBAComponent,
-    dates,
-    onRefresh: handleRefresh,
-    fetchDates,
+  const renderNBADates = () => {
+    return (
+      <FlatList
+        ref={ref}
+        data={dates}
+        getItemLayout={(data, index) => ({
+          length: ITEM_WIDTH,
+          offset: ITEM_WIDTH * index,
+          index,
+        })}
+        initialScrollIndex={index}
+        renderItem={renderDateItem}
+        keyExtractor={(item) => item}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.dateList}
+        onScrollToIndexFailed={onScrollToIndexFailed}
+      />
+    );
   };
+
+  return (
+    <View style={styles.container}>
+      <SafeAreaView style={styles.safeAreaContainer} />
+      <View style={styles.header}>
+        <Text style={styles.headerText}>NBA</Text>
+        <View style={styles.headerIcons}>
+          <TouchableOpacity>
+            <Ionicons name="settings-outline" size={25} color="white" marginRight={10} />
+          </TouchableOpacity>
+          <TouchableOpacity>
+            <AntDesign name="search1" size={25} color="white" />
+          </TouchableOpacity>
+        </View>
+      </View>
+      <View style={styles.headerContainer}>
+        {dateListLoading ? <ActivityIndicator size="large" color="white" /> : renderNBADates()}
+      </View>
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: 'black',
+          paddingHorizontal: 10,
+          paddingBottom: 10,
+        }}>
+        {renderNBAComponent()}
+      </View>
+      <NavBar />
+    </View>
+  );
 };
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: 'black',
+  },
+  safeAreaContainer: {
+    backgroundColor: 'black',
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginVertical: 10,
+  },
+  headerText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 24,
+    marginLeft: 10,
+  },
+  headerIcons: {
+    flexDirection: 'row',
+    justifyContent: 'space-evenly',
+    alignItems: 'center',
+    marginRight: 10,
+  },
+  headerContainer: {
+    height: 70,
+  },
+  dateList: {
+    justifyContent: 'center',
+  },
+  dateButton: {
+    width: ITEM_WIDTH,
+    height: '100%',
+    borderRadius: 5,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  dateText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: 'white',
+  },
+  selectedDateText: {
+    fontWeight: 'bold',
+    color: '#FFDB58',
+  },
   itemContainer: {
     flex: 1,
     flexDirection: 'row',
@@ -183,9 +358,9 @@ const styles = StyleSheet.create({
     padding: 5,
     borderWidth: 0.5,
     borderColor: 'white',
-    borderRadius: 10,
+    borderRadius: 5,
     margin: 3,
-    backgroundColor: '#141414',
+    backgroundColor: 'black',
   },
   TextStyle1: {
     fontSize: 14,
@@ -199,6 +374,14 @@ const styles = StyleSheet.create({
     fontWeight: 'normal',
     color: 'white',
     textAlign: 'center',
+    marginBottom: 2,
+  },
+  TextStyle3: {
+    fontSize: 12,
+    fontWeight: 'normal',
+    color: 'white',
+    textAlign: 'center',
+    marginTop: 2,
   },
   column: {
     flex: 1,
@@ -227,22 +410,6 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     marginBottom: 5,
-  },
-  scrollViewContent: {
-    flexDirection: 'row',
-  },
-  selectedDate: {
-    backgroundColor: '#FFF',
-  },
-  sectionHeader: {
-    backgroundColor: 'transparent',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-  },
-  sectionHeaderText: {
-    color: '#FFF',
-    fontSize: 20,
-    fontWeight: 'bold',
   },
 });
 

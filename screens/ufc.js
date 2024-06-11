@@ -1,10 +1,25 @@
+import { AntDesign, Ionicons } from '@expo/vector-icons';
 import moment from 'moment';
-import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, Image, Text, FlatList, RefreshControl } from 'react-native';
+import React, { useEffect, useState, useRef } from 'react';
+import {
+  StyleSheet,
+  View,
+  Image,
+  Text,
+  FlatList,
+  RefreshControl,
+  SafeAreaView,
+  TouchableOpacity,
+  ActivityIndicator,
+} from 'react-native';
+
+import NavBar from '../components/navbar'; // Import the NavBar component
 
 const options = {
   method: 'GET',
 };
+
+const ITEM_WIDTH = 75; // Define a fixed width for date items
 
 const findClosestDate = (dates) => {
   const today = moment();
@@ -15,10 +30,15 @@ const findClosestDate = (dates) => {
   });
 };
 
-const UFC = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
+const UFC = () => {
+  const ref = useRef();
+  const [selectedDate, setSelectedDate] = useState(moment().format('YYYYMMDD'));
+  const [refreshing, setRefreshing] = useState(false);
   const [events, setEvents] = useState([]);
   const [eventDetails, setEventDetails] = useState(null);
   const [dates, setDates] = useState([]);
+  const [index, setIndex] = useState(0);
+  const [dateListLoading, setDateListLoading] = useState(true);
 
   const formatToYYYYMMDD = (dateString) => {
     const date = moment(dateString);
@@ -28,35 +48,33 @@ const UFC = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
   const fetchDates = async () => {
     try {
       const response = await fetch(
-        `https://site.api.espn.com/apis/site/v2/sports/mma/ufc/scoreboard?dates=2024`,
-        options
+        `https://sports.core.api.espn.com/v2/sports/mma/leagues/ufc/calendar/whitelist`
       );
-      const result = await response.json();
-      const calendarDates = result.leagues[0].calendar.map((item) => item.startDate);
-      setDates(calendarDates);
-
-      // Find the closest date
-      const closestDate = formatToYYYYMMDD(findClosestDate(calendarDates));
-
-      // Set the selected date to the closest date
+      const data = await response.json();
+      const dates = data.eventDate.dates.map((date) => formatToYYYYMMDD(date));
+      const closestDate = findClosestDate(dates);
+      const newIndex = dates.findIndex((date) => date === closestDate);
+      setDates(dates);
+      setIndex(newIndex);
       setSelectedDate(closestDate);
-      // console.log(`Closest date: ${closestDate}`);
+      setDateListLoading(false);
     } catch (error) {
-      console.error('Error fetching UFC dates:', error);
+      console.error('Error fetching dates:', error);
+      setDates([]);
+      setDateListLoading(false);
     }
   };
 
   const fetchEvents = async (selectedDate) => {
     try {
-      // Use the selectedDate state instead of the dates parameter
       const formattedDate = formatToYYYYMMDD(selectedDate);
       const response = await fetch(
         `https://site.api.espn.com/apis/site/v2/sports/mma/ufc/scoreboard?dates=${formattedDate}`,
         options
       );
-      console.log('Fetch UFC Events Data URL:', response.url); // Logging the URL
+      console.log('Fetch UFC Events Data URL:', response.url);
       const result = await response.json();
-      setEvents(result.events || []); // Ensure events is always an array
+      setEvents(result.events || []);
       if (result.events && result.events.length > 0) {
         await fetchEventDetails(result.events[0].id);
       }
@@ -71,13 +89,22 @@ const UFC = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
         `https://site.web.api.espn.com/apis/common/v3/sports/mma/ufc/fightcenter/${eventId}`,
         options
       );
-      // console.log('Fetch UFC Event Details URL:', response.url); // Logging the URL
       const result = await response.json();
       setEventDetails(result);
     } catch (error) {
       console.error('Error fetching UFC event details:', error);
     }
   };
+
+  useEffect(() => {
+    const fetchData = async () => {
+      await fetchDates();
+      const closestDate = findClosestDate(dates);
+      setSelectedDate(closestDate);
+      await fetchEvents(closestDate);
+    };
+    fetchData();
+  }, []);
 
   useEffect(() => {
     fetchDates();
@@ -89,10 +116,36 @@ const UFC = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
     }
   }, [selectedDate]);
 
+  useEffect(() => {
+    if (ref.current && dates.length > 0 && !dateListLoading) {
+      const selectedIndex = dates.findIndex((d) => d === selectedDate);
+      setIndex(selectedIndex >= 0 ? selectedIndex : 0);
+      try {
+        ref.current.scrollToIndex({ index: selectedIndex, animated: true, viewPosition: 0.5 });
+      } catch (e) {
+        console.warn('Scroll to index failed:', e);
+      }
+    }
+  }, [dates, selectedDate, dateListLoading]);
+
   const onRefresh = async () => {
     setRefreshing(true);
     await fetchEvents(selectedDate);
     setRefreshing(false);
+  };
+
+  const onScrollToIndexFailed = async (info) => {
+    const wait = new Promise((resolve) => setTimeout(resolve, 5000));
+    await wait;
+    const offset = ITEM_WIDTH * info.index;
+    try {
+      ref.current?.scrollToOffset({ offset, animated: true });
+      setTimeout(() => {
+        setDateListLoading(false);
+      }, 500);
+    } catch (e) {
+      console.warn('Scroll to index failed:', e);
+    }
   };
 
   const renderCompetitionItem = (competition, cardKey) => {
@@ -190,8 +243,53 @@ const UFC = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
     );
   };
 
-  const renderUFCComponent = () => {
-    return (
+  const renderDateItem = ({ item }) => (
+    <TouchableOpacity
+      style={[styles.dateButton, item === selectedDate && styles.selectedDateButton]}
+      onPress={() => setSelectedDate(formatToYYYYMMDD(item))}
+      activeOpacity={1}>
+      <Text style={[styles.dateText, item === selectedDate && styles.selectedDateText]}>
+        {moment(item).format('MMM D')}
+      </Text>
+    </TouchableOpacity>
+  );
+
+  return (
+    <View style={styles.container}>
+      <SafeAreaView style={styles.safeAreaContainer} />
+      <View style={styles.header}>
+        <Text style={styles.headerText}>UFC</Text>
+        <View style={styles.headerIcons}>
+          <TouchableOpacity>
+            <Ionicons name="settings-outline" size={25} color="white" marginRight={10} />
+          </TouchableOpacity>
+          <TouchableOpacity>
+            <AntDesign name="search1" size={25} color="white" />
+          </TouchableOpacity>
+        </View>
+      </View>
+      <View style={styles.headerContainer}>
+        {dateListLoading ? (
+          <ActivityIndicator size="large" color="white" />
+        ) : (
+          <FlatList
+            ref={ref}
+            data={dates}
+            getItemLayout={(data, index) => ({
+              length: ITEM_WIDTH,
+              offset: ITEM_WIDTH * index,
+              index,
+            })}
+            initialScrollIndex={index}
+            renderItem={renderDateItem}
+            keyExtractor={(item) => item}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.dateList}
+            onScrollToIndexFailed={onScrollToIndexFailed}
+          />
+        )}
+      </View>
       <View style={{ flex: 1 }}>
         {events && events.length > 0 ? (
           <FlatList
@@ -211,24 +309,62 @@ const UFC = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
           />
         ) : (
           <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-            <Text>No fights available</Text>
+            <Text style={{ color: 'white' }}> </Text>
           </View>
         )}
       </View>
-    );
-  };
-
-  return {
-    events,
-    eventDetails,
-    fetchDates,
-    dates,
-    onRefresh,
-    renderUFCComponent,
-  };
+      <NavBar />
+    </View>
+  );
 };
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: 'black',
+  },
+  safeAreaContainer: {
+    backgroundColor: 'black',
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginVertical: 5,
+  },
+  headerText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 24,
+    marginLeft: 10,
+  },
+  headerIcons: {
+    flexDirection: 'row',
+    justifyContent: 'space-evenly',
+    alignItems: 'center',
+    marginRight: 10,
+  },
+  headerContainer: {
+    height: 40,
+  },
+  dateList: {
+    justifyContent: 'center',
+  },
+  dateButton: {
+    width: ITEM_WIDTH,
+    height: '100%',
+    borderRadius: 5,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  dateText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: 'white',
+  },
+  selectedDateText: {
+    fontWeight: 'bold',
+    color: '#FFDB58',
+  },
   competitorsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -245,7 +381,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   eventNameContainer: {
-    paddingVertical: 10,
+    paddingVertical: 5,
     backgroundColor: 'black',
   },
   eventNameText: {

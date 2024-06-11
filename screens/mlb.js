@@ -1,5 +1,7 @@
+import { AntDesign, Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import React, { useState, useEffect } from 'react';
+import moment from 'moment';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,12 +10,25 @@ import {
   Image,
   RefreshControl,
   TouchableOpacity,
+  ActivityIndicator,
+  SafeAreaView,
 } from 'react-native';
 
-const MLB = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
+import NavBar from '../components/navbar'; // Import the NavBar component
+
+const ITEM_WIDTH = 75;
+
+const MLB = () => {
   const navigation = useNavigation();
   const [gameData, setGameData] = useState([]);
   const [dates, setDates] = useState([]);
+  const [datesFetched, setDatesFetched] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(moment().format('YYYYMMDD'));
+  const [refreshing, setRefreshing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [dateListLoading, setDateListLoading] = useState(false);
+  const [index, setIndex] = useState(0);
+  const ref = useRef();
 
   const formatToYYYYMMDD = (dateString) => {
     const date = new Date(dateString);
@@ -40,8 +55,11 @@ const MLB = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
       const dates = data.eventDate.dates.map((date) => formatToYYYYMMDD(date));
 
       setDates(dates);
+      setDatesFetched(true); // Set the flag to true
+      const newIndex = dates.findIndex((date) => date === selectedDate);
+      setIndex(newIndex >= 0 ? newIndex : 0);
     } catch (error) {
-      console.error('Error in fetchMLBDates:', error);
+      console.error('Error in fetchNBADates:', error);
     }
   };
 
@@ -49,7 +67,6 @@ const MLB = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
     try {
       let formattedDate;
 
-      // Check if selectedDate is valid and in the correct format
       if (selectedDate && /^\d{8}$/.test(selectedDate)) {
         formattedDate = selectedDate;
       } else {
@@ -59,8 +76,6 @@ const MLB = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
       const response = await fetch(
         `https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard?dates=${formattedDate}`
       );
-
-      console.log('Fetch MLB Game Data URL:', response.url); // Logging the URL
 
       if (!response.ok) {
         throw new Error('Network response was not ok');
@@ -81,13 +96,12 @@ const MLB = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
           StatusShortDetail: event.competitions[0].status.type.shortDetail,
           DisplayClock: event.status.displayClock,
           Quarter: event.status.period,
-          outsText: event.competitions[0].outsText,
         };
       });
 
       setGameData(gameData);
     } catch (error) {
-      console.error('Error in fetchMLBGameData:', error);
+      console.error('Error in fetchNBAGameData:', error);
     }
   };
 
@@ -99,6 +113,26 @@ const MLB = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
     };
     fetchData();
   }, [selectedDate]);
+
+  useEffect(() => {
+    if (ref.current && datesFetched) {
+      // Check if dates have been fetched
+      ref.current.scrollToIndex({ index, animated: true, viewPosition: 0.5 });
+    }
+  }, [index, ref, datesFetched]);
+
+  const onScrollToIndexFailed = useCallback((info) => {
+    const wait = new Promise((resolve) => setTimeout(resolve, 500));
+    wait.then(() => {
+      const offset = ITEM_WIDTH * info.index;
+      try {
+        ref.current?.scrollToOffset({ offset, animated: true, viewPosition: 0.5 });
+        setDateListLoading(false);
+      } catch (e) {
+        console.warn('Scroll to index failed:', e);
+      }
+    });
+  }, []);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -113,7 +147,18 @@ const MLB = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
     return new Intl.DateTimeFormat('en-US', options).format(date);
   };
 
-  const renderMLBComponent = () => {
+  const renderDateItem = ({ item }) => (
+    <TouchableOpacity
+      style={[styles.dateButton, item === selectedDate && styles.selectedDateButton]}
+      onPress={() => setSelectedDate(item)}
+      activeOpacity={1}>
+      <Text style={[styles.dateText, item === selectedDate && styles.selectedDateText]}>
+        {moment(item).format('MMM D')}
+      </Text>
+    </TouchableOpacity>
+  );
+
+  const renderNBAComponent = () => {
     return (
       <View style={{ flex: 1 }}>
         {gameData.length > 0 ? (
@@ -123,8 +168,7 @@ const MLB = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
               <View key={index} style={{ flex: 1 }}>
                 <TouchableOpacity
                   style={styles.itemContainer}
-                  onPress={() => navigation.navigate('MLBDetails', { eventId: item.id })} // Pass event ID
-                >
+                  onPress={() => navigation.navigate('NBADetails', { eventId: item.id })}>
                   <View style={styles.column}>
                     <Image source={{ uri: item.AwayLogo }} style={styles.image} />
                     <Text style={styles.TextStyle1}>{item.AwayTeam}</Text>
@@ -151,7 +195,6 @@ const MLB = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
                         {item.StatusShortDetail.includes('End') && (
                           <Text style={styles.TextStyle2}>End {item.Quarter}</Text>
                         )}
-                        <Text style={styles.TextStyle3}>{item.outsText}</Text>
                       </View>
                     )}
                   </View>
@@ -181,15 +224,105 @@ const MLB = ({ selectedDate, setSelectedDate, refreshing, setRefreshing }) => {
     );
   };
 
-  return {
-    renderMLBComponent,
-    dates,
-    onRefresh: handleRefresh,
-    fetchDates,
+  const renderNBADates = () => {
+    return (
+      <FlatList
+        ref={ref}
+        data={dates}
+        getItemLayout={(data, index) => ({
+          length: ITEM_WIDTH,
+          offset: ITEM_WIDTH * index,
+          index,
+        })}
+        initialScrollIndex={index}
+        renderItem={renderDateItem}
+        keyExtractor={(item) => item}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.dateList}
+        onScrollToIndexFailed={onScrollToIndexFailed}
+      />
+    );
   };
+
+  return (
+    <View style={styles.container}>
+      <SafeAreaView style={styles.safeAreaContainer} />
+      <View style={styles.header}>
+        <Text style={styles.headerText}>MLB</Text>
+        <View style={styles.headerIcons}>
+          <TouchableOpacity>
+            <Ionicons name="settings-outline" size={25} color="white" marginRight={10} />
+          </TouchableOpacity>
+          <TouchableOpacity>
+            <AntDesign name="search1" size={25} color="white" />
+          </TouchableOpacity>
+        </View>
+      </View>
+      <View style={styles.headerContainer}>
+        {dateListLoading ? <ActivityIndicator size="large" color="white" /> : renderNBADates()}
+      </View>
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: 'black',
+          paddingHorizontal: 10,
+          paddingBottom: 10,
+        }}>
+        {renderNBAComponent()}
+      </View>
+      <NavBar />
+    </View>
+  );
 };
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: 'black',
+  },
+  safeAreaContainer: {
+    backgroundColor: 'black',
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginVertical: 10,
+  },
+  headerText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 24,
+    marginLeft: 10,
+  },
+  headerIcons: {
+    flexDirection: 'row',
+    justifyContent: 'space-evenly',
+    alignItems: 'center',
+    marginRight: 10,
+  },
+  headerContainer: {
+    height: 70,
+  },
+  dateList: {
+    justifyContent: 'center',
+  },
+  dateButton: {
+    width: ITEM_WIDTH,
+    height: '100%',
+    borderRadius: 5,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  dateText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: 'white',
+  },
+  selectedDateText: {
+    fontWeight: 'bold',
+    color: '#FFDB58',
+  },
   itemContainer: {
     flex: 1,
     flexDirection: 'row',
@@ -249,22 +382,6 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     marginBottom: 5,
-  },
-  scrollViewContent: {
-    flexDirection: 'row',
-  },
-  selectedDate: {
-    backgroundColor: '#FFF',
-  },
-  sectionHeader: {
-    backgroundColor: 'transparent',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-  },
-  sectionHeaderText: {
-    color: '#FFF',
-    fontSize: 20,
-    fontWeight: 'bold',
   },
 });
 
