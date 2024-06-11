@@ -170,7 +170,7 @@ const MLB = () => {
               <View key={index} style={{ flex: 1 }}>
                 <TouchableOpacity
                   style={styles.itemContainer}
-                  onPress={() => navigation.navigate('NBADetails', { eventId: item.id })}>
+                  onPress={() => navigation.navigate('MLBDetails', { eventId: item.id })}>
                   <View style={styles.column}>
                     <Image source={{ uri: item.AwayLogo }} style={styles.image} />
                     <Text style={styles.TextStyle1}>{item.AwayTeam}</Text>
@@ -334,7 +334,7 @@ const styles = StyleSheet.create({
     borderColor: 'white',
     borderRadius: 5,
     margin: 3,
-    backgroundColor: 'black',
+    backgroundColor: '#141414',
   },
   TextStyle1: {
     fontSize: 14,
