@@ -116,7 +116,10 @@ const MLB = () => {
   useEffect(() => {
     if (ref.current && datesFetched) {
       // Check if dates have been fetched
-      ref.current.scrollToIndex({ index, animated: true, viewPosition: 0.5 });
+      const wait = new Promise((resolve) => setTimeout(resolve, 1000));
+      wait.then(() => {
+        ref.current.scrollToIndex({ index, animated: false, viewPosition: 0.5 });
+      });
     }
   }, [index, ref, datesFetched]);
 
@@ -125,7 +128,7 @@ const MLB = () => {
     wait.then(() => {
       const offset = ITEM_WIDTH * info.index;
       try {
-        ref.current?.scrollToOffset({ offset, animated: true, viewPosition: 0.5 });
+        ref.current?.scrollToOffset({ offset, animated: false, viewPosition: 0.5 });
         setDateListLoading(false);
       } catch (e) {
         console.warn('Scroll to index failed:', e);
