@@ -265,7 +265,14 @@ const NHL = () => {
 
     return (
       <View style={{ flex: 1 }}>
-        <Text style={{ color: 'white', fontSize: 20, fontWeight: 'bold', marginBottom: 10 }}>
+        <Text
+          style={{
+            color: 'white',
+            fontSize: 20,
+            fontWeight: 'bold',
+            marginBottom: 10,
+            marginLeft: 10,
+          }}>
           {seasonSlug === 'regular-season'
             ? 'Games'
             : seasonSlug === 'post-season'
