@@ -222,64 +222,75 @@ const MLB = () => {
   };
 
   const renderMLBComponent = () => {
-    const renderItem = ({ item, index }) => (
-      <TouchableOpacity
-        style={styles.itemContainer}
-        onPress={() => navigation.navigate('MLBDetails', { eventId: item.id })}>
-        <View style={{ flexDirection: 'column' }}>
-          <View style={styles.column}>
-            <Image source={{ uri: item.AwayLogo }} style={styles.image} />
-            <View style={{ flexDirection: 'column', marginLeft: 10 }}>
-              {item.Status === 'STATUS_SCHEDULED' ? (
-                <Text style={styles.score}>{item.AwayTeamRecordSummary}</Text>
-              ) : (
-                <Text style={styles.score}>{item.AwayScore}</Text>
-              )}
-              <Text style={styles.TextStyle1}>{item.AwayTeam}</Text>
+    const renderItem = ({ item, index }) => {
+      const containerStyle = [
+        styles.itemContainer,
+        item.Status === 'STATUS_IN_PROGRESS' && { borderColor: 'lightgreen' },
+      ];
+
+      return (
+        <TouchableOpacity
+          style={containerStyle}
+          onPress={() => navigation.navigate('MLBDetails', { eventId: item.id })}>
+          <View style={{ flexDirection: 'column' }}>
+            <View style={styles.column}>
+              <Image source={{ uri: item.AwayLogo }} style={styles.image} />
+              <View style={{ flexDirection: 'column', marginLeft: 10 }}>
+                {item.Status === 'STATUS_SCHEDULED' ? (
+                  <Text style={styles.score}>{item.AwayTeamRecordSummary}</Text>
+                ) : (
+                  <Text style={styles.score}>{item.AwayScore}</Text>
+                )}
+                <Text style={styles.TextStyle1}>{item.AwayTeam}</Text>
+              </View>
+            </View>
+            <View style={styles.column}>
+              <Image source={{ uri: item.HomeLogo }} style={styles.image} />
+              <View style={{ flexDirection: 'column', marginLeft: 10 }}>
+                {item.Status === 'STATUS_SCHEDULED' ? (
+                  <Text style={styles.score}>{item.HomeTeamRecordSummary}</Text>
+                ) : (
+                  <Text style={styles.score}>{item.HomeScore}</Text>
+                )}
+                <Text style={styles.TextStyle1}>{item.HomeTeam}</Text>
+              </View>
             </View>
           </View>
-          <View style={styles.column}>
-            <Image source={{ uri: item.HomeLogo }} style={styles.image} />
-            <View style={{ flexDirection: 'column', marginLeft: 10 }}>
-              {item.Status === 'STATUS_SCHEDULED' ? (
-                <Text style={styles.score}>{item.HomeTeamRecordSummary}</Text>
-              ) : (
-                <Text style={styles.score}>{item.HomeScore}</Text>
-              )}
-              <Text style={styles.TextStyle1}>{item.HomeTeam}</Text>
-            </View>
+          <View style={styles.column2}>
+            {item.Status === 'STATUS_SCHEDULED' ? (
+              <View style={styles.column2}>
+                <Text style={styles.gametime}>{formatGameTime(item.GameTime)}</Text>
+              </View>
+            ) : item.Status === 'STATUS_FINAL' ? (
+              <View style={styles.column2}>
+                <Text style={styles.gametime}>{item.StatusShortDetail}</Text>
+              </View>
+            ) : (
+              <View style={styles.column2}>
+                <View style={styles.gameTime}>
+                  {item.StatusShortDetail.includes('Top') && (
+                    <Text style={styles.TextStyle2}>Top {item.Inning}</Text>
+                  )}
+                  {item.StatusShortDetail.includes('Mid') && (
+                    <Text style={styles.TextStyle2}>Mid {item.Inning}</Text>
+                  )}
+                  {item.StatusShortDetail.includes('Bot') && (
+                    <Text style={styles.TextStyle2}>Bot {item.Inning}</Text>
+                  )}
+                  {item.StatusShortDetail.includes('End') && (
+                    <Text style={styles.TextStyle2}>End {item.Inning}</Text>
+                  )}
+                </View>
+                <View>
+                  {item.Outs !== null && <Text style={styles.TextStyle2}>{item.Outs} Outs</Text>}
+                </View>
+                {renderBasesComponent(item.First, item.Second, item.Third)}
+              </View>
+            )}
           </View>
-        </View>
-        <View style={styles.column2}>
-          {item.Status === 'STATUS_SCHEDULED' ? (
-            <Text style={styles.gametime}>{formatGameTime(item.GameTime)}</Text>
-          ) : item.Status === 'STATUS_FINAL' ? (
-            <Text style={styles.gametime}>{item.StatusShortDetail}</Text>
-          ) : (
-            <View style={styles.column2}>
-              <View style={styles.gameTime}>
-                {item.StatusShortDetail.includes('Top') && (
-                  <Text style={styles.TextStyle2}>Top {item.Inning}</Text>
-                )}
-                {item.StatusShortDetail.includes('Mid') && (
-                  <Text style={styles.TextStyle2}>Mid {item.Inning}</Text>
-                )}
-                {item.StatusShortDetail.includes('Bot') && (
-                  <Text style={styles.TextStyle2}>Bot {item.Inning}</Text>
-                )}
-                {item.StatusShortDetail.includes('End') && (
-                  <Text style={styles.TextStyle2}>End {item.Inning}</Text>
-                )}
-              </View>
-              <View>
-                {item.Outs !== null && <Text style={styles.TextStyle2}>{item.Outs} Outs</Text>}
-              </View>
-              {renderBasesComponent(item.First, item.Second, item.Third)}
-            </View>
-          )}
-        </View>
-      </TouchableOpacity>
-    );
+        </TouchableOpacity>
+      );
+    };
 
     const groupedData = [];
     const remaining = gameData.slice(0);
@@ -444,7 +455,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     width: width * 0.6,
     padding: 5,
-    borderWidth: 0.5,
+    borderWidth: 1,
     borderColor: 'white',
     borderRadius: 5,
     margin: 3,
@@ -502,7 +513,8 @@ const styles = StyleSheet.create({
   column2: {
     flex: 1,
     flexDirection: 'column',
-    alignItems: 'flex-end',
+    alignSelf: 'flex-end',
+    alignItems: 'center',
     justifyContent: 'space-around',
     marginRight: 5,
     borderWidth: 2,
