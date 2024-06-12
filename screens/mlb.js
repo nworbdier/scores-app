@@ -215,7 +215,7 @@ const MLB = () => {
             <Image source={{ uri: item.AwayLogo }} style={styles.image} />
             <View style={{ flexDirection: 'column', marginLeft: 10 }}>
               {item.Status === 'STATUS_SCHEDULED' ? (
-                <Text style={styles.TextStyle1}>{item.AwayTeamRecordSummary}</Text>
+                <Text style={styles.score}>{item.AwayTeamRecordSummary}</Text>
               ) : (
                 <Text style={styles.score}>{item.AwayScore}</Text>
               )}
@@ -226,7 +226,7 @@ const MLB = () => {
             <Image source={{ uri: item.HomeLogo }} style={styles.image} />
             <View style={{ flexDirection: 'column', marginLeft: 10 }}>
               {item.Status === 'STATUS_SCHEDULED' ? (
-                <Text style={styles.TextStyle1}>{item.HomeTeamRecordSummary}</Text>
+                <Text style={styles.score}>{item.HomeTeamRecordSummary}</Text>
               ) : (
                 <Text style={styles.score}>{item.HomeScore}</Text>
               )}
@@ -236,7 +236,7 @@ const MLB = () => {
         </View>
         <View style={styles.column2}>
           {item.Status === 'STATUS_SCHEDULED' ? (
-            <Text style={styles.TextStyle2}>{formatGameTime(item.GameTime)}</Text>
+            <Text style={styles.gametime}>{formatGameTime(item.GameTime)}</Text>
           ) : item.Status === 'STATUS_FINAL' ? (
             <Text style={styles.TextStyle2}>{item.StatusShortDetail}</Text>
           ) : (
@@ -422,6 +422,13 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 2,
   },
+  gametime: {
+    fontSize: 17,
+    fontWeight: 'bold',
+    color: 'white',
+    textAlign: 'left',
+    marginBottom: 4,
+  },
   TextStyle3: {
     fontSize: 12,
     fontWeight: 'normal',
@@ -473,7 +480,7 @@ const styles = StyleSheet.create({
     width: 15,
     height: 15,
     backgroundColor: 'grey',
-    margin: 1,
+    margin: 0.5,
     transform: [{ rotate: '45deg' }], // Rotate to make it look like a diamond
   },
   baseActive: {
@@ -482,7 +489,7 @@ const styles = StyleSheet.create({
   emptySpace: {
     width: 15,
     height: 15,
-    margin: 1,
+    margin: 0.5,
   },
 });
 
