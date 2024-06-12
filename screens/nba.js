@@ -97,21 +97,38 @@ const NBA = () => {
 
       const data = await response.json();
       const gameData = data.events.map((event) => {
+        const competition = event.competitions[0];
+        const isPlayoff = competition.series && competition.series.type === 'playoff';
+        let homeWins = null;
+        let awayWins = null;
+
+        if (isPlayoff) {
+          homeWins = competition.series.competitors[0].wins;
+          awayWins = competition.series.competitors[1].wins;
+        }
+
         return {
           id: event.id,
-          HomeTeam: event.competitions[0].competitors[0].team.shortDisplayName,
-          HomeLogo: event.competitions[0].competitors[0].team.logo,
-          HomeScore: event.competitions[0].competitors[0].score,
-          HomeTeamRecordSummary: event.competitions[0].competitors[0].records[0].summary,
-          AwayTeam: event.competitions[0].competitors[1].team.shortDisplayName,
-          AwayLogo: event.competitions[0].competitors[1].team.logo,
-          AwayScore: event.competitions[0].competitors[1].score,
-          AwayTeamRecordSummary: event.competitions[0].competitors[1].records[0].summary,
-          GameTime: event.competitions[0].date,
-          Status: event.competitions[0].status.type.name,
-          StatusShortDetail: event.competitions[0].status.type.shortDetail,
+          HomeTeam: competition.competitors[0].team.shortDisplayName,
+          HomeLogo: competition.competitors[0].team.logo,
+          HomeScore: competition.competitors[0].score,
+          HomeTeamRecordSummary: isPlayoff
+            ? `${homeWins}-${awayWins}`
+            : competition.competitors[0].records[0].summary,
+          AwayTeam: competition.competitors[1].team.shortDisplayName,
+          AwayLogo: competition.competitors[1].team.logo,
+          AwayScore: competition.competitors[1].score,
+          AwayTeamRecordSummary: isPlayoff
+            ? `${awayWins}-${homeWins}`
+            : competition.competitors[1].records[0].summary,
+          GameTime: competition.date,
+          Status: competition.status.type.name,
+          StatusShortDetail: competition.status.type.shortDetail,
           DisplayClock: event.status.displayClock,
           Quarter: event.status.period,
+          IsPlayoff: isPlayoff,
+          HomeWins: homeWins,
+          AwayWins: awayWins,
         };
       });
 
@@ -351,7 +368,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   dateText: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
     color: 'white',
   },
