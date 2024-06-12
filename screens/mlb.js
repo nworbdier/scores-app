@@ -346,6 +346,13 @@ const MLB = () => {
 
   useFocusEffect(
     useCallback(() => {
+      const fetchInitialData = async () => {
+        await fetchGameData();
+        console.log('Initial fetch for MLB...');
+      };
+
+      fetchInitialData();
+
       const intervalId = setInterval(() => {
         fetchGameData();
         console.log('Refreshing MLB...');
