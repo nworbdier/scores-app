@@ -223,7 +223,7 @@ const NBA = () => {
           {item.Status === 'STATUS_SCHEDULED' ? (
             <Text style={styles.gametime}>{formatGameTime(item.GameTime)}</Text>
           ) : item.Status === 'STATUS_FINAL' ? (
-            <Text style={styles.TextStyle2}>{item.StatusShortDetail}</Text>
+            <Text style={styles.gametime}>{item.StatusShortDetail}</Text>
           ) : (
             <View style={styles.column2}>
               <View></View>
