@@ -39,6 +39,7 @@ const NHL = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [dateListLoading, setDateListLoading] = useState(false);
   const [index, setIndex] = useState(0);
+  const [seasonSlug, setSeasonSlug] = useState('');
   const ref = useRef();
 
   const formatToYYYYMMDD = (dateString) => {
@@ -131,6 +132,10 @@ const NHL = () => {
           AwayWins: awayWins,
         };
       });
+
+      if (data.events[0] && data.events[0].season && data.events[0].season.slug) {
+        setSeasonSlug(data.events[0].season.slug);
+      }
 
       setGameData(gameData);
     } catch (error) {
@@ -260,6 +265,13 @@ const NHL = () => {
 
     return (
       <View style={{ flex: 1 }}>
+        <Text style={{ color: 'white', fontSize: 20, fontWeight: 'bold', marginBottom: 10 }}>
+          {seasonSlug === 'regular-season'
+            ? 'Games'
+            : seasonSlug === 'post-season'
+              ? 'Playoffs'
+              : 'Games'}
+        </Text>
         <ScrollView
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor="#888" />
