@@ -226,6 +226,7 @@ const MLB = () => {
       const containerStyle = [
         styles.itemContainer,
         item.Status === 'STATUS_IN_PROGRESS' && { borderColor: 'lightgreen' },
+        item.Status === 'STATUS_RAIN_DELAY' && { borderColor: 'yellow' },
       ];
 
       return (
@@ -264,6 +265,10 @@ const MLB = () => {
             ) : item.Status === 'STATUS_FINAL' ? (
               <View style={styles.column2}>
                 <Text style={styles.gametime}>{item.StatusShortDetail}</Text>
+              </View>
+            ) : item.Status === 'STATUS_RAIN_DELAY' ? (
+              <View style={styles.column2}>
+                <Text style={[styles.TextStyle2, { fontWeight: 'bold' }]}>Rain Delay</Text>
               </View>
             ) : (
               <View style={styles.column2}>
