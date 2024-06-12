@@ -348,14 +348,14 @@ const MLB = () => {
     useCallback(() => {
       const fetchInitialData = async () => {
         await fetchGameData();
-        console.log('Initial fetch for MLB...');
+        // console.log('Initial fetch for MLB...');
       };
 
       fetchInitialData();
 
       const intervalId = setInterval(() => {
         fetchGameData();
-        console.log('Refreshing MLB...');
+        // console.log('Refreshing MLB...');
       }, 10000); // Refresh every 10 seconds
 
       return () => clearInterval(intervalId); // Cleanup interval on blur
