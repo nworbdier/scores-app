@@ -19,6 +19,16 @@ import {
 import NavBar from '../components/navbar'; // Import the NavBar component
 
 const ITEM_WIDTH = 75;
+
+const findClosestDate = (dates) => {
+  const today = moment();
+  return dates.reduce((closestDate, currentDate) => {
+    const currentDiff = Math.abs(today.diff(moment(currentDate), 'days'));
+    const closestDiff = Math.abs(today.diff(moment(closestDate), 'days'));
+    return currentDiff < closestDiff ? currentDate : closestDate;
+  });
+};
+
 const { width } = Dimensions.get('window');
 
 const MLB = () => {
@@ -52,17 +62,20 @@ const MLB = () => {
   const fetchDates = async () => {
     try {
       const response = await fetch(
-        'https://sports.core.api.espn.com/v2/sports/baseball/leagues/mlb/calendar/whitelist'
+        `https://sports.core.api.espn.com/v2/sports/baseball/leagues/mlb/calendar/whitelist`
       );
       const data = await response.json();
       const dates = data.eventDate.dates.map((date) => formatToYYYYMMDD(date));
-
+      const closestDate = findClosestDate(dates);
+      const newIndex = dates.findIndex((date) => date === closestDate);
       setDates(dates);
-      setDatesFetched(true); // Set the flag to true
-      const newIndex = dates.findIndex((date) => date === selectedDate);
-      setIndex(newIndex >= 0 ? newIndex : 0);
+      setIndex(newIndex);
+      setSelectedDate(closestDate);
+      setDateListLoading(false);
     } catch (error) {
-      console.error('Error in fetchNBADates:', error);
+      console.error('Error fetching dates:', error);
+      setDates([]);
+      setDateListLoading(false);
     }
   };
 
@@ -151,21 +164,38 @@ const MLB = () => {
   useEffect(() => {
     const fetchData = async () => {
       await fetchDates();
-      const formattedDate = formatToYYYYMMDD(selectedDate);
-      await fetchGameData(formattedDate);
+      const closestDate = findClosestDate(dates);
+      setSelectedDate(closestDate);
+      await fetchGameData(closestDate);
     };
     fetchData();
+  }, []);
+
+  useEffect(() => {
+    fetchDates();
+  }, []);
+
+  useEffect(() => {
+    if (selectedDate) {
+      fetchGameData(selectedDate);
+    }
   }, [selectedDate]);
 
   useEffect(() => {
-    if (ref.current && datesFetched) {
-      // Check if dates have been fetched
-      const wait = new Promise((resolve) => setTimeout(resolve, 1000));
+    if (ref.current && dates.length > 0 && !dateListLoading) {
+      const selectedIndex = dates.findIndex((d) => d === selectedDate);
+      setIndex(selectedIndex >= 0 ? selectedIndex : 0);
+
+      const wait = new Promise((resolve) => setTimeout(resolve, 100));
       wait.then(() => {
-        ref.current.scrollToIndex({ index, animated: true, viewPosition: 0.5 });
+        try {
+          ref.current.scrollToIndex({ index: selectedIndex, animated: true, viewPosition: 0.5 });
+        } catch (e) {
+          console.warn('Scroll to index failed:', e);
+        }
       });
     }
-  }, [index, ref, datesFetched]);
+  }, [dates, selectedDate, dateListLoading]);
 
   const onScrollToIndexFailed = useCallback((info) => {
     const wait = new Promise((resolve) => setTimeout(resolve, 500));
