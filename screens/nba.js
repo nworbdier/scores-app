@@ -404,9 +404,8 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   image: {
-    width: 40,
-    height: 40,
-    marginBottom: 5,
+    width: 20,
+    height: 20,
   },
 });
 

@@ -12,11 +12,15 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   SafeAreaView,
+  ScrollView,
+  Dimensions,
 } from 'react-native';
 
 import NavBar from '../components/navbar'; // Import the NavBar component
 
 const ITEM_WIDTH = 75;
+
+const { width } = Dimensions.get('window');
 
 const MLB = () => {
   const navigation = useNavigation();
@@ -84,11 +88,11 @@ const MLB = () => {
       const gameData = data.events.map((event) => {
         return {
           id: event.id,
-          HomeTeam: event.competitions[0].competitors[0].team.abbreviation,
+          HomeTeam: event.competitions[0].competitors[0].team.shortDisplayName,
           HomeLogo: event.competitions[0].competitors[0].team.logo,
           HomeScore: event.competitions[0].competitors[0].score,
           HomeTeamRecordSummary: event.competitions[0].competitors[0].records[0].summary,
-          AwayTeam: event.competitions[0].competitors[1].team.abbreviation,
+          AwayTeam: event.competitions[0].competitors[1].team.shortDisplayName,
           AwayLogo: event.competitions[0].competitors[1].team.logo,
           AwayScore: event.competitions[0].competitors[1].score,
           AwayTeamRecordSummary: event.competitions[0].competitors[1].records[0].summary,
@@ -96,11 +100,33 @@ const MLB = () => {
           Status: event.competitions[0].status.type.name,
           StatusShortDetail: event.competitions[0].status.type.shortDetail,
           DisplayClock: event.status.displayClock,
-          Quarter: event.status.period,
+          Inning: event.status.period,
+          Outs: event.competitions[0].situation ? event.competitions[0].situation.outs : null,
+          First: event.competitions[0].situation ? event.competitions[0].situation.onFirst : null,
+          Second: event.competitions[0].situation ? event.competitions[0].situation.onSecond : null,
+          Third: event.competitions[0].situation ? event.competitions[0].situation.onThird : null,
         };
       });
 
-      setGameData(gameData);
+      // Sort the game data
+      const sortedGameData = gameData.sort((a, b) => {
+        // If both games are final, sort by game start time
+        if (a.Status === 'STATUS_FINAL' && b.Status === 'STATUS_FINAL') {
+          return a.GameTime.localeCompare(b.GameTime);
+        }
+        // If only one of the games is final, place it at the end
+        else if (a.Status === 'STATUS_FINAL') {
+          return 1;
+        } else if (b.Status === 'STATUS_FINAL') {
+          return -1;
+        }
+        // Otherwise, sort by game start time
+        else {
+          return a.GameTime.localeCompare(b.GameTime);
+        }
+      });
+
+      setGameData(sortedGameData);
     } catch (error) {
       console.error('Error in fetchNBAGameData:', error);
     }
@@ -162,72 +188,107 @@ const MLB = () => {
     </TouchableOpacity>
   );
 
+  const renderBasesComponent = (First, Second, Third) => {
+    return (
+      <View style={styles.basesContainer}>
+        <View style={styles.baseRow}>
+          <View style={styles.emptySpace} />
+          <View style={[styles.base, Second && styles.baseActive]} />
+          <View style={styles.emptySpace} />
+        </View>
+        <View style={styles.baseRow}>
+          <View style={[styles.base, Third && styles.baseActive]} />
+          <View style={styles.emptySpace} />
+          <View style={[styles.base, First && styles.baseActive]} />
+        </View>
+      </View>
+    );
+  };
+
   const renderMLBComponent = () => {
+    const renderItem = ({ item, index }) => (
+      <TouchableOpacity
+        style={styles.itemContainer}
+        onPress={() => navigation.navigate('MLBDetails', { eventId: item.id })}>
+        <View style={{ flexDirection: 'column' }}>
+          <View style={styles.column}>
+            <Image source={{ uri: item.AwayLogo }} style={styles.image} />
+            <View style={{ flexDirection: 'column', marginLeft: 10 }}>
+              {item.Status === 'STATUS_SCHEDULED' ? (
+                <Text style={styles.TextStyle1}>{item.AwayTeamRecordSummary}</Text>
+              ) : (
+                <Text style={styles.score}>{item.AwayScore}</Text>
+              )}
+              <Text style={styles.TextStyle1}>{item.AwayTeam}</Text>
+            </View>
+          </View>
+          <View style={styles.column}>
+            <Image source={{ uri: item.HomeLogo }} style={styles.image} />
+            <View style={{ flexDirection: 'column', marginLeft: 10 }}>
+              {item.Status === 'STATUS_SCHEDULED' ? (
+                <Text style={styles.TextStyle1}>{item.HomeTeamRecordSummary}</Text>
+              ) : (
+                <Text style={styles.score}>{item.HomeScore}</Text>
+              )}
+              <Text style={styles.TextStyle1}>{item.HomeTeam}</Text>
+            </View>
+          </View>
+        </View>
+        <View style={styles.column2}>
+          {item.Status === 'STATUS_SCHEDULED' ? (
+            <Text style={styles.TextStyle2}>{formatGameTime(item.GameTime)}</Text>
+          ) : item.Status === 'STATUS_FINAL' ? (
+            <Text style={styles.TextStyle2}>{item.StatusShortDetail}</Text>
+          ) : (
+            <View style={styles.column2}>
+              <View style={styles.gameTime}>
+                {item.StatusShortDetail.includes('Top') && (
+                  <Text style={styles.TextStyle2}>Top {item.Inning}</Text>
+                )}
+                {item.StatusShortDetail.includes('Mid') && (
+                  <Text style={styles.TextStyle2}>Mid {item.Inning}</Text>
+                )}
+                {item.StatusShortDetail.includes('Bot') && (
+                  <Text style={styles.TextStyle2}>Bot {item.Inning}</Text>
+                )}
+                {item.StatusShortDetail.includes('End') && (
+                  <Text style={styles.TextStyle2}>End {item.Inning}</Text>
+                )}
+              </View>
+              <View>
+                {item.Outs !== null && <Text style={styles.TextStyle2}>{item.Outs} Outs</Text>}
+              </View>
+              {renderBasesComponent(item.First, item.Second, item.Third)}
+            </View>
+          )}
+        </View>
+      </TouchableOpacity>
+    );
+
+    const groupedData = [];
+    const remaining = gameData.slice(0);
+
+    // Group the remaining items into rows of three
+    for (let i = 0; i < remaining.length; i += 4) {
+      groupedData.push(remaining.slice(i, i + 4));
+    }
+
     return (
       <View style={{ flex: 1 }}>
-        {gameData.length > 0 ? (
-          <FlatList
-            data={gameData}
-            renderItem={({ item, index }) => (
-              <View key={index} style={{ flex: 1 }}>
-                <TouchableOpacity
-                  style={styles.itemContainer}
-                  onPress={() => navigation.navigate('MLBDetails', { eventId: item.id })}>
-                  <View style={styles.column}>
-                    <Image source={{ uri: item.AwayLogo }} style={styles.image} />
-                    <Text style={styles.TextStyle1}>{item.AwayTeam}</Text>
-                    {item.Status === 'STATUS_SCHEDULED' ? (
-                      <Text style={styles.TextStyle1}>{item.AwayTeamRecordSummary}</Text>
-                    ) : (
-                      <Text style={styles.TextStyle1}>{item.AwayScore}</Text>
-                    )}
-                  </View>
-                  <View style={styles.column2}>
-                    {item.Status === 'STATUS_SCHEDULED' ? (
-                      <Text style={styles.TextStyle2}>{formatGameTime(item.GameTime)}</Text>
-                    ) : item.Status === 'STATUS_FINAL' ? (
-                      <Text style={styles.TextStyle2}>{item.StatusShortDetail}</Text>
-                    ) : (
-                      <View style={styles.gameTime}>
-                        {item.StatusShortDetail.includes('Top') && (
-                          <Text style={styles.TextStyle2}>Top {item.Quarter}</Text>
-                        )}
-                        {item.StatusShortDetail.includes('Mid') && (
-                          <Text style={styles.TextStyle2}>Mid {item.Quarter}</Text>
-                        )}
-                        {item.StatusShortDetail.includes('Bot') && (
-                          <Text style={styles.TextStyle2}>Bot {item.Quarter}</Text>
-                        )}
-                        {item.StatusShortDetail.includes('End') && (
-                          <Text style={styles.TextStyle2}>End {item.Quarter}</Text>
-                        )}
-                      </View>
-                    )}
-                  </View>
-                  <View style={styles.column}>
-                    <Image source={{ uri: item.HomeLogo }} style={styles.image} />
-                    <Text style={styles.TextStyle1}>{item.HomeTeam}</Text>
-                    {item.Status === 'STATUS_SCHEDULED' ? (
-                      <Text style={styles.TextStyle1}>{item.HomeTeamRecordSummary}</Text>
-                    ) : (
-                      <Text style={styles.TextStyle1}>{item.HomeScore}</Text>
-                    )}
-                  </View>
-                </TouchableOpacity>
+        <ScrollView
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor="#888" />
+          }>
+          <ScrollView horizontal>
+            {groupedData.map((row, index) => (
+              <View key={index} style={{ flexDirection: 'column' }}>
+                {row.map((item, rowIndex) => (
+                  <View key={`${index}-${rowIndex}`}>{renderItem({ item, index: rowIndex })}</View>
+                ))}
               </View>
-            )}
-            keyExtractor={(item, index) => index.toString()}
-            showsVerticalScrollIndicator={false}
-            refreshControl={
-              <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor="#888" />
-            }
-            numColumns={2}
-          />
-        ) : (
-          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-            <Text>No games available</Text>
-          </View>
-        )}
+            ))}
+          </ScrollView>
+        </ScrollView>
       </View>
     );
   };
@@ -331,9 +392,8 @@ const styles = StyleSheet.create({
     color: '#FFDB58',
   },
   itemContainer: {
-    flex: 1,
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    width: width * 0.6,
     padding: 5,
     borderWidth: 0.5,
     borderColor: 'white',
@@ -345,7 +405,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'normal',
     color: 'white',
-    textAlign: 'center',
+    textAlign: 'left',
+    marginBottom: 4,
+  },
+  score: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: 'white',
+    textAlign: 'left',
     marginBottom: 4,
   },
   TextStyle2: {
@@ -364,8 +431,8 @@ const styles = StyleSheet.create({
   },
   column: {
     flex: 1,
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     borderWidth: 2,
     borderRadius: 10,
     backgroundColor: 'transparent',
@@ -378,17 +445,44 @@ const styles = StyleSheet.create({
   },
   column2: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: 'column',
+    alignItems: 'flex-end',
+    justifyContent: 'space-around',
+    marginRight: 5,
     borderWidth: 2,
     borderRadius: 10,
     backgroundColor: 'transparent',
     borderColor: 'transparent',
   },
   image: {
-    width: 40,
-    height: 40,
-    marginBottom: 5,
+    width: 35,
+    height: 35,
+  },
+  basesContainer: {
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  baseRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  base: {
+    width: 15,
+    height: 15,
+    backgroundColor: 'grey',
+    margin: 1,
+    transform: [{ rotate: '45deg' }], // Rotate to make it look like a diamond
+  },
+  baseActive: {
+    backgroundColor: 'yellow', // Change active base color to yellow
+  },
+  emptySpace: {
+    width: 15,
+    height: 15,
+    margin: 1,
   },
 });
 
