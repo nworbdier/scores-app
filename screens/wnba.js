@@ -249,7 +249,7 @@ const WNBA = () => {
             <Text style={styles.gametime}>{item.StatusShortDetail}</Text>
           ) : (
             <View style={styles.column2}>
-              <View></View>
+              <View />
             </View>
           )}
         </View>

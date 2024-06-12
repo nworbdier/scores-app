@@ -15,6 +15,7 @@ import {
   ScrollView,
   Dimensions,
 } from 'react-native';
+
 import NavBar from '../components/navbar'; // Import the NavBar component
 
 const ITEM_WIDTH = 75;

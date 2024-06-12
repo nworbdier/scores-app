@@ -343,7 +343,7 @@ const PGA = () => {
       const updateScoresForSelectedRound = () => {
         if (!playerData || !playerData.rounds) return;
 
-        const roundIndex = parseInt(selectedRound.slice(1)) - 1;
+        const roundIndex = parseInt(selectedRound.slice(1), 10) - 1;
         if (playerData.rounds[roundIndex] && playerData.rounds[roundIndex].linescores) {
           const roundLineScores = playerData.rounds[roundIndex].linescores.map((ls) => ls.value);
           const outScore = playerData.rounds[roundIndex].outScore;

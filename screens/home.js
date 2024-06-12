@@ -22,9 +22,8 @@ const Scores = () => {
   const [index, setIndex] = useState(0);
   const [selectedSport, setSelectedSport] = useState('TENNIS');
   const [selectedDates, setSelectedDates] = useState({});
-  const [refreshing, setRefreshing] = useState(false);
   const [resetting, setResetting] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [setLoading] = useState(true);
   const [dateListLoading, setDateListLoading] = useState(false);
 
   const getSelectedDate = () => selectedDates[selectedSport] || moment().format('YYYYMMDD');
