@@ -39,6 +39,8 @@ const WNBA = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [dateListLoading, setDateListLoading] = useState(false);
   const [index, setIndex] = useState(0);
+  const [seasonSlug, setSeasonSlug] = useState('');
+
   const ref = useRef();
 
   const formatToYYYYMMDD = (dateString) => {
@@ -97,23 +99,44 @@ const WNBA = () => {
 
       const data = await response.json();
       const gameData = data.events.map((event) => {
+        const competition = event.competitions[0];
+        const isPlayoff = competition.series && competition.series.type === 'playoff';
+        let homeWins = null;
+        let awayWins = null;
+
+        if (isPlayoff) {
+          homeWins = competition.series.competitors[0].wins;
+          awayWins = competition.series.competitors[1].wins;
+        }
+
         return {
           id: event.id,
-          HomeTeam: event.competitions[0].competitors[0].team.shortDisplayName,
-          HomeLogo: event.competitions[0].competitors[0].team.logo,
-          HomeScore: event.competitions[0].competitors[0].score,
-          HomeTeamRecordSummary: event.competitions[0].competitors[0].records[0].summary,
-          AwayTeam: event.competitions[0].competitors[1].team.shortDisplayName,
-          AwayLogo: event.competitions[0].competitors[1].team.logo,
-          AwayScore: event.competitions[0].competitors[1].score,
-          AwayTeamRecordSummary: event.competitions[0].competitors[1].records[0].summary,
-          GameTime: event.competitions[0].date,
-          Status: event.competitions[0].status.type.name,
-          StatusShortDetail: event.competitions[0].status.type.shortDetail,
+          HomeTeam: competition.competitors[0].team.shortDisplayName,
+          HomeLogo: competition.competitors[0].team.logo,
+          HomeScore: competition.competitors[0].score,
+          HomeTeamRecordSummary: isPlayoff
+            ? `${homeWins}-${awayWins}`
+            : competition.competitors[0].records[0].summary,
+          AwayTeam: competition.competitors[1].team.shortDisplayName,
+          AwayLogo: competition.competitors[1].team.logo,
+          AwayScore: competition.competitors[1].score,
+          AwayTeamRecordSummary: isPlayoff
+            ? `${awayWins}-${homeWins}`
+            : competition.competitors[1].records[0].summary,
+          GameTime: competition.date,
+          Status: competition.status.type.name,
+          StatusShortDetail: competition.status.type.shortDetail,
           DisplayClock: event.status.displayClock,
           Quarter: event.status.period,
+          IsPlayoff: isPlayoff,
+          HomeWins: homeWins,
+          AwayWins: awayWins,
         };
       });
+
+      if (data.events[0] && data.events[0].season && data.events[0].season.slug) {
+        setSeasonSlug(data.events[0].season.slug);
+      }
 
       setGameData(gameData);
     } catch (error) {
@@ -243,6 +266,13 @@ const WNBA = () => {
 
     return (
       <View style={{ flex: 1 }}>
+        <Text style={{ color: 'white', fontSize: 20, fontWeight: 'bold', marginBottom: 10 }}>
+          {seasonSlug === 'regular-season'
+            ? 'Games'
+            : seasonSlug === 'post-season'
+              ? 'Playoffs'
+              : 'Games'}
+        </Text>
         <ScrollView
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor="#888" />

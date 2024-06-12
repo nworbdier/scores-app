@@ -31,6 +31,7 @@ const MLB = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [dateListLoading, setDateListLoading] = useState(false);
   const [index, setIndex] = useState(0);
+  const [seasonSlug, setSeasonSlug] = useState('');
   const ref = useRef();
 
   const formatToYYYYMMDD = (dateString) => {
@@ -86,6 +87,15 @@ const MLB = () => {
 
       const data = await response.json();
       const gameData = data.events.map((event) => {
+        const competition = event.competitions[0];
+        const isPlayoff = competition.series && competition.series.type === 'playoff';
+        let homeWins = null;
+        let awayWins = null;
+
+        if (isPlayoff) {
+          homeWins = competition.series.competitors[0].wins;
+          awayWins = competition.series.competitors[1].wins;
+        }
         return {
           id: event.id,
           HomeTeam: event.competitions[0].competitors[0].team.shortDisplayName,
@@ -105,8 +115,15 @@ const MLB = () => {
           First: event.competitions[0].situation ? event.competitions[0].situation.onFirst : null,
           Second: event.competitions[0].situation ? event.competitions[0].situation.onSecond : null,
           Third: event.competitions[0].situation ? event.competitions[0].situation.onThird : null,
+          IsPlayoff: isPlayoff,
+          HomeWins: homeWins,
+          AwayWins: awayWins,
         };
       });
+
+      if (data.events[0] && data.events[0].season && data.events[0].season.slug) {
+        setSeasonSlug(data.events[0].season.slug);
+      }
 
       // Sort the game data
       const sortedGameData = gameData.sort((a, b) => {
@@ -275,6 +292,13 @@ const MLB = () => {
 
     return (
       <View style={{ flex: 1 }}>
+        <Text style={{ color: 'white', fontSize: 20, fontWeight: 'bold', marginBottom: 10 }}>
+          {seasonSlug === 'regular-season'
+            ? 'Games'
+            : seasonSlug === 'post-season'
+              ? 'Playoffs'
+              : 'Games'}
+        </Text>
         <ScrollView
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor="#888" />

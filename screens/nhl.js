@@ -154,10 +154,6 @@ const NHL = () => {
   }, []);
 
   useEffect(() => {
-    fetchDates();
-  }, []);
-
-  useEffect(() => {
     if (selectedDate) {
       fetchGameData(selectedDate);
     }
@@ -174,6 +170,10 @@ const NHL = () => {
       }
     }
   }, [dates, selectedDate, dateListLoading]);
+
+  useEffect(() => {
+    fetchDates();
+  }, []);
 
   const onScrollToIndexFailed = useCallback((info) => {
     const wait = new Promise((resolve) => setTimeout(resolve, 500));
