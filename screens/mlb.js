@@ -1,5 +1,5 @@
 import { AntDesign, Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import moment from 'moment';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
@@ -15,11 +15,9 @@ import {
   ScrollView,
   Dimensions,
 } from 'react-native';
-
 import NavBar from '../components/navbar'; // Import the NavBar component
 
 const ITEM_WIDTH = 75;
-
 const { width } = Dimensions.get('window');
 
 const MLB = () => {
@@ -53,7 +51,7 @@ const MLB = () => {
   const fetchDates = async () => {
     try {
       const response = await fetch(
-        `https://sports.core.api.espn.com/v2/sports/baseball/leagues/mlb/calendar/whitelist`
+        'https://sports.core.api.espn.com/v2/sports/baseball/leagues/mlb/calendar/whitelist'
       );
       const data = await response.json();
       const dates = data.eventDate.dates.map((date) => formatToYYYYMMDD(date));
@@ -346,6 +344,17 @@ const MLB = () => {
     );
   };
 
+  useFocusEffect(
+    useCallback(() => {
+      const intervalId = setInterval(() => {
+        fetchGameData();
+        console.log('Refreshing MLB...');
+      }, 10000); // Refresh every 10 seconds
+
+      return () => clearInterval(intervalId); // Cleanup interval on blur
+    }, [selectedDate])
+  );
+
   return (
     <View style={styles.container}>
       <SafeAreaView style={styles.safeAreaContainer} />
@@ -501,7 +510,6 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 10,
   },
   baseRow: {
     flexDirection: 'row',
@@ -512,7 +520,6 @@ const styles = StyleSheet.create({
     width: 15,
     height: 15,
     backgroundColor: 'grey',
-    margin: 0.5,
     transform: [{ rotate: '45deg' }], // Rotate to make it look like a diamond
   },
   baseActive: {
@@ -521,7 +528,7 @@ const styles = StyleSheet.create({
   emptySpace: {
     width: 15,
     height: 15,
-    margin: 0.5,
+    transform: [{ rotate: '45deg' }], // Rotate to make it look like a diamond
   },
 });
 
