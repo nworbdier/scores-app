@@ -304,24 +304,16 @@ const MLB = () => {
               <View style={styles.column2}>
                 <View style={styles.gameTime}>
                   {item.StatusShortDetail.includes('Top') && (
-                    <Text style={[styles.TextStyle2, { fontWeight: 'bold' }]}>
-                      Top {item.Inning}
-                    </Text>
+                    <Text style={[styles.inning]}>Top {item.Inning}</Text>
                   )}
                   {item.StatusShortDetail.includes('Mid') && (
-                    <Text style={[styles.TextStyle2, { fontWeight: 'bold' }]}>
-                      Mid {item.Inning}
-                    </Text>
+                    <Text style={[styles.inning]}>Mid {item.Inning}</Text>
                   )}
                   {item.StatusShortDetail.includes('Bot') && (
-                    <Text style={[styles.TextStyle2, { fontWeight: 'bold' }]}>
-                      Bot {item.Inning}
-                    </Text>
+                    <Text style={[styles.inning]}>Bot {item.Inning}</Text>
                   )}
                   {item.StatusShortDetail.includes('End') && (
-                    <Text style={[styles.TextStyle2, { fontWeight: 'bold' }]}>
-                      End {item.Inning}
-                    </Text>
+                    <Text style={[styles.inning]}>End {item.Inning}</Text>
                   )}
                 </View>
                 <View>
@@ -521,6 +513,13 @@ const styles = StyleSheet.create({
   TextStyle2: {
     fontSize: 15,
     fontWeight: 'normal',
+    color: 'white',
+    textAlign: 'center',
+    marginBottom: 2,
+  },
+  inning: {
+    fontSize: 18,
+    fontWeight: 'bold',
     color: 'white',
     textAlign: 'center',
     marginBottom: 2,

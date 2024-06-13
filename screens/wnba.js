@@ -274,7 +274,10 @@ const WNBA = () => {
               <View style={styles.column2}>
                 <View>
                   <Text style={[styles.TextStyle2, { fontWeight: 'bold' }]}>
-                    {item.DisplayClock} - {getNumberWithSuffix(item.Quarter)}
+                    {getNumberWithSuffix(item.Quarter)}
+                  </Text>
+                  <Text style={[styles.TextStyle2, { fontWeight: 'bold' }]}>
+                    {item.DisplayClock}
                   </Text>
                 </View>
               </View>
@@ -450,7 +453,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   TextStyle2: {
-    fontSize: 15,
+    fontSize: 18,
     fontWeight: 'normal',
     color: 'white',
     textAlign: 'center',
