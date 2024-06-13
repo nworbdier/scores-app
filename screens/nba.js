@@ -282,11 +282,17 @@ const NBA = () => {
           </View>
           <View style={styles.column2}>
             {item.Status === 'STATUS_SCHEDULED' ? (
-              <Text style={styles.gametime}>{formatGameTime(item.GameTime)}</Text>
+              <View style={styles.column2}>
+                <Text style={styles.gametime}>{formatGameTime(item.GameTime)}</Text>
+              </View>
             ) : item.Status === 'STATUS_FINAL' ? (
-              <Text style={styles.gametime}>{item.StatusShortDetail}</Text>
+              <View style={styles.column2}>
+                <Text style={styles.gametime}>{item.StatusShortDetail}</Text>
+              </View>
             ) : item.Status === 'STATUS_HALFTIME' ? (
-              <Text style={styles.gametime}>Half</Text>
+              <View style={styles.column2}>
+                <Text style={styles.gametime}>Half</Text>
+              </View>
             ) : item.Status === 'STATUS_END_PERIOD' ? (
               <Text style={styles.gametime}>End {item.Quarter}</Text>
             ) : (
