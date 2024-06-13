@@ -31,6 +31,18 @@ const findClosestDate = (dates) => {
   });
 };
 
+const getNumberWithSuffix = (number) => {
+  if (number % 10 === 1 && number % 100 !== 11) {
+    return number + 'st';
+  } else if (number % 10 === 2 && number % 100 !== 12) {
+    return number + 'nd';
+  } else if (number % 10 === 3 && number % 100 !== 13) {
+    return number + 'rd';
+  } else {
+    return number + 'th';
+  }
+};
+
 const WNBA = () => {
   const navigation = useNavigation();
   const [gameData, setGameData] = useState([]);
@@ -214,47 +226,63 @@ const WNBA = () => {
   );
 
   const renderWNBAComponent = () => {
-    const renderItem = ({ item, index }) => (
-      <TouchableOpacity
-        style={styles.itemContainer}
-        onPress={() => navigation.navigate('WNBADetails', { eventId: item.id })}>
-        <View style={{ flexDirection: 'column' }}>
-          <View style={styles.column}>
-            <Image source={{ uri: item.AwayLogo }} style={styles.image} />
-            <View style={{ flexDirection: 'column', marginLeft: 10 }}>
-              {item.Status === 'STATUS_SCHEDULED' ? (
-                <Text style={styles.score}>{item.AwayTeamRecordSummary}</Text>
-              ) : (
-                <Text style={styles.score}>{item.AwayScore}</Text>
-              )}
-              <Text style={styles.TextStyle1}>{item.AwayTeam}</Text>
+    const renderItem = ({ item, index }) => {
+      const containerStyle = [
+        styles.itemContainer,
+        item.Status === 'STATUS_IN_PROGRESS' && { borderColor: 'lightgreen' },
+        item.Status === 'STATUS_HALFTIME' && { borderColor: 'lightgreen' },
+
+        item.Status === 'STATUS_RAIN_DELAY' && { borderColor: 'yellow' },
+      ];
+
+      return (
+        <TouchableOpacity
+          style={containerStyle}
+          onPress={() => navigation.navigate('WNBADetails', { eventId: item.id })}>
+          <View style={{ flexDirection: 'column' }}>
+            <View style={styles.column}>
+              <Image source={{ uri: item.AwayLogo }} style={styles.image} />
+              <View style={{ flexDirection: 'column', marginLeft: 10 }}>
+                {item.Status === 'STATUS_SCHEDULED' ? (
+                  <Text style={styles.score}>{item.AwayTeamRecordSummary}</Text>
+                ) : (
+                  <Text style={styles.score}>{item.AwayScore}</Text>
+                )}
+                <Text style={styles.TextStyle1}>{item.AwayTeam}</Text>
+              </View>
+            </View>
+            <View style={styles.column}>
+              <Image source={{ uri: item.HomeLogo }} style={styles.image} />
+              <View style={{ flexDirection: 'column', marginLeft: 10 }}>
+                {item.Status === 'STATUS_SCHEDULED' ? (
+                  <Text style={styles.score}>{item.HomeTeamRecordSummary}</Text>
+                ) : (
+                  <Text style={styles.score}>{item.HomeScore}</Text>
+                )}
+                <Text style={styles.TextStyle1}>{item.HomeTeam}</Text>
+              </View>
             </View>
           </View>
-          <View style={styles.column}>
-            <Image source={{ uri: item.HomeLogo }} style={styles.image} />
-            <View style={{ flexDirection: 'column', marginLeft: 10 }}>
-              {item.Status === 'STATUS_SCHEDULED' ? (
-                <Text style={styles.score}>{item.HomeTeamRecordSummary}</Text>
-              ) : (
-                <Text style={styles.score}>{item.HomeScore}</Text>
-              )}
-              <Text style={styles.TextStyle1}>{item.HomeTeam}</Text>
-            </View>
+          <View style={styles.column2}>
+            {item.Status === 'STATUS_SCHEDULED' ? (
+              <Text style={styles.gametime}>{formatGameTime(item.GameTime)}</Text>
+            ) : item.Status === 'STATUS_FINAL' ? (
+              <Text style={styles.gametime}>{item.StatusShortDetail}</Text>
+            ) : item.Status === 'STATUS_HALFTIME' ? (
+              <Text style={styles.gametime}>Half</Text>
+            ) : (
+              <View style={styles.column2}>
+                <View>
+                  <Text style={[styles.TextStyle2, { fontWeight: 'bold' }]}>
+                    {item.DisplayClock} - {getNumberWithSuffix(item.Quarter)}
+                  </Text>
+                </View>
+              </View>
+            )}
           </View>
-        </View>
-        <View style={styles.column2}>
-          {item.Status === 'STATUS_SCHEDULED' ? (
-            <Text style={styles.gametime}>{formatGameTime(item.GameTime)}</Text>
-          ) : item.Status === 'STATUS_FINAL' ? (
-            <Text style={styles.gametime}>{item.StatusShortDetail}</Text>
-          ) : (
-            <View style={styles.column2}>
-              <View />
-            </View>
-          )}
-        </View>
-      </TouchableOpacity>
-    );
+        </TouchableOpacity>
+      );
+    };
 
     const groupedData = [];
     const remaining = gameData.slice(0);
@@ -404,7 +432,7 @@ const styles = StyleSheet.create({
     borderWidth: 0.5,
     borderColor: 'white',
     borderRadius: 5,
-    margin: 3,
+    margin: 2,
     backgroundColor: '#141414',
   },
   TextStyle1: {
