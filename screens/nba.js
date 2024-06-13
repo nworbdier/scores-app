@@ -1,5 +1,5 @@
 import { AntDesign, Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import moment from 'moment';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
@@ -225,6 +225,24 @@ const NBA = () => {
     </TouchableOpacity>
   );
 
+  useFocusEffect(
+    useCallback(() => {
+      const fetchInitialData = async () => {
+        await fetchGameData();
+        // console.log('Initial fetch for MLB...');
+      };
+
+      fetchInitialData();
+
+      const intervalId = setInterval(() => {
+        fetchGameData();
+        // console.log('Refreshing NBA...');
+      }, 5000); // Refresh every 10 seconds
+
+      return () => clearInterval(intervalId); // Cleanup interval on blur
+    }, [selectedDate])
+  );
+
   const renderNBAComponent = () => {
     const renderItem = ({ item, index }) => {
       const containerStyle = [
@@ -269,6 +287,8 @@ const NBA = () => {
               <Text style={styles.gametime}>{item.StatusShortDetail}</Text>
             ) : item.Status === 'STATUS_HALFTIME' ? (
               <Text style={styles.gametime}>Half</Text>
+            ) : item.Status === 'STATUS_END_PERIOD' ? (
+              <Text style={styles.gametime}>End {item.Quarter}</Text>
             ) : (
               <View style={styles.column2}>
                 <View>

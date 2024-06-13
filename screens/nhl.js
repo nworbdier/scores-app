@@ -1,5 +1,5 @@
 import { AntDesign, Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import moment from 'moment';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
@@ -210,6 +210,24 @@ const NHL = () => {
         {moment(item).format('MMM D')}
       </Text>
     </TouchableOpacity>
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      const fetchInitialData = async () => {
+        await fetchGameData();
+        // console.log('Initial fetch for MLB...');
+      };
+
+      fetchInitialData();
+
+      const intervalId = setInterval(() => {
+        fetchGameData();
+        // console.log('Refreshing MLB...');
+      }, 10000); // Refresh every 10 seconds
+
+      return () => clearInterval(intervalId); // Cleanup interval on blur
+    }, [selectedDate])
   );
 
   const renderNHLComponent = () => {

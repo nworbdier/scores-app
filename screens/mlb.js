@@ -35,7 +35,6 @@ const MLB = () => {
   const navigation = useNavigation();
   const [gameData, setGameData] = useState([]);
   const [dates, setDates] = useState([]);
-  const [datesFetched, setDatesFetched] = useState(false);
   const [selectedDate, setSelectedDate] = useState(moment().format('YYYYMMDD'));
   const [refreshing, setRefreshing] = useState(false);
   const [dateListLoading, setDateListLoading] = useState(false);

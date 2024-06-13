@@ -1,5 +1,5 @@
 import { AntDesign, Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import moment from 'moment';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
@@ -225,13 +225,31 @@ const WNBA = () => {
     </TouchableOpacity>
   );
 
+  useFocusEffect(
+    useCallback(() => {
+      const fetchInitialData = async () => {
+        await fetchGameData();
+        // console.log('Initial fetch for MLB...');
+      };
+
+      fetchInitialData();
+
+      const intervalId = setInterval(() => {
+        fetchGameData();
+        console.log('Refreshing WNBA...');
+      }, 5000);
+
+      return () => clearInterval(intervalId); // Cleanup interval on blur
+    }, [selectedDate])
+  );
+
   const renderWNBAComponent = () => {
     const renderItem = ({ item, index }) => {
       const containerStyle = [
         styles.itemContainer,
         item.Status === 'STATUS_IN_PROGRESS' && { borderColor: 'lightgreen' },
         item.Status === 'STATUS_HALFTIME' && { borderColor: 'lightgreen' },
-
+        item.Status === 'STATUS_END_PERIOD' && { borderColor: 'lightgreen' },
         item.Status === 'STATUS_RAIN_DELAY' && { borderColor: 'yellow' },
       ];
 
@@ -270,6 +288,8 @@ const WNBA = () => {
               <Text style={styles.gametime}>{item.StatusShortDetail}</Text>
             ) : item.Status === 'STATUS_HALFTIME' ? (
               <Text style={styles.gametime}>Half</Text>
+            ) : item.Status === 'STATUS_END_PERIOD' ? (
+              <Text style={styles.gametime}>End {item.Quarter}</Text>
             ) : (
               <View style={styles.column2}>
                 <View>
