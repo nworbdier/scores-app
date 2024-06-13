@@ -31,6 +31,18 @@ const findClosestDate = (dates) => {
   });
 };
 
+const getNumberWithSuffix = (number) => {
+  if (number % 10 === 1 && number % 100 !== 11) {
+    return number + 'st';
+  } else if (number % 10 === 2 && number % 100 !== 12) {
+    return number + 'nd';
+  } else if (number % 10 === 3 && number % 100 !== 13) {
+    return number + 'rd';
+  } else {
+    return number + 'th';
+  }
+};
+
 const NHL = () => {
   const navigation = useNavigation();
   const [gameData, setGameData] = useState([]);
@@ -126,7 +138,7 @@ const NHL = () => {
           Status: competition.status.type.name,
           StatusShortDetail: competition.status.type.shortDetail,
           DisplayClock: event.status.displayClock,
-          Quarter: event.status.period,
+          Period: event.status.period,
           IsPlayoff: isPlayoff,
           HomeWins: homeWins,
           AwayWins: awayWins,
@@ -261,12 +273,27 @@ const NHL = () => {
         </View>
         <View style={styles.column2}>
           {item.Status === 'STATUS_SCHEDULED' ? (
-            <Text style={styles.gametime}>{formatGameTime(item.GameTime)}</Text>
+            <View style={styles.column2}>
+              <Text style={styles.gametime}>{formatGameTime(item.GameTime)}</Text>
+            </View>
           ) : item.Status === 'STATUS_FINAL' ? (
-            <Text style={styles.gametime}>{item.StatusShortDetail}</Text>
+            <View style={styles.column2}>
+              <Text style={styles.gametime}>{item.StatusShortDetail}</Text>
+            </View>
+          ) : item.Status === 'STATUS_HALFTIME' ? (
+            <View style={styles.column2}>
+              <Text style={styles.gametime}>Half</Text>
+            </View>
+          ) : item.Status === 'STATUS_END_PERIOD' ? (
+            <Text style={styles.gametime}>End {item.Period}</Text>
           ) : (
             <View style={styles.column2}>
-              <View />
+              <View>
+                <Text style={[styles.TextStyle2, { fontWeight: 'bold' }]}>
+                  {getNumberWithSuffix(item.Quarter)}
+                </Text>
+                <Text style={[styles.TextStyle2, { fontWeight: 'bold' }]}>{item.DisplayClock}</Text>
+              </View>
             </View>
           )}
         </View>
