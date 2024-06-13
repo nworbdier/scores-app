@@ -102,10 +102,7 @@ const PFL = () => {
   useFocusEffect(
     useCallback(() => {
       const fetchInitialData = async () => {
-        await fetchDates();
-        const closestDate = findClosestDate(dates);
-        setSelectedDate(closestDate);
-        await fetchEvents(closestDate);
+        await fetchEvents(selectedDate);
       };
 
       fetchInitialData();
@@ -117,16 +114,6 @@ const PFL = () => {
       return () => clearInterval(intervalId); // Cleanup interval on blur
     }, [selectedDate])
   );
-
-  useEffect(() => {
-    const fetchData = async () => {
-      await fetchDates();
-      const closestDate = findClosestDate(dates);
-      setSelectedDate(closestDate);
-      await fetchEvents(closestDate);
-    };
-    fetchData();
-  }, []);
 
   useEffect(() => {
     fetchDates();

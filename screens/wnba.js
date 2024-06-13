@@ -433,7 +433,7 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   headerContainer: {
-    height: 70,
+    height: 50,
   },
   dateList: {
     justifyContent: 'center',

@@ -183,7 +183,7 @@ const PGA = () => {
         if (currentEventId) {
           fetchPGAData(currentEventId);
         }
-      }, 10000); // Refresh every 10 seconds
+      }, 100000); // Refresh every 10 seconds
 
       return () => clearInterval(intervalId); // Cleanup interval on blur
     }, [currentEventId])
@@ -372,14 +372,24 @@ const PGA = () => {
 
         const roundIndex = parseInt(selectedRound.slice(1), 10) - 1;
         if (playerData.rounds[roundIndex] && playerData.rounds[roundIndex].linescores) {
-          const roundLineScores = playerData.rounds[roundIndex].linescores.map((ls) => ls.value);
+          const roundLineScores = playerData.rounds[roundIndex].linescores.map((ls) => ({
+            period: ls.period,
+            score: ls.displayValue,
+            par: ls.par,
+          }));
           const outScore = playerData.rounds[roundIndex].outScore;
           const inScore = playerData.rounds[roundIndex].inScore;
+
+          // Calculate the sum of the par scores for the "In" holes
+          const inParScore = roundLineScores.slice(9).reduce((sum, ls) => sum + (ls.par || 0), 0);
+          const outParScore = roundLineScores.slice(9).reduce((sum, ls) => sum + (ls.par || 0), 0);
 
           setLineScores({
             [selectedRound]: roundLineScores,
             outScore,
             inScore,
+            inParScore,
+            outParScore,
           });
         }
       };
@@ -420,10 +430,10 @@ const PGA = () => {
               ))}
             </View>
             <View style={styles.scoresContainer}>
-              <View style={styles.scoreRow}>
+              <View style={styles.holeRow}>
                 {[...Array(9).keys()].map((i) => (
-                  <Text key={i} style={styles.scoreCell}>
-                    {i + 1}
+                  <Text key={i} style={styles.headerHoleCell}>
+                    {lineScores[selectedRound] ? lineScores[selectedRound][i]?.period : ''}
                   </Text>
                 ))}
                 <Text style={[styles.scoreCell, styles.headerCell]}>Out</Text>
@@ -431,39 +441,40 @@ const PGA = () => {
               <View style={styles.scoreRow}>
                 {[...Array(9).keys()].map((i) => (
                   <Text key={i} style={styles.scoreCell}>
-                    -
+                    {lineScores[selectedRound] ? lineScores[selectedRound][i]?.par : ''}
                   </Text>
                 ))}
-                <Text style={styles.scoreCell}>27</Text>
+                <Text style={styles.scoreCell}>{lineScores.outParScore}</Text>
               </View>
               <View style={styles.scoreRow}>
                 {[...Array(9).keys()].map((i) => (
                   <Text key={i} style={styles.scoreCell}>
-                    {lineScores[selectedRound] ? lineScores[selectedRound][i] : ''}
+                    {lineScores[selectedRound] ? lineScores[selectedRound][i]?.score : ''}
                   </Text>
                 ))}
                 <Text style={styles.scoreCell}>{lineScores.outScore}</Text>
               </View>
-              <View style={styles.scoreRow}>
+
+              <View style={styles.holeRow}>
                 {[...Array(9).keys()].map((i) => (
-                  <Text key={i} style={styles.scoreCell}>
-                    {i + 10}
+                  <Text key={i + 9} style={styles.headerHoleCell}>
+                    {lineScores[selectedRound] ? lineScores[selectedRound][i + 9]?.period : ''}
                   </Text>
                 ))}
                 <Text style={[styles.scoreCell, styles.headerCell]}>In</Text>
               </View>
               <View style={styles.scoreRow}>
                 {[...Array(9).keys()].map((i) => (
-                  <Text key={i} style={styles.scoreCell}>
-                    -
+                  <Text key={i + 9} style={styles.scoreCell}>
+                    {lineScores[selectedRound] ? lineScores[selectedRound][i + 9]?.par : ''}
                   </Text>
                 ))}
-                <Text style={styles.scoreCell}>27</Text>
+                <Text style={styles.scoreCell}>{lineScores.inParScore}</Text>
               </View>
               <View style={styles.scoreRow}>
                 {[...Array(9).keys()].map((i) => (
-                  <Text key={i} style={styles.scoreCell}>
-                    {lineScores[selectedRound] ? lineScores[selectedRound][i + 9] : ''}
+                  <Text key={i + 9} style={styles.scoreCell}>
+                    {lineScores[selectedRound] ? lineScores[selectedRound][i + 9]?.score : ''}
                   </Text>
                 ))}
                 <Text style={styles.scoreCell}>{lineScores.inScore}</Text>
@@ -538,7 +549,7 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   headerContainer: {
-    height: 70,
+    height: 50,
   },
   tournamentDropdown: {
     flexDirection: 'row',
@@ -709,6 +720,17 @@ const styles = StyleSheet.create({
   },
   scoresContainer: {
     alignItems: 'center',
+  },
+  holeRow: {
+    flexDirection: 'row',
+    marginVertical: 10,
+    backgroundColor: 'lightgrey',
+  },
+  headerHoleCell: {
+    width: 30,
+    textAlign: 'center',
+    color: 'black',
+    fontWeight: 'bold',
   },
   scoreRow: {
     flexDirection: 'row',

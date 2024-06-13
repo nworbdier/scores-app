@@ -206,7 +206,7 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   headerContainer: {
-    height: 70,
+    height: 50,
   },
   sportList: {
     justifyContent: 'center',

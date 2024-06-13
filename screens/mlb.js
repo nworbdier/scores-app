@@ -444,7 +444,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'black',
   },
   safeAreaContainer: {
-    backgroundColor: 'black',
+    backgroundColor: '#141414',
   },
   header: {
     flexDirection: 'row',
@@ -464,7 +464,7 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   headerContainer: {
-    height: 70,
+    height: 50,
   },
   dateList: {
     justifyContent: 'center',
