@@ -1,7 +1,6 @@
 import { Ionicons, AntDesign } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import moment from 'moment';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
-
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
@@ -69,7 +68,7 @@ const PGA = () => {
   const fetchTournamentCalendar = async () => {
     try {
       const response = await fetch(
-        `https://site.api.espn.com/apis/site/v2/sports/golf/pga/scoreboard`
+        'https://site.api.espn.com/apis/site/v2/sports/golf/pga/scoreboard'
       );
       const data = await response.json();
       const calendar = data.leagues[0].calendar;
@@ -100,8 +99,6 @@ const PGA = () => {
       const response = await fetch(
         `https://site.web.api.espn.com/apis/site/v2/sports/golf/leaderboard?league=pga&event=${eventId}`
       );
-
-      console.log('Response URL:', response.url);
 
       const data = await response.json();
       setCurrentData(data); // Set current data
@@ -163,6 +160,27 @@ const PGA = () => {
       console.error('Error fetching PGA data:', error);
     }
   };
+
+  useFocusEffect(
+    useCallback(() => {
+      const fetchInitialData = async () => {
+        await fetchTournamentCalendar();
+        if (currentEventId) {
+          await fetchPGAData(currentEventId);
+        }
+      };
+
+      fetchInitialData();
+
+      const intervalId = setInterval(() => {
+        if (currentEventId) {
+          fetchPGAData(currentEventId);
+        }
+      }, 10000); // Refresh every 10 seconds
+
+      return () => clearInterval(intervalId); // Cleanup interval on blur
+    }, [currentEventId])
+  );
 
   useEffect(() => {
     const initializeData = async () => {

@@ -1,8 +1,7 @@
 import { AntDesign, Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import moment from 'moment';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
-
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import {
   StyleSheet,
   View,
@@ -39,6 +38,7 @@ const PFL = () => {
   const [events, setEvents] = useState([]);
   const [eventDetails, setEventDetails] = useState(null);
   const [dates, setDates] = useState([]);
+  const [datesFetched, setDatesFetched] = useState(false);
   const [index, setIndex] = useState(0);
   const [dateListLoading, setDateListLoading] = useState(true);
 
@@ -57,6 +57,7 @@ const PFL = () => {
       const closestDate = findClosestDate(dates);
       const newIndex = dates.findIndex((date) => date === closestDate);
       setDates(dates);
+      setDatesFetched(true); // Set the flag to true
       setIndex(newIndex);
       setSelectedDate(closestDate);
       setDateListLoading(false);
@@ -74,14 +75,14 @@ const PFL = () => {
         `https://site.api.espn.com/apis/site/v2/sports/mma/pfl/scoreboard?dates=${formattedDate}`,
         options
       );
-      console.log('Fetch UFC Events Data URL:', response.url);
+      console.log('Fetch PFL Events Data URL:', response.url);
       const result = await response.json();
       setEvents(result.events || []);
       if (result.events && result.events.length > 0) {
         await fetchEventDetails(result.events[0].id);
       }
     } catch (error) {
-      console.error('Error fetching UFC events:', error);
+      console.error('Error fetching PFL events:', error);
     }
   };
 
@@ -94,9 +95,28 @@ const PFL = () => {
       const result = await response.json();
       setEventDetails(result);
     } catch (error) {
-      console.error('Error fetching UFC event details:', error);
+      console.error('Error fetching PFL event details:', error);
     }
   };
+
+  useFocusEffect(
+    useCallback(() => {
+      const fetchInitialData = async () => {
+        await fetchDates();
+        const closestDate = findClosestDate(dates);
+        setSelectedDate(closestDate);
+        await fetchEvents(closestDate);
+      };
+
+      fetchInitialData();
+
+      const intervalId = setInterval(() => {
+        fetchEvents(selectedDate);
+      }, 10000); // Refresh every 10 seconds
+
+      return () => clearInterval(intervalId); // Cleanup interval on blur
+    }, [selectedDate])
+  );
 
   useEffect(() => {
     const fetchData = async () => {
@@ -118,37 +138,34 @@ const PFL = () => {
     }
   }, [selectedDate]);
 
-  useEffect(() => {
-    if (ref.current && dates.length > 0 && !dateListLoading) {
-      const selectedIndex = dates.findIndex((d) => d === selectedDate);
-      setIndex(selectedIndex >= 0 ? selectedIndex : 0);
-      try {
-        ref.current.scrollToIndex({ index: selectedIndex, animated: true, viewPosition: 0.5 });
-      } catch (e) {
-        console.warn('Scroll to index failed:', e);
-      }
-    }
-  }, [dates, selectedDate, dateListLoading]);
-
   const onRefresh = async () => {
     setRefreshing(true);
     await fetchEvents(selectedDate);
     setRefreshing(false);
   };
 
-  const onScrollToIndexFailed = async (info) => {
-    const wait = new Promise((resolve) => setTimeout(resolve, 5000));
-    await wait;
-    const offset = ITEM_WIDTH * info.index;
-    try {
-      ref.current?.scrollToOffset({ offset, animated: true });
-      setTimeout(() => {
-        setDateListLoading(false);
-      }, 500);
-    } catch (e) {
-      console.warn('Scroll to index failed:', e);
+  useEffect(() => {
+    if (ref.current && datesFetched) {
+      // Check if dates have been fetched
+      const wait = new Promise((resolve) => setTimeout(resolve, 1000));
+      wait.then(() => {
+        ref.current.scrollToIndex({ index, animated: true, viewPosition: 0.5 });
+      });
     }
-  };
+  }, [index, ref, datesFetched]);
+
+  const onScrollToIndexFailed = useCallback((info) => {
+    const wait = new Promise((resolve) => setTimeout(resolve, 1000));
+    wait.then(() => {
+      const offset = ITEM_WIDTH * info.index;
+      try {
+        ref.current?.scrollToOffset({ offset, animated: true, viewPosition: 0.5 });
+        setDateListLoading(false);
+      } catch (e) {
+        console.warn('Scroll to index failed:', e);
+      }
+    });
+  }, []);
 
   const renderCompetitionItem = (competition, cardKey) => {
     const statusType = competition.status.type.name;

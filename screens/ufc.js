@@ -1,7 +1,6 @@
 import { AntDesign, Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import moment from 'moment';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
-
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import {
   StyleSheet,
@@ -99,6 +98,25 @@ const UFC = () => {
       console.error('Error fetching UFC event details:', error);
     }
   };
+
+  useFocusEffect(
+    useCallback(() => {
+      const fetchInitialData = async () => {
+        await fetchDates();
+        const closestDate = findClosestDate(dates);
+        setSelectedDate(closestDate);
+        await fetchEvents(closestDate);
+      };
+
+      fetchInitialData();
+
+      const intervalId = setInterval(() => {
+        fetchEvents(selectedDate);
+      }, 10000); // Refresh every 10 seconds
+
+      return () => clearInterval(intervalId); // Cleanup interval on blur
+    }, [selectedDate])
+  );
 
   useEffect(() => {
     const fetchData = async () => {
