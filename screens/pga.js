@@ -131,6 +131,13 @@ const PGA = () => {
                   today = competitor.linescores[lineScoreIndex].displayValue || '-';
                 }
               }
+
+              if (thru && thru !== '-') {
+                // Check if startHole is 10 and add asterisk
+                if (competitor.status.startHole === 10) {
+                  thru += '*';
+                }
+              }
             }
           }
 
