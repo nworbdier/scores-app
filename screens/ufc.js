@@ -41,6 +41,7 @@ const UFC = () => {
   const [datesFetched, setDatesFetched] = useState(false);
   const [index, setIndex] = useState(0);
   const [dateListLoading, setDateListLoading] = useState(true);
+  const [liveFight, setLiveFight] = useState(null); // Add a state to store the live fight
 
   const formatToYYYYMMDD = (dateString) => {
     const date = moment(dateString);
@@ -174,25 +175,47 @@ const UFC = () => {
 
     return (
       <View style={styles.competitorsContainer} key={competition.id}>
-        <View style={styles.competitorColumn}>
-          {getImageSource(competitor1) && (
-            <Image source={getImageSource(competitor1)} style={styles.headshotImage} />
-          )}
-          <Text style={styles.competitorName}>{competitor1.athlete.displayName}</Text>
-          <Text
-            style={[
-              styles.resultText,
-              statusType === 'STATUS_SCHEDULED' && styles.scheduledText,
-              !competitor1.winner && statusType !== 'STATUS_SCHEDULED' && styles.lossText,
-            ]}>
-            {isInProgress
-              ? '-'
-              : statusType === 'STATUS_SCHEDULED'
-                ? competitor1.displayRecord
-                : competitor1.winner
-                  ? 'W'
-                  : 'L'}
-          </Text>
+        <View>
+          <View style={styles.competitorRow}>
+            {getImageSource(competitor1) && (
+              <Image source={getImageSource(competitor1)} style={styles.headshotImage} />
+            )}
+            <Text style={styles.competitorName}>{competitor1.athlete.displayName}</Text>
+            <Text
+              style={[
+                styles.resultText,
+                statusType === 'STATUS_SCHEDULED' && styles.scheduledText,
+                !competitor1.winner && statusType !== 'STATUS_SCHEDULED' && styles.lossText,
+              ]}>
+              {isInProgress
+                ? '-'
+                : statusType === 'STATUS_SCHEDULED'
+                  ? competitor1.displayRecord
+                  : competitor1.winner
+                    ? 'W'
+                    : 'L'}
+            </Text>
+          </View>
+          <View style={styles.competitorRow}>
+            {getImageSource(competitor2) && (
+              <Image source={getImageSource(competitor2)} style={styles.headshotImage} />
+            )}
+            <Text style={styles.competitorName}>{competitor2.athlete.displayName}</Text>
+            <Text
+              style={[
+                styles.resultText,
+                statusType === 'STATUS_SCHEDULED' && styles.scheduledText,
+                !competitor2.winner && statusType !== 'STATUS_SCHEDULED' && styles.lossText,
+              ]}>
+              {isInProgress
+                ? '-'
+                : statusType === 'STATUS_SCHEDULED'
+                  ? competitor2.displayRecord
+                  : competitor2.winner
+                    ? 'W'
+                    : 'L'}
+            </Text>
+          </View>
         </View>
         <View style={styles.vsColumn}>
           {statusType === 'STATUS_FINAL' || isInProgress ? (
@@ -204,29 +227,7 @@ const UFC = () => {
                 {isInProgress ? displayClock : result.description}
               </Text>
             </View>
-          ) : (
-            <Text style={styles.vsText}>vs</Text>
-          )}
-        </View>
-        <View style={styles.competitorColumn}>
-          {getImageSource(competitor2) && (
-            <Image source={getImageSource(competitor2)} style={styles.headshotImage} />
-          )}
-          <Text style={styles.competitorName}>{competitor2.athlete.displayName}</Text>
-          <Text
-            style={[
-              styles.resultText,
-              statusType === 'STATUS_SCHEDULED' && styles.scheduledText,
-              !competitor2.winner && statusType !== 'STATUS_SCHEDULED' && styles.lossText,
-            ]}>
-            {isInProgress
-              ? '-'
-              : statusType === 'STATUS_SCHEDULED'
-                ? competitor2.displayRecord
-                : competitor2.winner
-                  ? 'W'
-                  : 'L'}
-          </Text>
+          ) : null}
         </View>
       </View>
     );
@@ -238,6 +239,11 @@ const UFC = () => {
     const statusType = card?.competitions[0]?.status?.type?.name;
     const cardTime =
       cardDate && statusType !== 'STATUS_FINAL' ? moment(cardDate).format('h:mm A') : '';
+
+    // Update the live fight state if the card contains an in-progress competition
+    if (card?.competitions.some((comp) => comp.status.type.name === 'STATUS_IN_PROGRESS')) {
+      setLiveFight(card);
+    }
 
     return (
       <View style={styles.cardContainer} key={cardKey}>
@@ -297,6 +303,14 @@ const UFC = () => {
         )}
       </View>
       <View style={{ flex: 1 }}>
+        {liveFight && (
+          <View style={{ backgroundColor: 'red', paddingVertical: 10 }}>
+            <Text style={{ fontSize: 18, color: 'white', textAlign: 'center' }}>
+              LIVE FIGHT: {liveFight.displayName}
+            </Text>
+            {liveFight.competitions.map((comp) => renderCompetitionItem(comp, 'live'))}
+          </View>
+        )}
         {events && events.length > 0 ? (
           <FlatList
             data={events}
@@ -372,9 +386,6 @@ const styles = StyleSheet.create({
     color: '#FFDB58',
   },
   competitorsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
     backgroundColor: '#141414',
     borderWidth: 0.5,
     borderColor: 'white',
@@ -382,8 +393,9 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 5,
   },
-  competitorColumn: {
+  competitorRow: {
     flex: 3,
+    flexDirection: 'row',
     alignItems: 'center',
   },
   eventNameContainer: {
@@ -415,15 +427,16 @@ const styles = StyleSheet.create({
   vsColumn: {
     flex: 1,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   headshotImage: {
-    width: 60,
-    height: 60,
+    width: 50,
+    height: 50,
     borderRadius: 25,
     marginBottom: 10,
   },
   competitorName: {
-    fontSize: 12,
+    fontSize: 16,
     color: 'white',
     fontWeight: 'bold',
     textAlign: 'center',

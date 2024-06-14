@@ -290,7 +290,7 @@ const NHL = () => {
             <View style={styles.column2}>
               <View>
                 <Text style={[styles.TextStyle2, { fontWeight: 'bold' }]}>
-                  {getNumberWithSuffix(item.Quarter)}
+                  {getNumberWithSuffix(item.Period)}
                 </Text>
                 <Text style={[styles.TextStyle2, { fontWeight: 'bold' }]}>{item.DisplayClock}</Text>
               </View>
