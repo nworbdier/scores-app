@@ -225,6 +225,7 @@ const UFC = () => {
             </View>
           </View>
         </View>
+
         <View style={styles.vsColumn}>
           {statusType === 'STATUS_FINAL' ||
           isInProgress ||
