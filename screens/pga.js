@@ -1,4 +1,4 @@
-import { Ionicons, AntDesign } from '@expo/vector-icons';
+import { Ionicons, AntDesign, MaterialIcons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import moment from 'moment';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
@@ -515,7 +515,11 @@ const PGA = () => {
     <View style={styles.container}>
       <SafeAreaView style={styles.safeAreaContainer} />
       <View style={styles.header}>
-        <Text style={styles.headerText}>PGA</Text>
+        <View
+          style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Text style={styles.headerText}>PGA</Text>
+          <MaterialIcons name="sports-golf" size={24} color="white" marginLeft={5} />
+        </View>
         <View style={styles.headerIcons}>
           <TouchableOpacity>
             <Ionicons name="settings-outline" size={25} color="white" marginRight={10} />
@@ -578,6 +582,7 @@ const styles = StyleSheet.create({
   },
   tournamentDropdown: {
     flexDirection: 'row',
+    alignItems: 'center',
     marginVertical: 15,
   },
   tournamentName: {
@@ -585,7 +590,6 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: 'bold',
   },
-
   playerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
