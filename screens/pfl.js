@@ -173,60 +173,93 @@ const PFL = () => {
     };
 
     return (
-      <View style={styles.competitorsContainer} key={competition.id}>
+      <View
+        style={[
+          styles.competitorsContainer,
+          isInProgress && { borderColor: 'lightgreen', borderWidth: 1 },
+        ]}
+        key={competition.id}>
         <View style={styles.competitorColumn}>
-          {getImageSource(competitor1) && (
-            <Image source={getImageSource(competitor1)} style={styles.headshotImage} />
-          )}
-          <Text style={styles.competitorName}>{competitor1.athlete.displayName}</Text>
-          <Text
-            style={[
-              styles.resultText,
-              statusType === 'STATUS_SCHEDULED' && styles.scheduledText,
-              !competitor1.winner && statusType !== 'STATUS_SCHEDULED' && styles.lossText,
-            ]}>
-            {isInProgress
-              ? '-'
-              : statusType === 'STATUS_SCHEDULED'
-                ? competitor1.displayRecord
-                : competitor1.winner
-                  ? 'W'
-                  : 'L'}
-          </Text>
+          <View style={styles.competitorRow}>
+            {getImageSource(competitor1) && (
+              <Image source={getImageSource(competitor1)} style={styles.headshotImage} />
+            )}
+            <View style={styles.competitorInfo}>
+              <Text style={styles.competitorName}>{competitor1.athlete.displayName}</Text>
+              {!isInProgress && (
+                <Text
+                  style={[
+                    styles.resultText,
+                    statusType === 'STATUS_SCHEDULED' && styles.scheduledText,
+                    !competitor1.winner && statusType !== 'STATUS_SCHEDULED' && styles.lossText,
+                  ]}>
+                  {statusType === 'STATUS_SCHEDULED'
+                    ? competitor1.displayRecord
+                    : competitor1.winner
+                      ? 'W'
+                      : 'L'}
+                </Text>
+              )}
+            </View>
+          </View>
+          <View style={styles.competitorRow}>
+            {getImageSource(competitor2) && (
+              <Image source={getImageSource(competitor2)} style={styles.headshotImage} />
+            )}
+            <View style={styles.competitorInfo}>
+              <Text style={styles.competitorName}>{competitor2.athlete.displayName}</Text>
+              {!isInProgress && (
+                <Text
+                  style={[
+                    styles.resultText,
+                    statusType === 'STATUS_SCHEDULED' && styles.scheduledText,
+                    !competitor2.winner && statusType !== 'STATUS_SCHEDULED' && styles.lossText,
+                  ]}>
+                  {statusType === 'STATUS_SCHEDULED'
+                    ? competitor2.displayRecord
+                    : competitor2.winner
+                      ? 'W'
+                      : 'L'}
+                </Text>
+              )}
+            </View>
+          </View>
         </View>
         <View style={styles.vsColumn}>
-          {statusType === 'STATUS_FINAL' || isInProgress ? (
+          {statusType === 'STATUS_FINAL' ||
+          isInProgress ||
+          statusType === 'STATUS_END_OF_ROUND' ||
+          statusType === 'STATUS_END_OF_FIGHT' ? (
             <View style={styles.resultColumn}>
-              <Text style={[styles.resultText2, styles.centeredText]}>
-                {isInProgress ? `R${period}` : result.shortDisplayName}
+              <Text style={styles.resultText3}>
+                {isInProgress
+                  ? `Round ${period}`
+                  : statusType === 'STATUS_END_OF_ROUND'
+                    ? `End Round ${period}`
+                    : statusType === 'STATUS_END_OF_FIGHT'
+                      ? 'Final'
+                      : ''}
               </Text>
-              <Text style={[styles.resultDescription, styles.centeredText]}>
-                {isInProgress ? displayClock : result.description}
-              </Text>
+              <View>
+                <Text style={[styles.resultText2]}>
+                  {isInProgress ? displayClock : result.shortDisplayName}
+                </Text>
+                {!isInProgress && (
+                  <Text style={[styles.resultDescription]}>{result.description}</Text>
+                )}
+              </View>
             </View>
           ) : (
-            <Text style={styles.vsText}>vs</Text>
+            <View style={styles.resultColumn}>
+              <Text style={styles.resultText2}>
+                {statusType === 'STATUS_FIGHTERS_WALKING'
+                  ? 'Walkouts'
+                  : statusType === 'STATUS_FIGHTERS_INTRODUCTION'
+                    ? 'Intros'
+                    : ''}
+              </Text>
+            </View>
           )}
-        </View>
-        <View style={styles.competitorColumn}>
-          {getImageSource(competitor2) && (
-            <Image source={getImageSource(competitor2)} style={styles.headshotImage} />
-          )}
-          <Text style={styles.competitorName}>{competitor2.athlete.displayName}</Text>
-          <Text
-            style={[
-              styles.resultText,
-              statusType === 'STATUS_SCHEDULED' && styles.scheduledText,
-              !competitor2.winner && statusType !== 'STATUS_SCHEDULED' && styles.lossText,
-            ]}>
-            {isInProgress
-              ? '-'
-              : statusType === 'STATUS_SCHEDULED'
-                ? competitor2.displayRecord
-                : competitor2.winner
-                  ? 'W'
-                  : 'L'}
-          </Text>
         </View>
       </View>
     );
@@ -376,15 +409,24 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     backgroundColor: '#141414',
-    borderWidth: 0.5,
+    borderWidth: 1,
     borderColor: 'white',
     marginBottom: 10,
     paddingVertical: 10,
     borderRadius: 5,
   },
   competitorColumn: {
-    flex: 3,
+    flex: 2,
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginLeft: 10,
+  },
+  competitorRow: {
+    flexDirection: 'row',
     alignItems: 'center',
+  },
+  competitorInfo: {
+    marginLeft: 10,
   },
   eventNameContainer: {
     paddingVertical: 5,
@@ -414,51 +456,57 @@ const styles = StyleSheet.create({
   },
   vsColumn: {
     flex: 1,
-    alignItems: 'center',
+    alignItems: 'flex-end',
   },
   headshotImage: {
-    width: 60,
-    height: 60,
-    borderRadius: 25,
+    width: 50,
+    height: 50,
+    borderRadius: 30,
     marginBottom: 10,
   },
   competitorName: {
-    fontSize: 12,
+    fontSize: 16,
     color: 'white',
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 10,
   },
   resultText: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: 'bold',
     color: 'green',
   },
   resultText2: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: 'bold',
     color: 'white',
+    marginBottom: 5,
+    textAlign: 'right',
+  },
+  resultText3: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: 'white',
+    textAlign: 'right',
+  },
+  lossText: {
+    fontSize: 15,
+    color: 'red',
   },
   vsText: {
     fontSize: 18,
     color: 'white',
   },
   resultColumn: {
-    alignItems: 'center',
-    justifyContent: 'center',
+    marginRight: 20,
   },
   resultDescription: {
-    fontSize: 12,
+    fontSize: 15,
     color: 'white',
-  },
-  centeredText: {
-    textAlign: 'center',
+    textAlign: 'right',
   },
   scheduledText: {
     color: 'gray',
-  },
-  lossText: {
-    color: 'red',
   },
   competitionTypeText: {
     fontSize: 12,
