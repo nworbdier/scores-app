@@ -46,6 +46,7 @@ const PGA = () => {
   const [selectedDate, setSelectedDate] = useState(currentDate);
 
   const [closestDateIndex, setClosestDateIndex] = useState(0); // Initialize with 0
+  const [selectedTournament, setSelectedTournament] = useState(null); // Variable for the selected tournament
 
   const flatListRef = useRef();
 
@@ -84,7 +85,6 @@ const PGA = () => {
       // Always use the first event for the current date
       const firstEvent = data.events[0];
       if (firstEvent) {
-        setCurrentEventId(firstEvent.id);
         return firstEvent.id;
       } else {
         console.error('No events found for the current date.');
@@ -171,39 +171,29 @@ const PGA = () => {
   useFocusEffect(
     useCallback(() => {
       const fetchInitialData = async () => {
-        await fetchTournamentCalendar();
-        if (currentEventId) {
-          await fetchPGAData(currentEventId);
+        const eventId = await fetchTournamentCalendar();
+        setCurrentEventId(eventId);
+        setSelectedTournament(eventId);
+        if (eventId) {
+          await fetchPGAData(eventId);
         }
       };
 
       fetchInitialData();
 
       const intervalId = setInterval(() => {
-        if (currentEventId) {
-          fetchPGAData(currentEventId);
+        if (selectedTournament) {
+          fetchPGAData(selectedTournament);
         }
       }, 100000); // Refresh every 10 seconds
 
       return () => clearInterval(intervalId); // Cleanup interval on blur
-    }, [currentEventId])
+    }, [])
   );
-
-  useEffect(() => {
-    const initializeData = async () => {
-      const eventId = await fetchTournamentCalendar();
-      setCurrentEventId(eventId);
-      if (eventId) {
-        await fetchPGAData(eventId);
-      }
-    };
-
-    initializeData();
-  }, []);
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await fetchPGAData(currentEventId);
+    await fetchPGAData(selectedTournament);
     setRefreshing(false);
   };
 
@@ -213,6 +203,7 @@ const PGA = () => {
     );
     if (selectedTournament) {
       setCurrentEventId(selectedTournament.id);
+      setSelectedTournament(selectedTournament.id);
       setTournamentName(selectedTournament.label);
       await fetchPGAData(selectedTournament.id);
       setTournamentModalVisible(false); // Close the modal after selection
@@ -635,7 +626,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   headerPlayerThru: {
-    flex: 1,
+    flex: 1.5,
     textAlign: 'center',
     color: 'white',
     fontWeight: 'bold',
@@ -662,7 +653,7 @@ const styles = StyleSheet.create({
     color: 'white',
   },
   playerThru: {
-    flex: 1,
+    flex: 1.5,
     textAlign: 'center',
     color: 'white',
   },
