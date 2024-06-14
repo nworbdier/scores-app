@@ -344,6 +344,7 @@ const PGA = () => {
     const [selectedRound, setSelectedRound] = useState(`R${statusPeriod || 1}`);
     const [lineScores, setLineScores] = useState({});
     const [playerData, setPlayerData] = useState(null);
+    const [totScore, setTotScore] = useState(null);
 
     useEffect(() => {
       const fetchPlayerData = async () => {
@@ -356,8 +357,28 @@ const PGA = () => {
           const response = await fetch(
             `https://site.web.api.espn.com/apis/site/v2/sports/golf/pga/leaderboard/${eventId}/competitorsummary/${playerId}`
           );
+          console.log('Url:', response.url);
           const data = await response.json();
           setPlayerData(data);
+
+          if (data.rounds) {
+            const totalScore = data.rounds.reduce((total, round) => {
+              const roundScore = parseInt(round.displayValue, 10);
+              return total + (isNaN(roundScore) ? 0 : roundScore);
+            }, 0);
+
+            // Format the totalScore to display "E" if 0, "+" if positive, or just the number if negative
+            let formattedScore;
+            if (totalScore > 0) {
+              formattedScore = `+${totalScore}`;
+            } else if (totalScore === 0) {
+              formattedScore = 'E';
+            } else {
+              formattedScore = totalScore.toString();
+            }
+
+            setTotScore(formattedScore);
+          }
         } catch (error) {
           console.error('Error fetching PGA player data:', error);
         }
@@ -382,7 +403,9 @@ const PGA = () => {
 
           // Calculate the sum of the par scores for the "In" holes
           const inParScore = roundLineScores.slice(9).reduce((sum, ls) => sum + (ls.par || 0), 0);
-          const outParScore = roundLineScores.slice(9).reduce((sum, ls) => sum + (ls.par || 0), 0);
+          const outParScore = roundLineScores
+            .slice(0, 9)
+            .reduce((sum, ls) => sum + (ls.par || 0), 0);
 
           setLineScores({
             [selectedRound]: roundLineScores,
@@ -414,7 +437,9 @@ const PGA = () => {
                 source={{ uri: playerData?.competitor?.headshot }}
                 style={styles.playerHeadshot}
               />
-              <Text style={styles.modalPlayerName}>{player?.name}</Text>
+              <Text style={styles.modalPlayerName}>
+                {player?.name} ({totScore})
+              </Text>
             </View>
             <View style={styles.roundButtonsContainer}>
               {['R1', 'R2', 'R3', 'R4'].map((round) => (
@@ -661,7 +686,7 @@ const styles = StyleSheet.create({
     width: '80%',
     height: '75%',
     padding: 10,
-    backgroundColor: 'white',
+    backgroundColor: 'lightgrey',
     borderRadius: 10,
     alignItems: 'center',
   },

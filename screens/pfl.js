@@ -236,7 +236,7 @@ const PFL = () => {
                 {isInProgress
                   ? `Round ${period}`
                   : statusType === 'STATUS_END_OF_ROUND'
-                    ? `End Round ${period}`
+                    ? `End Rd ${period}`
                     : statusType === 'STATUS_END_OF_FIGHT'
                       ? 'Final'
                       : ''}
