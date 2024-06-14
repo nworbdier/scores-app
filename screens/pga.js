@@ -106,61 +106,72 @@ const PGA = () => {
       const eventDetails = data.events[0];
       setTournamentName(eventDetails.tournament.displayName); // Set tournament name
 
-      const players = data.events[0].competitions[0].competitors
-        .sort((a, b) => a.sortOrder - b.sortOrder)
-        .map((competitor) => {
-          const period = competitor.status.period;
-          let today = '-';
-          let thru = competitor.status.thru;
-          let position = competitor.status.position.displayName;
+      let players = [];
 
-          if (competitor.status.displayValue === 'CUT') {
-            position = 'MC';
-            today = '-';
-            thru = 'CUT';
-          } else {
-            if (competitor.status.type.name === 'STATUS_SCHEDULED') {
-              thru =
-                competitor.status.startHole === 10
-                  ? `${moment(competitor.status.teeTime).format('h:mm A')}*`
-                  : moment(competitor.status.teeTime).format('h:mm A');
+      if (
+        data.events.length > 0 &&
+        data.events[0].competitions.length > 0 &&
+        data.events[0].competitions[0].competitors
+      ) {
+        players = data.events[0].competitions[0].competitors
+          .sort((a, b) => a.sortOrder - b.sortOrder)
+          .map((competitor) => {
+            const period = competitor.status.period;
+            let today = '-';
+            let thru = competitor.status.thru;
+            let position = competitor.status.position.displayName;
+
+            if (competitor.status.displayValue === 'CUT') {
+              position = 'MC';
+              today = '-';
+              thru = 'CUT';
             } else {
-              if (competitor.linescores && competitor.linescores.length > 0) {
-                const lineScoreIndex = period - 1;
-                if (lineScoreIndex >= 0 && lineScoreIndex < competitor.linescores.length) {
-                  today = competitor.linescores[lineScoreIndex].displayValue || '-';
+              if (competitor.status.type.name === 'STATUS_SCHEDULED') {
+                thru =
+                  competitor.status.startHole === 10
+                    ? `${moment(competitor.status.teeTime).format('h:mm A')}*`
+                    : moment(competitor.status.teeTime).format('h:mm A');
+              } else {
+                if (competitor.linescores && competitor.linescores.length > 0) {
+                  const lineScoreIndex = period - 1;
+                  if (lineScoreIndex >= 0 && lineScoreIndex < competitor.linescores.length) {
+                    today = competitor.linescores[lineScoreIndex].displayValue || '-';
+                  }
                 }
-              }
 
-              if (thru && thru !== '-') {
-                // Check if startHole is 10 and add asterisk
-                if (competitor.status.startHole === 10) {
-                  thru += '*';
+                if (thru && thru !== '-') {
+                  // Check if startHole is 10 and add asterisk
+                  if (competitor.status.startHole === 10) {
+                    thru += '*';
+                  }
                 }
               }
             }
-          }
 
-          // Find the total score from statistics
-          let totalScore = '-';
-          if (competitor.statistics && competitor.statistics[0]) {
-            totalScore = competitor.statistics[0].displayValue || '-';
-          }
+            // Find the total score from statistics
+            let totalScore = '-';
+            if (competitor.statistics && competitor.statistics[0]) {
+              totalScore = competitor.statistics[0].displayValue || '-';
+            }
 
-          // Add (A) if the player is an amateur
-          const playerName = competitor.amateur
-            ? `${competitor.athlete.displayName} (A)`
-            : competitor.athlete.displayName;
+            // Add (A) if the player is an amateur
+            const playerName = competitor.amateur
+              ? `${competitor.athlete.displayName} (A)`
+              : competitor.athlete.displayName;
 
-          return {
-            id: competitor.athlete.id, // Assuming competitor has an id field
-            pl: position,
-            name: playerName,
-            today,
-            thru,
-            tot: totalScore,
-          };
-        });
+            return {
+              id: competitor.athlete.id, // Assuming competitor has an id field
+              pl: position,
+              name: playerName,
+              today,
+              thru,
+              tot: totalScore,
+            };
+          });
+      } else {
+        console.log('No player data available. Check back later.');
+        // Optionally, you can set a state or perform an action to handle this case
+      }
 
       setPlayersData(players);
     } catch (error) {
@@ -236,7 +247,6 @@ const PGA = () => {
       }}>
       <View style={styles.leftContainer}>
         <Text style={styles.playerPosition}>{item.pl}</Text>
-        {item.headshot ? <Image source={{ uri: item.headshot }} style={styles.headshot} /> : null}
         <Text style={styles.playerName}>{item.name}</Text>
       </View>
       <View style={styles.rightContainer}>
@@ -521,16 +531,22 @@ const PGA = () => {
         </View>
       </View>
       <View style={{ flex: 1, backgroundColor: 'black', paddingHorizontal: 10, paddingBottom: 10 }}>
-        <FlatList
-          data={playersData}
-          renderItem={renderPlayer}
-          keyExtractor={(item) => item.id.toString()}
-          contentContainerStyle={styles.listContent}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#888" />
-          }
-          ListHeaderComponent={renderHeader}
-        />
+        {playersData.length > 0 ? (
+          <FlatList
+            data={playersData}
+            renderItem={renderPlayer}
+            keyExtractor={(item) => item.id.toString()}
+            contentContainerStyle={styles.listContent}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#888" />
+            }
+            ListHeaderComponent={renderHeader}
+          />
+        ) : (
+          <View style={styles.noDataContainer}>
+            <Text style={styles.noDataText}>Check Back Later</Text>
+          </View>
+        )}
         <PlayerModal
           visible={modalVisible}
           player={selectedPlayer}
@@ -780,6 +796,16 @@ const styles = StyleSheet.create({
   tournamentItemText: {
     fontSize: 16,
     textAlign: 'left',
+  },
+  noDataContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  noDataText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: 'white',
   },
 });
 
