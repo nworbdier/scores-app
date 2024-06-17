@@ -164,11 +164,10 @@ const UFC = () => {
     const displayClock = competition.status.displayClock;
 
     const getImageSource = (competitor) => {
-      const { headshot, athlete } = competitor.athlete || {};
-      return headshot && headshot.href
-        ? { uri: headshot.href }
-        : athlete && athlete.flag && athlete.flag.href
-          ? { uri: athlete.flag.href }
+      return competitor.athlete && competitor.athlete.headshot && competitor.athlete.headshot.href
+        ? { uri: competitor.athlete.headshot.href }
+        : competitor.athlete && competitor.athlete.flag && competitor.athlete.flag.href
+          ? { uri: competitor.athlete.flag.href }
           : null;
     };
 
