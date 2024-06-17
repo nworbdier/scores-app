@@ -40,6 +40,7 @@ const styles = StyleSheet.create({
     paddingBottom: 45,
   },
   iconContainer: {
+    flex: 1,
     alignItems: 'center',
   },
   text: {
