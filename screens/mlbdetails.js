@@ -1,6 +1,6 @@
+import moment from 'moment';
 import React, { useState, useEffect } from 'react';
 import { View, Text, Image, StyleSheet, SafeAreaView, TouchableOpacity } from 'react-native';
-import moment from 'moment';
 
 import NavBar from '../components/navbar'; // Import the NavBar component
 
@@ -8,6 +8,7 @@ const MLBDetails = ({ route }) => {
   const { eventId } = route.params; // Get the eventId from the navigation route parameters
   const [matchupData, setMatchupData] = useState(null);
   const [selectedTab, setSelectedTab] = useState('Feed');
+  const [countdown, setCountdown] = useState('');
 
   useEffect(() => {
     const fetchMatchupData = async () => {
@@ -26,6 +27,27 @@ const MLBDetails = ({ route }) => {
     fetchMatchupData();
   }, [eventId]);
 
+  useEffect(() => {
+    let interval;
+    if (matchupData && matchupData.header && matchupData.header.competitions) {
+      const competition = matchupData.header.competitions[0];
+      if (competition.status.type.name === 'STATUS_SCHEDULED') {
+        interval = setInterval(() => {
+          const gameTime = moment(competition.date);
+          const now = moment();
+          const duration = moment.duration(gameTime.diff(now));
+
+          const hours = Math.floor(duration.asHours()).toString().padStart(1, '0');
+          const minutes = duration.minutes().toString().padStart(2, '0');
+
+          setCountdown(`First Pitch: ${hours} hr ${minutes} min`);
+        }, 500);
+      }
+    }
+
+    return () => clearInterval(interval);
+  }, [matchupData]);
+
   if (!matchupData || !matchupData.header || !matchupData.header.competitions) {
     return (
       <View style={styles.container}>
@@ -39,7 +61,14 @@ const MLBDetails = ({ route }) => {
   const renderContent = () => {
     switch (selectedTab) {
       case 'Feed':
-        return <Text style={styles.tabContent}>Feed</Text>;
+        return (
+          <View style={styles.feedContent}>
+            <Text style={styles.tabContent}>Feed</Text>
+            {competition.status.type.name === 'STATUS_SCHEDULED' && (
+              <Text style={styles.countdownText}>{countdown}</Text>
+            )}
+          </View>
+        );
       case 'Game':
         return <Text style={styles.tabContent}>Game</Text>;
       case competition.competitors[1].team.abbreviation:
@@ -76,7 +105,7 @@ const MLBDetails = ({ route }) => {
         <View>
           <View style={styles.vsContainer}>
             {competition.status.type.name === 'STATUS_SCHEDULED' ? (
-              <Text style={styles.inningText}>{moment(competition.date).format('h:mm A')}</Text>
+              <Text style={styles.dateText}>{moment(competition.date).format('h:mm A')}</Text>
             ) : (
               <Text style={styles.inningText}>
                 {competition.status.periodPrefix} {competition.status.period}
@@ -187,6 +216,11 @@ const styles = StyleSheet.create({
     fontSize: 20,
     color: 'white',
   },
+  dateText: {
+    fontSize: 18,
+    color: 'white',
+    fontWeight: 'bold',
+  },
   switcherHeader: {
     flexDirection: 'row',
     justifyContent: 'space-around',
@@ -213,6 +247,16 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 24,
     fontWeight: 'bold',
+  },
+  feedContent: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  countdownText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#FFDB58',
+    marginTop: 10,
   },
 });
 
