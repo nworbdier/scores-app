@@ -315,10 +315,11 @@ const MLB = () => {
                     <Text style={[styles.inning]}>End {item.Inning}</Text>
                   )}
                 </View>
+                {renderBasesComponent(item.First, item.Second, item.Third)}
+
                 <View>
                   {item.Outs !== null && <Text style={styles.TextStyle2}>{item.Outs} Outs</Text>}
                 </View>
-                {renderBasesComponent(item.First, item.Second, item.Third)}
               </View>
             )}
           </View>
