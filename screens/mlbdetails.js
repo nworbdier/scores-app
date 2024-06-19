@@ -37,16 +37,42 @@ const MLBDetails = ({ route }) => {
           const now = moment();
           const duration = moment.duration(gameTime.diff(now));
 
-          const hours = Math.floor(duration.asHours()).toString().padStart(1, '0');
-          const minutes = duration.minutes().toString().padStart(2, '0');
+          const hours = Math.floor(duration.asHours());
+          const minutes = duration.minutes();
 
-          setCountdown(`First Pitch: ${hours} hr ${minutes} min`);
+          let countdownText = 'First Pitch: ';
+          if (hours > 0) {
+            countdownText += `${hours} hr `;
+          }
+          if (minutes > 0 || hours === 0) {
+            // display minutes if there are hours or if there are only minutes
+            countdownText += `${minutes} min`;
+          }
+
+          setCountdown(countdownText.trim());
         }, 500);
       }
     }
 
     return () => clearInterval(interval);
   }, [matchupData]);
+
+  const renderBasesComponent = (situation) => {
+    return (
+      <View style={styles.basesContainer}>
+        <View style={styles.baseRow}>
+          <View style={styles.emptySpace} />
+          <View style={[styles.base, situation?.onSecond?.playerId ? styles.baseActive : null]} />
+          <View style={styles.emptySpace} />
+        </View>
+        <View style={styles.baseRow}>
+          <View style={[styles.base, situation?.onThird?.playerId ? styles.baseActive : null]} />
+          <View style={styles.emptySpace} />
+          <View style={[styles.base, situation?.onFirst?.playerId ? styles.baseActive : null]} />
+        </View>
+      </View>
+    );
+  };
 
   if (!matchupData || !matchupData.header || !matchupData.header.competitions) {
     return (
@@ -57,6 +83,9 @@ const MLBDetails = ({ route }) => {
   }
 
   const competition = matchupData.header.competitions[0];
+  const situation = matchupData.situation;
+  const homeTeam = competition.competitors[1].team.abbreviation;
+  const awayTeam = competition.competitors[0].team.abbreviation;
 
   const renderContent = () => {
     switch (selectedTab) {
@@ -71,13 +100,39 @@ const MLBDetails = ({ route }) => {
         );
       case 'Game':
         return <Text style={styles.tabContent}>Game</Text>;
-      case competition.competitors[1].team.abbreviation:
+      case homeTeam:
         return (
-          <Text style={styles.tabContent}>{competition.competitors[1].team.abbreviation}</Text>
+          <View style={styles.tabContent}>
+            <Text style={styles.tabContent}>Pitching</Text>
+            {matchupData.boxscore.players[0].statistics[1].athletes.map((athlete) => (
+              <View key={athlete.athlete.id}>
+                <Text style={styles.players}>{athlete.athlete.displayName}</Text>
+              </View>
+            ))}
+            <Text style={styles.tabContent}>Batting</Text>
+            {matchupData.boxscore.players[0].statistics[0].athletes.map((athlete) => (
+              <View key={athlete.athlete.id}>
+                <Text style={styles.players}>{athlete.athlete.displayName}</Text>
+              </View>
+            ))}
+          </View>
         );
-      case competition.competitors[0].team.abbreviation:
+      case awayTeam:
         return (
-          <Text style={styles.tabContent}>{competition.competitors[0].team.abbreviation}</Text>
+          <View style={styles.tabContent}>
+            <Text style={styles.tabContent}>Pitching</Text>
+            {matchupData.boxscore.players[1].statistics[1].athletes.map((athlete) => (
+              <View key={athlete.athlete.id}>
+                <Text style={styles.players}>{athlete.athlete.displayName}</Text>
+              </View>
+            ))}
+            <Text style={styles.tabContent}>Batting</Text>
+            {matchupData.boxscore.players[1].statistics[0].athletes.map((athlete) => (
+              <View key={athlete.athlete.id}>
+                <Text style={styles.players}>{athlete.athlete.displayName}</Text>
+              </View>
+            ))}
+          </View>
         );
       default:
         return null;
@@ -103,13 +158,32 @@ const MLBDetails = ({ route }) => {
           </View>
         </View>
         <View>
-          <View style={styles.vsContainer}>
+          <View>
             {competition.status.type.name === 'STATUS_SCHEDULED' ? (
               <Text style={styles.dateText}>{moment(competition.date).format('h:mm A')}</Text>
+            ) : competition.status.type.name === 'STATUS_FINAL' ? (
+              <Text style={styles.inning}>{competition.status.type.shortDetail}</Text>
             ) : (
-              <Text style={styles.inningText}>
-                {competition.status.periodPrefix} {competition.status.period}
-              </Text>
+              <View style={styles.gameTime}>
+                <View>
+                  {competition.status.periodPrefix.includes('Top') && (
+                    <Text style={styles.inning}>Top {competition.status.period}</Text>
+                  )}
+                  {competition.status.periodPrefix.includes('Mid') && (
+                    <Text style={styles.inning}>Mid {competition.status.period}</Text>
+                  )}
+                  {competition.status.periodPrefix.includes('Bot') && (
+                    <Text style={styles.inning}>Bot {competition.status.period}</Text>
+                  )}
+                  {competition.status.periodPrefix.includes('End') && (
+                    <Text style={styles.inning}>End {competition.status.period}</Text>
+                  )}
+                </View>
+                <View>{renderBasesComponent(situation)}</View>
+                <View>
+                  <Text style={styles.ballsandstrikes}>{situation?.outs} Outs</Text>
+                </View>
+              </View>
             )}
           </View>
         </View>
@@ -170,7 +244,7 @@ const styles = StyleSheet.create({
   matchupContainer: {
     flex: 1,
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'space-around',
     alignItems: 'center',
   },
   column: {
@@ -202,14 +276,16 @@ const styles = StyleSheet.create({
     marginTop: 10,
     color: 'white',
   },
-  vsContainer: {
-    alignSelf: 'center',
+  gameTime: {
     alignItems: 'center',
   },
-  vsText: {
-    fontSize: 20,
+  inning: {
+    fontSize: 18,
     fontWeight: 'bold',
-    marginVertical: 5,
+    color: 'white',
+  },
+  ballsandstrikes: {
+    fontSize: 16,
     color: 'white',
   },
   inningText: {
@@ -248,6 +324,15 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
   },
+  playerHeader: {
+    color: 'white',
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
+  players: {
+    color: 'white',
+    fontSize: 20,
+  },
   feedContent: {
     justifyContent: 'center',
     alignItems: 'center',
@@ -257,6 +342,31 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#FFDB58',
     marginTop: 10,
+  },
+  basesContainer: {
+    marginVertical: 10,
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  baseRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  base: {
+    width: 15,
+    height: 15,
+    backgroundColor: 'grey',
+    transform: [{ rotate: '45deg' }], // Rotate to make it look like a diamond
+  },
+  baseActive: {
+    backgroundColor: 'yellow', // Change active base color to yellow
+  },
+  emptySpace: {
+    width: 15,
+    height: 15,
+    transform: [{ rotate: '45deg' }], // Rotate to make it look like a diamond
   },
 });
 
