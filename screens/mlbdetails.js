@@ -1,5 +1,6 @@
+import { useFocusEffect } from '@react-navigation/native';
 import moment from 'moment';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -15,25 +16,73 @@ import NavBar from '../components/navbar'; // Import the NavBar component
 const MLBDetails = ({ route }) => {
   const { eventId } = route.params; // Get the eventId from the navigation route parameters
   const [matchupData, setMatchupData] = useState(null);
+  const [playbyplaydata, setPlaybyplaydata] = useState(null);
   const [selectedTab, setSelectedTab] = useState('Feed');
   const [countdown, setCountdown] = useState('');
 
-  useEffect(() => {
-    const fetchMatchupData = async () => {
-      try {
-        const response = await fetch(
-          `https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/summary?event=${eventId}`
-        );
-        console.log('Response URL:', response.url);
-        const data = await response.json();
-        setMatchupData(data);
-      } catch (error) {
-        console.error('Error fetching matchup data:', error);
-      }
-    };
+  const fetchMatchupData = async () => {
+    try {
+      const response = await fetch(
+        `https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/summary?event=${eventId}`
+      );
+      console.log('Url', response.url);
+      const data = await response.json();
+      setMatchupData(data);
+    } catch (error) {
+      console.error('Error fetching matchup data:', error);
+    }
+  };
 
-    fetchMatchupData();
-  }, [eventId]);
+  const fetchPlaybyPlayData = async () => {
+    try {
+      // Fetch data from page 1
+      const response1 = await fetch(
+        `https://sports.core.api.espn.com/v2/sports/baseball/leagues/mlb/events/${eventId}/competitions/${eventId}/plays?limit=500&page=1`
+      );
+      const data1 = await response1.json();
+
+      // Fetch data from page 2
+      const response2 = await fetch(
+        `https://sports.core.api.espn.com/v2/sports/baseball/leagues/mlb/events/${eventId}/competitions/${eventId}/plays?limit=500&page=2`
+      );
+      const data2 = await response2.json();
+
+      // Combine items from both pages
+      const combinedItems = [...data1.items, ...data2.items];
+
+      console.log('Url', response1.url);
+
+      // Filter out items where shortAlternativeText contains "pitches to"
+      const filteredItems = combinedItems.filter(
+        (item) => item.shortAlternativeText && !item.shortAlternativeText.includes('pitches to')
+      );
+
+      setPlaybyplaydata({ items: filteredItems });
+    } catch (error) {
+      console.error('Error fetching play-by-play data:', error);
+    }
+  };
+
+  const fetchGameData = async () => {
+    await fetchMatchupData();
+    await fetchPlaybyPlayData();
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      const fetchInitialData = async () => {
+        await fetchGameData();
+      };
+
+      fetchInitialData();
+
+      const intervalId = setInterval(() => {
+        fetchGameData();
+      }, 10000); // Refresh every 10 seconds
+
+      return () => clearInterval(intervalId); // Cleanup interval on blur
+    }, [eventId])
+  );
 
   useEffect(() => {
     let interval;
@@ -82,7 +131,13 @@ const MLBDetails = ({ route }) => {
     );
   };
 
-  if (!matchupData || !matchupData.header || !matchupData.header.competitions) {
+  if (
+    !matchupData ||
+    !matchupData.header ||
+    !matchupData.header.competitions ||
+    !playbyplaydata ||
+    !playbyplaydata.items
+  ) {
     return (
       <View style={styles.container}>
         <Text>Loading...</Text>
@@ -95,18 +150,79 @@ const MLBDetails = ({ route }) => {
   const homeTeam = competition.competitors[1].team.abbreviation;
   const awayTeam = competition.competitors[0].team.abbreviation;
   const defaultImage = require('../assets/person.png');
+  const getUpdatedBatOrder = (athletes) => {
+    const batOrderMapping = {};
+
+    return athletes.map((athlete) => {
+      const baseOrder = athlete.batOrder;
+      if (batOrderMapping[baseOrder] === undefined) {
+        batOrderMapping[baseOrder] = 0;
+      } else {
+        batOrderMapping[baseOrder] += 1;
+      }
+      const increment = batOrderMapping[baseOrder];
+      const updatedBatOrder = increment === 0 ? baseOrder : `${baseOrder}.${increment}`;
+
+      return { ...athlete, updatedBatOrder };
+    });
+  };
+  const updatedBattersHome = getUpdatedBatOrder(
+    matchupData.boxscore.players[0].statistics[0].athletes
+  );
+  const updatedBattersAway = getUpdatedBatOrder(
+    matchupData.boxscore.players[1].statistics[0].athletes
+  );
 
   const renderContent = () => {
     switch (selectedTab) {
       case 'Feed':
-        return (
-          <View style={styles.feedContent}>
-            <Text style={styles.tabContent}>Feed</Text>
-            {competition.status.type.name === 'STATUS_SCHEDULED' && (
+        if (competition.status.type.name !== 'STATUS_SCHEDULED') {
+          // Filter items where status is not 'STATUS_SCHEDULED'
+          const filteredItems = playbyplaydata.items.filter(
+            (item) => item.status !== 'STATUS_SCHEDULED'
+          );
+
+          // Prepare grouped items and filter out "Pitcher pitches to Batter"
+          const groupedItems = {};
+          filteredItems.forEach((item) => {
+            if (item.alternativeText && item.alternativeText.includes('pitches to')) {
+              return; // Skip this item
+            }
+            if (!groupedItems[item.atBatId]) {
+              groupedItems[item.atBatId] = [];
+            }
+            groupedItems[item.atBatId].push(item.alternativeText);
+          });
+
+          // Reverse the order of atBatId keys
+          const reversedAtBatIds = Object.keys(groupedItems).reverse();
+
+          // Render the items, reversing the order of both atBatId keys and texts within each group
+          return (
+            <View style={styles.feedContent}>
+              <ScrollView>
+                {reversedAtBatIds.map((atBatId) => (
+                  <View key={atBatId} style={styles.feedItem}>
+                    <Text style={styles.feedItemHeader}>At Bat ID: {atBatId}</Text>
+                    {groupedItems[atBatId].reverse().map((text, index) => (
+                      <Text key={index} style={styles.feedItemText}>
+                        {text}
+                      </Text>
+                    ))}
+                  </View>
+                ))}
+              </ScrollView>
+            </View>
+          );
+        } else {
+          // Render scheduled message or countdown if status is 'STATUS_SCHEDULED'
+          return (
+            <View style={styles.feedContent}>
               <Text style={styles.countdownText}>{countdown}</Text>
-            )}
-          </View>
-        );
+            </View>
+          );
+        }
+
       case 'Game':
         return (
           <View style={styles.feedContent}>
@@ -134,7 +250,6 @@ const MLBDetails = ({ route }) => {
                         <Image source={defaultImage} style={styles.headshot} />
                       </View>
                     )}
-
                     <View style={{ flexDirection: 'column' }}>
                       <Text style={styles.players}>
                         {athlete?.athlete?.displayName} - {athlete.position.abbreviation}
@@ -151,7 +266,7 @@ const MLBDetails = ({ route }) => {
                   </View>
                 ))}
               <Text style={styles.tabContent}>Batting</Text>
-              {matchupData.boxscore.players[0].statistics[0].athletes.map((athlete) => (
+              {updatedBattersHome.map((athlete) => (
                 <View key={athlete?.athlete?.id} style={styles.playerContainer}>
                   {athlete?.athlete?.headshot?.href ? (
                     <View style={styles.headshotContainer}>
@@ -160,14 +275,18 @@ const MLBDetails = ({ route }) => {
                         style={styles.headshot}
                       />
                       {athlete.batOrder !== undefined && (
-                        <Text style={styles.batOrder}>{athlete.batOrder}</Text>
+                        <View style={styles.batOrderContainer}>
+                          <Text style={styles.batOrder}>{athlete.updatedBatOrder}</Text>
+                        </View>
                       )}
                     </View>
                   ) : (
                     <View style={styles.headshotContainer}>
                       <Image source={defaultImage} style={styles.headshot} />
                       {athlete.batOrder !== undefined && (
-                        <Text style={styles.batOrder}>{athlete.batOrder}</Text>
+                        <View style={styles.batOrderContainer}>
+                          <Text style={styles.batOrder}>{athlete.updatedBatOrder}</Text>
+                        </View>
                       )}
                     </View>
                   )}
@@ -267,7 +386,7 @@ const MLBDetails = ({ route }) => {
                 ))}
 
               <Text style={styles.tabContent}>Batting</Text>
-              {matchupData.boxscore.players[1].statistics[0].athletes.map((athlete) => (
+              {updatedBattersAway.map((athlete) => (
                 <View key={athlete?.athlete?.id} style={styles.playerContainer}>
                   {athlete?.athlete?.headshot?.href ? (
                     <View style={styles.headshotContainer}>
@@ -276,14 +395,18 @@ const MLBDetails = ({ route }) => {
                         style={styles.headshot}
                       />
                       {athlete.batOrder !== undefined && (
-                        <Text style={styles.batOrder}>{athlete.batOrder}</Text>
+                        <View style={styles.batOrderContainer}>
+                          <Text style={styles.batOrder}>{athlete.updatedBatOrder}</Text>
+                        </View>
                       )}
                     </View>
                   ) : (
                     <View style={styles.headshotContainer}>
                       <Image source={defaultImage} style={styles.headshot} />
                       {athlete.batOrder !== undefined && (
-                        <Text style={styles.batOrder}>{athlete.batOrder}</Text>
+                        <View style={styles.batOrderContainer}>
+                          <Text style={styles.batOrder}>{athlete.updatedBatOrder}</Text>
+                        </View>
                       )}
                     </View>
                   )}
@@ -293,15 +416,16 @@ const MLBDetails = ({ route }) => {
                     </Text>
                     <ScrollView horizontal>
                       <View style={{ flexDirection: 'column' }}>
-                        <Text style={styles.playerStats}> {athlete.stats.join('  ')}</Text>
+                        <Text style={styles.playerStats}>{athlete.stats.join('  ')}</Text>
                         <Text style={styles.playerStats}>
-                          {matchupData.boxscore.players[1].statistics[0].labels.join('  ')}
+                          {matchupData.boxscore.players[0].statistics[0].labels.join('  ')}
                         </Text>
                       </View>
                     </ScrollView>
                   </View>
                 </View>
               ))}
+
               {matchupData.boxscore.players[1].statistics[1].athletes.filter(
                 (athlete) => athlete.starter === false
               ).length > 0 && (
@@ -586,15 +710,19 @@ const styles = StyleSheet.create({
   headshotContainer: {
     position: 'relative',
   },
-  batOrder: {
+  batOrderContainer: {
+    flexDirection: 'row',
     position: 'absolute',
-    bottom: -10,
-    left: -10,
+    bottom: -15,
+    left: -15,
+    borderRadius: 8,
+    backgroundColor: 'black',
+    padding: 5,
+  },
+  batOrder: {
     color: 'yellow',
     fontWeight: 'bold',
     fontSize: 16, // adjust as needed
-    padding: 2,
-    borderRadius: 25, // adjust if needed
   },
   headshot: {
     width: 50,
@@ -606,6 +734,21 @@ const styles = StyleSheet.create({
   playerStats: {
     color: 'white',
     fontSize: 16,
+  },
+  feedItem: {
+    marginVertical: 10,
+    paddingHorizontal: 20,
+  },
+  feedItemHeader: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 5,
+  },
+  feedItemText: {
+    color: 'white',
+    fontSize: 16,
+    marginBottom: 5,
   },
 });
 
