@@ -94,6 +94,7 @@ const MLBDetails = ({ route }) => {
   const situation = matchupData.situation;
   const homeTeam = competition.competitors[1].team.abbreviation;
   const awayTeam = competition.competitors[0].team.abbreviation;
+  const defaultImage = require('../assets/person.png');
 
   const renderContent = () => {
     switch (selectedTab) {
@@ -115,11 +116,13 @@ const MLBDetails = ({ route }) => {
               <Text style={styles.tabContent}>Pitching</Text>
               {matchupData.boxscore.players[0].statistics[1].athletes.map((athlete) => (
                 <View key={athlete?.athlete?.id} style={styles.playerContainer}>
-                  {athlete?.athlete?.headshot?.href && (
+                  {athlete?.athlete?.headshot?.href ? (
                     <Image
                       source={{ uri: athlete.athlete.headshot.href }}
                       style={styles.headshot}
                     />
+                  ) : (
+                    <Image source={defaultImage} style={styles.headshot} />
                   )}
                   <Text style={styles.players}>
                     {athlete?.athlete?.displayName} -{' '}
@@ -132,11 +135,13 @@ const MLBDetails = ({ route }) => {
               <Text style={styles.tabContent}>Batting</Text>
               {matchupData.boxscore.players[0].statistics[0].athletes.map((athlete) => (
                 <View key={athlete?.athlete?.id} style={styles.playerContainer}>
-                  {athlete?.athlete?.headshot?.href && (
+                  {athlete?.athlete?.headshot?.href ? (
                     <Image
                       source={{ uri: athlete.athlete.headshot.href }}
                       style={styles.headshot}
                     />
+                  ) : (
+                    <Image source={defaultImage} style={styles.headshot} />
                   )}
                   <Text style={styles.players}>
                     {athlete?.athlete?.displayName} - {athlete.position.abbreviation}
@@ -154,11 +159,13 @@ const MLBDetails = ({ route }) => {
               <Text style={styles.tabContent}>Pitching</Text>
               {matchupData.boxscore.players[1].statistics[1].athletes.map((athlete) => (
                 <View key={athlete?.athlete?.id} style={styles.playerContainer}>
-                  {athlete?.athlete?.headshot?.href && (
+                  {athlete?.athlete?.headshot?.href ? (
                     <Image
                       source={{ uri: athlete.athlete.headshot.href }}
                       style={styles.headshot}
                     />
+                  ) : (
+                    <Image source={defaultImage} style={styles.headshot} />
                   )}
                   <Text style={styles.players}>
                     {athlete?.athlete?.displayName} -{' '}
@@ -171,11 +178,13 @@ const MLBDetails = ({ route }) => {
               <Text style={styles.tabContent}>Batting</Text>
               {matchupData.boxscore.players[1].statistics[0].athletes.map((athlete) => (
                 <View key={athlete?.athlete?.id} style={styles.playerContainer}>
-                  {athlete?.athlete?.headshot?.href && (
+                  {athlete?.athlete?.headshot?.href ? (
                     <Image
                       source={{ uri: athlete.athlete.headshot.href }}
                       style={styles.headshot}
                     />
+                  ) : (
+                    <Image source={defaultImage} style={styles.headshot} />
                   )}
                   <Text style={styles.players}>
                     {athlete?.athlete?.displayName} - {athlete.position.abbreviation}
@@ -430,6 +439,7 @@ const styles = StyleSheet.create({
     height: 50,
     borderRadius: 25,
     marginRight: 10,
+    backgroundColor: '#606060',
   },
 });
 
