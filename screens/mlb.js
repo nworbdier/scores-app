@@ -489,7 +489,7 @@ const styles = StyleSheet.create({
   itemContainer: {
     flexDirection: 'row',
     width: width * 0.6,
-    padding: 5,
+    padding: 10,
     borderWidth: 1,
     borderColor: 'white',
     borderRadius: 5,
@@ -557,6 +557,7 @@ const styles = StyleSheet.create({
     height: 35,
   },
   basesContainer: {
+    marginVertical: 5,
     flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'center',

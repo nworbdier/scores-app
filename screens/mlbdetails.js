@@ -1,6 +1,14 @@
 import moment from 'moment';
 import React, { useState, useEffect } from 'react';
-import { View, Text, Image, StyleSheet, SafeAreaView, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  SafeAreaView,
+  TouchableOpacity,
+  ScrollView,
+} from 'react-native';
 
 import NavBar from '../components/navbar'; // Import the NavBar component
 
@@ -103,35 +111,78 @@ const MLBDetails = ({ route }) => {
       case homeTeam:
         return (
           <View style={styles.tabContent}>
-            <Text style={styles.tabContent}>Pitching</Text>
-            {matchupData.boxscore.players[0].statistics[1].athletes.map((athlete) => (
-              <View key={athlete.athlete.id}>
-                <Text style={styles.players}>{athlete.athlete.displayName}</Text>
-              </View>
-            ))}
-            <Text style={styles.tabContent}>Batting</Text>
-            {matchupData.boxscore.players[0].statistics[0].athletes.map((athlete) => (
-              <View key={athlete.athlete.id}>
-                <Text style={styles.players}>{athlete.athlete.displayName}</Text>
-              </View>
-            ))}
+            <ScrollView>
+              <Text style={styles.tabContent}>Pitching</Text>
+              {matchupData.boxscore.players[0].statistics[1].athletes.map((athlete) => (
+                <View key={athlete?.athlete?.id} style={styles.playerContainer}>
+                  {athlete?.athlete?.headshot?.href && (
+                    <Image
+                      source={{ uri: athlete.athlete.headshot.href }}
+                      style={styles.headshot}
+                    />
+                  )}
+                  <Text style={styles.players}>
+                    {athlete?.athlete?.displayName} -{' '}
+                    {athlete.starter
+                      ? `S${athlete.position.abbreviation}`
+                      : athlete.position.abbreviation}
+                  </Text>
+                </View>
+              ))}
+              <Text style={styles.tabContent}>Batting</Text>
+              {matchupData.boxscore.players[0].statistics[0].athletes.map((athlete) => (
+                <View key={athlete?.athlete?.id} style={styles.playerContainer}>
+                  {athlete?.athlete?.headshot?.href && (
+                    <Image
+                      source={{ uri: athlete.athlete.headshot.href }}
+                      style={styles.headshot}
+                    />
+                  )}
+                  <Text style={styles.players}>
+                    {athlete?.athlete?.displayName} - {athlete.position.abbreviation}
+                  </Text>
+                </View>
+              ))}
+            </ScrollView>
           </View>
         );
+
       case awayTeam:
         return (
           <View style={styles.tabContent}>
-            <Text style={styles.tabContent}>Pitching</Text>
-            {matchupData.boxscore.players[1].statistics[1].athletes.map((athlete) => (
-              <View key={athlete.athlete.id}>
-                <Text style={styles.players}>{athlete.athlete.displayName}</Text>
-              </View>
-            ))}
-            <Text style={styles.tabContent}>Batting</Text>
-            {matchupData.boxscore.players[1].statistics[0].athletes.map((athlete) => (
-              <View key={athlete.athlete.id}>
-                <Text style={styles.players}>{athlete.athlete.displayName}</Text>
-              </View>
-            ))}
+            <ScrollView>
+              <Text style={styles.tabContent}>Pitching</Text>
+              {matchupData.boxscore.players[1].statistics[1].athletes.map((athlete) => (
+                <View key={athlete?.athlete?.id} style={styles.playerContainer}>
+                  {athlete?.athlete?.headshot?.href && (
+                    <Image
+                      source={{ uri: athlete.athlete.headshot.href }}
+                      style={styles.headshot}
+                    />
+                  )}
+                  <Text style={styles.players}>
+                    {athlete?.athlete?.displayName} -{' '}
+                    {athlete.starter
+                      ? `S${athlete.position.abbreviation}`
+                      : athlete.position.abbreviation}
+                  </Text>
+                </View>
+              ))}
+              <Text style={styles.tabContent}>Batting</Text>
+              {matchupData.boxscore.players[1].statistics[0].athletes.map((athlete) => (
+                <View key={athlete?.athlete?.id} style={styles.playerContainer}>
+                  {athlete?.athlete?.headshot?.href && (
+                    <Image
+                      source={{ uri: athlete.athlete.headshot.href }}
+                      style={styles.headshot}
+                    />
+                  )}
+                  <Text style={styles.players}>
+                    {athlete?.athlete?.displayName} - {athlete.position.abbreviation}
+                  </Text>
+                </View>
+              ))}
+            </ScrollView>
           </View>
         );
       default:
@@ -316,13 +367,13 @@ const styles = StyleSheet.create({
   },
   tabContentContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   tabContent: {
     color: 'white',
     fontSize: 24,
     fontWeight: 'bold',
+    paddingVertical: 10,
+    paddingHorizontal: 10,
   },
   playerHeader: {
     color: 'white',
@@ -344,7 +395,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   basesContainer: {
-    marginVertical: 10,
+    marginVertical: 15,
     flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'center',
@@ -367,6 +418,18 @@ const styles = StyleSheet.create({
     width: 15,
     height: 15,
     transform: [{ rotate: '45deg' }], // Rotate to make it look like a diamond
+  },
+  playerContainer: {
+    flexDirection: 'row',
+    marginVertical: 5,
+    alignItems: 'center',
+    marginLeft: 10,
+  },
+  headshot: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: 10,
   },
 });
 
