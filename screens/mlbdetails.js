@@ -134,9 +134,20 @@ const MLBDetails = ({ route }) => {
                         <Image source={defaultImage} style={styles.headshot} />
                       </View>
                     )}
-                    <Text style={styles.players}>
-                      {athlete?.athlete?.displayName} - {athlete.position.abbreviation}
-                    </Text>
+
+                    <View style={{ flexDirection: 'column' }}>
+                      <Text style={styles.players}>
+                        {athlete?.athlete?.displayName} - {athlete.position.abbreviation}
+                      </Text>
+                      <ScrollView horizontal>
+                        <View style={{ flexDirection: 'column' }}>
+                          <Text style={styles.playerStats}>{athlete.stats.join('  ')}</Text>
+                          <Text style={styles.playerStats}>
+                            {matchupData.boxscore.players[0].statistics[1].labels.join('  ')}
+                          </Text>
+                        </View>
+                      </ScrollView>
+                    </View>
                   </View>
                 ))}
               <Text style={styles.tabContent}>Batting</Text>
@@ -160,33 +171,60 @@ const MLBDetails = ({ route }) => {
                       )}
                     </View>
                   )}
-                  <Text style={styles.players}>
-                    {athlete?.athlete?.displayName} - {athlete.position.abbreviation}
-                  </Text>
-                </View>
-              ))}
-              <Text style={styles.tabContent}>Other Pitching</Text>
-              {matchupData.boxscore.players[0].statistics[1].athletes
-                .filter((athlete) => athlete.starter === false)
-                .map((athlete) => (
-                  <View key={athlete?.athlete?.id} style={styles.playerContainer}>
-                    {athlete?.athlete?.headshot?.href ? (
-                      <View style={styles.headshotContainer}>
-                        <Image
-                          source={{ uri: athlete.athlete.headshot.href }}
-                          style={styles.headshot}
-                        />
-                      </View>
-                    ) : (
-                      <View style={styles.headshotContainer}>
-                        <Image source={defaultImage} style={styles.headshot} />
-                      </View>
-                    )}
+                  <View style={{ flexDirection: 'column' }}>
                     <Text style={styles.players}>
                       {athlete?.athlete?.displayName} - {athlete.position.abbreviation}
                     </Text>
+                    <ScrollView horizontal>
+                      <View style={{ flexDirection: 'column' }}>
+                        <Text style={styles.playerStats}>{athlete.stats.join('  ')}</Text>
+                        <Text style={styles.playerStats}>
+                          {matchupData.boxscore.players[0].statistics[0].labels.join('  ')}
+                        </Text>
+                      </View>
+                    </ScrollView>
                   </View>
-                ))}
+                </View>
+              ))}
+
+              {matchupData.boxscore.players[0].statistics[1].athletes.filter(
+                (athlete) => athlete.starter === false
+              ).length > 0 && (
+                <>
+                  <Text style={styles.tabContent}>Other Pitching</Text>
+                  {matchupData.boxscore.players[0].statistics[1].athletes
+                    .filter((athlete) => athlete.starter === false)
+                    .map((athlete) => (
+                      <View key={athlete?.athlete?.id} style={styles.playerContainer}>
+                        {athlete?.athlete?.headshot?.href ? (
+                          <View style={styles.headshotContainer}>
+                            <Image
+                              source={{ uri: athlete.athlete.headshot.href }}
+                              style={styles.headshot}
+                            />
+                          </View>
+                        ) : (
+                          <View style={styles.headshotContainer}>
+                            <Image source={defaultImage} style={styles.headshot} />
+                          </View>
+                        )}
+                        <View style={{ flexDirection: 'column' }}>
+                          <Text style={styles.players}>
+                            {athlete?.athlete?.displayName} - {athlete.position.abbreviation}
+                          </Text>
+                          <ScrollView horizontal>
+                            <View style={{ flexDirection: 'column' }}>
+                              <Text style={styles.playerStats}>{athlete.stats.join('  ')}</Text>
+                              <Text style={styles.playerStats}>
+                                {matchupData.boxscore.players[0].statistics[1].labels.join('  ')}
+                              </Text>
+                            </View>
+                          </ScrollView>
+                        </View>
+                      </View>
+                    ))}
+                </>
+              )}
             </ScrollView>
           </View>
         );
@@ -212,11 +250,22 @@ const MLBDetails = ({ route }) => {
                         <Image source={defaultImage} style={styles.headshot} />
                       </View>
                     )}
-                    <Text style={styles.players}>
-                      {athlete?.athlete?.displayName} - {athlete.position.abbreviation}
-                    </Text>
+                    <View style={{ flexDirection: 'column' }}>
+                      <Text style={styles.players}>
+                        {athlete?.athlete?.displayName} - {athlete.position.abbreviation}
+                      </Text>
+                      <ScrollView horizontal>
+                        <View style={{ flexDirection: 'column' }}>
+                          <Text style={styles.playerStats}>{athlete.stats.join('  ')}</Text>
+                          <Text style={styles.playerStats}>
+                            {matchupData.boxscore.players[1].statistics[1].labels.join('  ')}
+                          </Text>
+                        </View>
+                      </ScrollView>
+                    </View>
                   </View>
                 ))}
+
               <Text style={styles.tabContent}>Batting</Text>
               {matchupData.boxscore.players[1].statistics[0].athletes.map((athlete) => (
                 <View key={athlete?.athlete?.id} style={styles.playerContainer}>
@@ -238,33 +287,59 @@ const MLBDetails = ({ route }) => {
                       )}
                     </View>
                   )}
-                  <Text style={styles.players}>
-                    {athlete?.athlete?.displayName} - {athlete.position.abbreviation}
-                  </Text>
-                </View>
-              ))}
-              <Text style={styles.tabContent}>Other Pitching</Text>
-              {matchupData.boxscore.players[1].statistics[1].athletes
-                .filter((athlete) => athlete.starter === false)
-                .map((athlete) => (
-                  <View key={athlete?.athlete?.id} style={styles.playerContainer}>
-                    {athlete?.athlete?.headshot?.href ? (
-                      <View style={styles.headshotContainer}>
-                        <Image
-                          source={{ uri: athlete.athlete.headshot.href }}
-                          style={styles.headshot}
-                        />
-                      </View>
-                    ) : (
-                      <View style={styles.headshotContainer}>
-                        <Image source={defaultImage} style={styles.headshot} />
-                      </View>
-                    )}
+                  <View style={{ flexDirection: 'column' }}>
                     <Text style={styles.players}>
                       {athlete?.athlete?.displayName} - {athlete.position.abbreviation}
                     </Text>
+                    <ScrollView horizontal>
+                      <View style={{ flexDirection: 'column' }}>
+                        <Text style={styles.playerStats}> {athlete.stats.join('  ')}</Text>
+                        <Text style={styles.playerStats}>
+                          {matchupData.boxscore.players[1].statistics[0].labels.join('  ')}
+                        </Text>
+                      </View>
+                    </ScrollView>
                   </View>
-                ))}
+                </View>
+              ))}
+              {matchupData.boxscore.players[1].statistics[1].athletes.filter(
+                (athlete) => athlete.starter === false
+              ).length > 0 && (
+                <>
+                  <Text style={styles.tabContent}>Other Pitching</Text>
+                  {matchupData.boxscore.players[1].statistics[1].athletes
+                    .filter((athlete) => athlete.starter === false)
+                    .map((athlete) => (
+                      <View key={athlete?.athlete?.id} style={styles.playerContainer}>
+                        {athlete?.athlete?.headshot?.href ? (
+                          <View style={styles.headshotContainer}>
+                            <Image
+                              source={{ uri: athlete.athlete.headshot.href }}
+                              style={styles.headshot}
+                            />
+                          </View>
+                        ) : (
+                          <View style={styles.headshotContainer}>
+                            <Image source={defaultImage} style={styles.headshot} />
+                          </View>
+                        )}
+                        <View style={{ flexDirection: 'column' }}>
+                          <Text style={styles.players}>
+                            {athlete?.athlete?.displayName} - {athlete.position.abbreviation}
+                          </Text>
+                          <ScrollView horizontal>
+                            <View style={{ flexDirection: 'column' }}>
+                              <Text style={styles.playerStats}>{athlete.stats.join('  ')}</Text>
+                              <Text style={styles.playerStats}>
+                                {matchupData.boxscore.players[0].statistics[1].labels.join('  ')}
+                              </Text>
+                            </View>
+                          </ScrollView>
+                        </View>
+                      </View>
+                    ))}
+                </>
+              )}
             </ScrollView>
           </View>
         );
@@ -516,6 +591,7 @@ const styles = StyleSheet.create({
     bottom: -10,
     left: -10,
     color: 'yellow',
+    fontWeight: 'bold',
     fontSize: 16, // adjust as needed
     padding: 2,
     borderRadius: 25, // adjust if needed
@@ -526,6 +602,10 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     marginRight: 10,
     backgroundColor: '#606060',
+  },
+  playerStats: {
+    color: 'white',
+    fontSize: 16,
   },
 });
 
