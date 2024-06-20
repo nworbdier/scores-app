@@ -553,7 +553,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   basesContainer: {
-    marginVertical: 15,
+    marginVertical: 10,
     flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'center',

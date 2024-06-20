@@ -4,7 +4,7 @@
     "slug": "vs-sports-app",
     "version": "1.0.0",
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/VsLogo.jpg"
     },
     "experiments": {
       "tsconfigPaths": true
@@ -18,7 +18,7 @@
       ]
     ],
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/VsLogo.jpg",
     "userInterfaceStyle": "light",
     "splash": {
       "image": "./assets/splash.png",
