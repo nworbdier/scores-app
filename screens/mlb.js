@@ -1,4 +1,4 @@
-import { AntDesign, Ionicons } from '@expo/vector-icons';
+import { AntDesign, Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import moment from 'moment';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
@@ -19,16 +19,6 @@ import {
 import NavBar from '../components/navbar'; // Import the NavBar component
 
 const ITEM_WIDTH = 75;
-
-const findClosestDate = (dates) => {
-  const today = moment();
-  return dates.reduce((closestDate, currentDate) => {
-    const currentDiff = Math.abs(today.diff(moment(currentDate), 'days'));
-    const closestDiff = Math.abs(today.diff(moment(closestDate), 'days'));
-    return currentDiff < closestDiff ? currentDate : closestDate;
-  });
-};
-
 const { width } = Dimensions.get('window');
 
 const MLB = () => {
@@ -44,18 +34,16 @@ const MLB = () => {
 
   const formatToYYYYMMDD = (dateString) => {
     const date = new Date(dateString);
-    const year = date.getFullYear();
-    let month = date.getMonth() + 1;
-    let day = date.getDate();
+    return moment(date).format('YYYYMMDD');
+  };
 
-    if (month < 10) {
-      month = `0${month}`;
-    }
-    if (day < 10) {
-      day = `0${day}`;
-    }
-
-    return `${year}${month}${day}`;
+  const findClosestDate = (dates) => {
+    const today = moment();
+    return dates.reduce((closestDate, currentDate) => {
+      const currentDiff = Math.abs(today.diff(moment(currentDate), 'days'));
+      const closestDiff = Math.abs(today.diff(moment(closestDate), 'days'));
+      return currentDiff < closestDiff ? currentDate : closestDate;
+    });
   };
 
   const fetchDates = async () => {
@@ -73,23 +61,18 @@ const MLB = () => {
       setDateListLoading(false);
     } catch (error) {
       console.error('Error fetching dates:', error);
-      setDates([]);
       setDateListLoading(false);
     }
   };
 
-  const fetchGameData = async () => {
+  const fetchGameData = async (date = selectedDate) => {
     try {
-      let formattedDate;
-
-      if (selectedDate && /^\d{8}$/.test(selectedDate)) {
-        formattedDate = selectedDate;
-      } else {
+      if (!date || !/^\d{8}$/.test(date)) {
         return;
       }
 
       const response = await fetch(
-        `https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard?dates=${formattedDate}`
+        `https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard?dates=${date}`
       );
 
       if (!response.ok) {
@@ -109,23 +92,23 @@ const MLB = () => {
         }
         return {
           id: event.id,
-          HomeTeam: event.competitions[0].competitors[0].team.shortDisplayName,
-          HomeLogo: event.competitions[0].competitors[0].team.logo,
-          HomeScore: event.competitions[0].competitors[0].score,
-          HomeTeamRecordSummary: event.competitions[0].competitors[0].records[0].summary,
-          AwayTeam: event.competitions[0].competitors[1].team.shortDisplayName,
-          AwayLogo: event.competitions[0].competitors[1].team.logo,
-          AwayScore: event.competitions[0].competitors[1].score,
-          AwayTeamRecordSummary: event.competitions[0].competitors[1].records[0].summary,
-          GameTime: event.competitions[0].date,
-          Status: event.competitions[0].status.type.name,
-          StatusShortDetail: event.competitions[0].status.type.shortDetail,
+          HomeTeam: competition.competitors[0].team.shortDisplayName,
+          HomeLogo: competition.competitors[0].team.logo,
+          HomeScore: competition.competitors[0].score,
+          HomeTeamRecordSummary: competition.competitors[0].records[0].summary,
+          AwayTeam: competition.competitors[1].team.shortDisplayName,
+          AwayLogo: competition.competitors[1].team.logo,
+          AwayScore: competition.competitors[1].score,
+          AwayTeamRecordSummary: competition.competitors[1].records[0].summary,
+          GameTime: competition.date,
+          Status: competition.status.type.name,
+          StatusShortDetail: competition.status.type.shortDetail,
           DisplayClock: event.status.displayClock,
           Inning: event.status.period,
-          Outs: event.competitions[0].situation ? event.competitions[0].situation.outs : null,
-          First: event.competitions[0].situation ? event.competitions[0].situation.onFirst : null,
-          Second: event.competitions[0].situation ? event.competitions[0].situation.onSecond : null,
-          Third: event.competitions[0].situation ? event.competitions[0].situation.onThird : null,
+          Outs: competition.situation ? competition.situation.outs : null,
+          First: competition.situation ? competition.situation.onFirst : null,
+          Second: competition.situation ? competition.situation.onSecond : null,
+          Third: competition.situation ? competition.situation.onThird : null,
           IsPlayoff: isPlayoff,
           HomeWins: homeWins,
           AwayWins: awayWins,
@@ -138,25 +121,20 @@ const MLB = () => {
 
       // Sort the game data
       const sortedGameData = gameData.sort((a, b) => {
-        // If both games are final, sort by game start time
         if (a.Status === 'STATUS_FINAL' && b.Status === 'STATUS_FINAL') {
           return a.GameTime.localeCompare(b.GameTime);
-        }
-        // If only one of the games is final, place it at the end
-        else if (a.Status === 'STATUS_FINAL') {
+        } else if (a.Status === 'STATUS_FINAL') {
           return 1;
         } else if (b.Status === 'STATUS_FINAL') {
           return -1;
-        }
-        // Otherwise, sort by game start time
-        else {
+        } else {
           return a.GameTime.localeCompare(b.GameTime);
         }
       });
 
       setGameData(sortedGameData);
     } catch (error) {
-      console.error('Error in fetchNBAGameData:', error);
+      console.error('Error fetching game data:', error);
     }
   };
 
@@ -171,12 +149,8 @@ const MLB = () => {
   }, []);
 
   useEffect(() => {
-    fetchDates();
-  }, []);
-
-  useEffect(() => {
     if (selectedDate) {
-      fetchGameData(selectedDate);
+      fetchGameData();
     }
   }, [selectedDate]);
 
@@ -217,14 +191,12 @@ const MLB = () => {
 
   const formatGameTime = (isoDate) => {
     const date = new Date(isoDate);
-    const options = { hour: 'numeric', minute: 'numeric', hour12: true };
-    // eslint-disable-next-line no-undef
-    return new Intl.DateTimeFormat('en-US', options).format(date);
+    return moment(date).format('h:mm A');
   };
 
   const renderDateItem = ({ item }) => (
     <TouchableOpacity
-      style={[styles.dateButton, item === selectedDate]}
+      style={[styles.dateButton, item === selectedDate && styles.selectedDateButton]}
       onPress={() => setSelectedDate(item)}
       activeOpacity={1}>
       <Text style={[styles.dateText, item === selectedDate && styles.selectedDateText]}>
@@ -329,8 +301,6 @@ const MLB = () => {
 
     const groupedData = [];
     const remaining = gameData.slice(0);
-
-    // Group the remaining items into rows of three
     for (let i = 0; i < remaining.length; i += 4) {
       groupedData.push(remaining.slice(i, i + 4));
     }
@@ -370,50 +340,51 @@ const MLB = () => {
     );
   };
 
-  const renderMLBDates = () => {
-    return (
-      <FlatList
-        ref={ref}
-        data={dates}
-        getItemLayout={(data, index) => ({
-          length: ITEM_WIDTH,
-          offset: ITEM_WIDTH * index,
-          index,
-        })}
-        initialScrollIndex={index}
-        renderItem={renderDateItem}
-        keyExtractor={(item) => item}
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.dateList}
-        onScrollToIndexFailed={onScrollToIndexFailed}
-      />
-    );
-  };
+  const renderMLBDates = () => (
+    <FlatList
+      ref={ref}
+      data={dates}
+      getItemLayout={(data, index) => ({
+        length: ITEM_WIDTH,
+        offset: ITEM_WIDTH * index,
+        index,
+      })}
+      initialScrollIndex={index}
+      renderItem={renderDateItem}
+      keyExtractor={(item) => item}
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      contentContainerStyle={styles.dateList}
+      onScrollToIndexFailed={onScrollToIndexFailed}
+    />
+  );
 
   useFocusEffect(
     useCallback(() => {
       const fetchInitialData = async () => {
         await fetchGameData();
-        // console.log('Initial fetch for MLB...');
       };
 
       fetchInitialData();
 
-      const intervalId = setInterval(() => {
-        fetchGameData();
-        // console.log('Refreshing MLB...');
-      }, 10000); // Refresh every 10 seconds
+      const intervalId = setInterval(
+        () => fetchGameData(),
+        10000 // Refresh every 10 seconds
+      );
 
       return () => clearInterval(intervalId); // Cleanup interval on blur
-    }, [selectedDate])
+    }, [])
   );
 
   return (
     <View style={styles.container}>
       <SafeAreaView style={styles.safeAreaContainer} />
       <View style={styles.header}>
-        <Text style={styles.headerText}>MLB</Text>
+        <View
+          style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Text style={styles.headerText}>MLB</Text>
+          <Ionicons name="baseball-outline" size={24} color="white" marginLeft={5} />
+        </View>
         <View style={styles.headerIcons}>
           <TouchableOpacity>
             <Ionicons name="settings-outline" size={25} color="white" marginRight={10} />
@@ -477,6 +448,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+
   dateText: {
     fontSize: 18,
     fontWeight: 'bold',

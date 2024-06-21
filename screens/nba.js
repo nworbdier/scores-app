@@ -380,7 +380,11 @@ const NBA = () => {
     <View style={styles.container}>
       <SafeAreaView style={styles.safeAreaContainer} />
       <View style={styles.header}>
-        <Text style={styles.headerText}>NBA</Text>
+        <View
+          style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Text style={styles.headerText}>NBA</Text>
+          <Ionicons name="basketball-outline" size={24} color="white" marginLeft={5} />
+        </View>
         <View style={styles.headerIcons}>
           <TouchableOpacity>
             <Ionicons name="settings-outline" size={25} color="white" marginRight={10} />

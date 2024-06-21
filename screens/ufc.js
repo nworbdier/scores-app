@@ -1,4 +1,4 @@
-import { AntDesign, Ionicons } from '@expo/vector-icons';
+import { AntDesign, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import moment from 'moment';
 import React, { useEffect, useState, useRef, useCallback } from 'react';
@@ -297,7 +297,11 @@ const UFC = () => {
     <View style={styles.container}>
       <SafeAreaView style={styles.safeAreaContainer} />
       <View style={styles.header}>
-        <Text style={styles.headerText}>UFC</Text>
+        <View
+          style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Text style={styles.headerText}>UFC</Text>
+          <MaterialCommunityIcons name="boxing-glove" size={24} color="white" marginLeft={5} />
+        </View>
         <View style={styles.headerIcons}>
           <TouchableOpacity>
             <Ionicons name="settings-outline" size={25} color="white" marginRight={10} />
