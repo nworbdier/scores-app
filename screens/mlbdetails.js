@@ -16,7 +16,6 @@ import NavBar from '../components/navbar'; // Import the NavBar component
 const MLBDetails = ({ route }) => {
   const { eventId } = route.params; // Get the eventId from the navigation route parameters
   const [matchupData, setMatchupData] = useState(null);
-  const [playbyplaydata, setPlaybyplaydata] = useState(null);
   const [selectedTab, setSelectedTab] = useState('Feed');
   const [countdown, setCountdown] = useState('');
 
@@ -33,39 +32,8 @@ const MLBDetails = ({ route }) => {
     }
   };
 
-  const fetchPlaybyPlayData = async () => {
-    try {
-      // Fetch data from page 1
-      const response1 = await fetch(
-        `https://sports.core.api.espn.com/v2/sports/baseball/leagues/mlb/events/${eventId}/competitions/${eventId}/plays?limit=500&page=1`
-      );
-      const data1 = await response1.json();
-
-      // Fetch data from page 2
-      const response2 = await fetch(
-        `https://sports.core.api.espn.com/v2/sports/baseball/leagues/mlb/events/${eventId}/competitions/${eventId}/plays?limit=500&page=2`
-      );
-      const data2 = await response2.json();
-
-      // Combine items from both pages
-      const combinedItems = [...data1.items, ...data2.items];
-
-      console.log('Url', response1.url);
-
-      // Filter out items where shortAlternativeText contains "pitches to"
-      const filteredItems = combinedItems.filter(
-        (item) => item.shortAlternativeText && !item.shortAlternativeText.includes('pitches to')
-      );
-
-      setPlaybyplaydata({ items: filteredItems });
-    } catch (error) {
-      console.error('Error fetching play-by-play data:', error);
-    }
-  };
-
   const fetchGameData = async () => {
     await fetchMatchupData();
-    await fetchPlaybyPlayData();
   };
 
   useFocusEffect(
@@ -135,8 +103,7 @@ const MLBDetails = ({ route }) => {
     !matchupData ||
     !matchupData.header ||
     !matchupData.header.competitions ||
-    !playbyplaydata ||
-    !playbyplaydata.items
+    !matchupData.plays
   ) {
     return (
       <View style={styles.container}>
@@ -178,29 +145,12 @@ const MLBDetails = ({ route }) => {
       case 'Feed':
         if (competition.status.type.name !== 'STATUS_SCHEDULED') {
           // Filter items where status is not 'STATUS_SCHEDULED' and make the necessary text replacements
-          const filteredItems = playbyplaydata.items
+          const filteredItems = matchupData.plays
             .filter((item) => item.status !== 'STATUS_SCHEDULED')
             .map((item) => {
               // Make the necessary text replacements
-              if (item.shortAlternativeText === 'Ball In Play') {
-                if (item.type.alternativeText.includes('Out')) {
-                  item.shortAlternativeText = 'In play, out(s)';
-                } else if (
-                  item.type.alternativeText.includes('Single') ||
-                  item.type.alternativeText.includes('Double') ||
-                  item.type.alternativeText.includes('Triple')
-                ) {
-                  item.shortAlternativeText = 'In play, no out';
-                }
-              }
-              if (item.shortAlternativeText === 'Strike Foul') {
-                item.shortAlternativeText = 'Foul ball';
-              }
-              if (
-                item.shortAlternativeText === 'Strike Swinging' ||
-                item.shortAlternativeText === 'Strike Looking'
-              ) {
-                item.shortAlternativeText = 'Strike';
+              if (item.text?.includes('Strike Foul')) {
+                item.type.text = 'Foul ball';
               }
               return item;
             });
@@ -208,13 +158,13 @@ const MLBDetails = ({ route }) => {
           // Prepare grouped items and filter out "Pitcher pitches to Batter"
           const groupedItems = {};
           filteredItems.forEach((item) => {
-            if (item.shortAlternativeText && item.shortAlternativeText.includes('pitches to')) {
+            if (item.text && item.text.includes('pitches to')) {
               return; // Skip this item
             }
             if (!groupedItems[item.atBatId]) {
               groupedItems[item.atBatId] = [];
             }
-            groupedItems[item.atBatId].push(item.shortAlternativeText);
+            groupedItems[item.atBatId].push(item.text);
           });
 
           // Reverse the order of atBatId keys
