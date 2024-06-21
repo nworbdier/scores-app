@@ -177,21 +177,44 @@ const MLBDetails = ({ route }) => {
     switch (selectedTab) {
       case 'Feed':
         if (competition.status.type.name !== 'STATUS_SCHEDULED') {
-          // Filter items where status is not 'STATUS_SCHEDULED'
-          const filteredItems = playbyplaydata.items.filter(
-            (item) => item.status !== 'STATUS_SCHEDULED'
-          );
+          // Filter items where status is not 'STATUS_SCHEDULED' and make the necessary text replacements
+          const filteredItems = playbyplaydata.items
+            .filter((item) => item.status !== 'STATUS_SCHEDULED')
+            .map((item) => {
+              // Make the necessary text replacements
+              if (item.shortAlternativeText === 'Ball In Play') {
+                if (item.type.alternativeText.includes('Out')) {
+                  item.shortAlternativeText = 'In play, out(s)';
+                } else if (
+                  item.type.alternativeText.includes('Single') ||
+                  item.type.alternativeText.includes('Double') ||
+                  item.type.alternativeText.includes('Triple')
+                ) {
+                  item.shortAlternativeText = 'In play, no out';
+                }
+              }
+              if (item.shortAlternativeText === 'Strike Foul') {
+                item.shortAlternativeText = 'Foul ball';
+              }
+              if (
+                item.shortAlternativeText === 'Strike Swinging' ||
+                item.shortAlternativeText === 'Strike Looking'
+              ) {
+                item.shortAlternativeText = 'Strike';
+              }
+              return item;
+            });
 
           // Prepare grouped items and filter out "Pitcher pitches to Batter"
           const groupedItems = {};
           filteredItems.forEach((item) => {
-            if (item.alternativeText && item.alternativeText.includes('pitches to')) {
+            if (item.shortAlternativeText && item.shortAlternativeText.includes('pitches to')) {
               return; // Skip this item
             }
             if (!groupedItems[item.atBatId]) {
               groupedItems[item.atBatId] = [];
             }
-            groupedItems[item.atBatId].push(item.alternativeText);
+            groupedItems[item.atBatId].push(item.shortAlternativeText);
           });
 
           // Reverse the order of atBatId keys
@@ -203,7 +226,7 @@ const MLBDetails = ({ route }) => {
               <ScrollView>
                 {reversedAtBatIds.map((atBatId) => (
                   <View key={atBatId} style={styles.feedItem}>
-                    <Text style={styles.feedItemHeader}>At Bat ID: {atBatId}</Text>
+                    <Text style={styles.feedItemHeader}>{atBatId}</Text>
                     {groupedItems[atBatId].reverse().map((text, index) => (
                       <Text key={index} style={styles.feedItemText}>
                         {text}
