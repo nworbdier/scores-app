@@ -159,7 +159,7 @@ const PFL = () => {
     const competitor1 = competition.competitors[0];
     const competitor2 = competition.competitors[1];
     const result = competition.status.result;
-    const isInProgress = statusType === 'STATUS_IN_PROGRESS';
+    const isInProgress = statusType.includes('STATUS_IN_PROGRESS');
     const period = competition.status.period;
     const displayClock = competition.status.displayClock;
 
@@ -185,20 +185,15 @@ const PFL = () => {
             )}
             <View style={styles.competitorInfo}>
               <Text style={styles.competitorName}>{competitor1.athlete.displayName}</Text>
-              {!isInProgress && (
-                <Text
-                  style={[
-                    styles.resultText,
-                    statusType === 'STATUS_SCHEDULED' && styles.scheduledText,
-                    !competitor1.winner && statusType !== 'STATUS_SCHEDULED' && styles.lossText,
-                  ]}>
-                  {statusType === 'STATUS_SCHEDULED'
-                    ? competitor1.displayRecord
-                    : competitor1.winner
-                      ? 'W'
-                      : 'L'}
+              {statusType === 'STATUS_SCHEDULED' || statusType === 'STATUS_PRE_FIGHT' ? (
+                <Text style={[styles.resultText, styles.scheduledText]}>
+                  {competitor1.displayRecord}
                 </Text>
-              )}
+              ) : statusType === 'STATUS_FINAL' ? (
+                <Text style={[styles.resultText, !competitor1.winner && styles.lossText]}>
+                  {competitor1.winner ? 'W' : 'L'}
+                </Text>
+              ) : null}
             </View>
           </View>
           <View style={styles.competitorRow}>
@@ -207,20 +202,15 @@ const PFL = () => {
             )}
             <View style={styles.competitorInfo}>
               <Text style={styles.competitorName}>{competitor2.athlete.displayName}</Text>
-              {!isInProgress && (
-                <Text
-                  style={[
-                    styles.resultText,
-                    statusType === 'STATUS_SCHEDULED' && styles.scheduledText,
-                    !competitor2.winner && statusType !== 'STATUS_SCHEDULED' && styles.lossText,
-                  ]}>
-                  {statusType === 'STATUS_SCHEDULED'
-                    ? competitor2.displayRecord
-                    : competitor2.winner
-                      ? 'W'
-                      : 'L'}
+              {statusType === 'STATUS_SCHEDULED' || statusType === 'STATUS_PRE_FIGHT' ? (
+                <Text style={[styles.resultText, styles.scheduledText]}>
+                  {competitor2.displayRecord}
                 </Text>
-              )}
+              ) : statusType === 'STATUS_FINAL' ? (
+                <Text style={[styles.resultText, !competitor2.winner && styles.lossText]}>
+                  {competitor2.winner ? 'W' : 'L'}
+                </Text>
+              ) : null}
             </View>
           </View>
         </View>
@@ -235,7 +225,7 @@ const PFL = () => {
                 {isInProgress
                   ? `Round ${period}`
                   : statusType === 'STATUS_END_OF_ROUND'
-                    ? `End Rd ${period}`
+                    ? `End Round ${period}`
                     : statusType === 'STATUS_END_OF_FIGHT'
                       ? 'Final'
                       : ''}
