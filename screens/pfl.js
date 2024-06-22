@@ -92,7 +92,6 @@ const PFL = () => {
         `https://site.web.api.espn.com/apis/common/v3/sports/mma/pfl/fightcenter/${eventId}`,
         options
       );
-      console.log('Url', response.url);
       const result = await response.json();
       setEventDetails(result);
     } catch (error) {
@@ -156,11 +155,12 @@ const PFL = () => {
   }, []);
 
   const renderCompetitionItem = (competition, cardKey) => {
-    const statusType = competition.status.type.state;
+    const isLive = competition.status.type.state === 'in';
+    const statusType = competition.status.type.name;
     const competitor1 = competition.competitors[0];
     const competitor2 = competition.competitors[1];
     const result = competition.status.result;
-    const isInProgress = statusType.includes('in');
+    const isInProgress = statusType.includes('STATUS_IN_PROGRESS');
     const period = competition.status.period;
     const displayClock = competition.status.displayClock;
 
@@ -176,7 +176,7 @@ const PFL = () => {
       <View
         style={[
           styles.competitorsContainer,
-          isInProgress && { borderColor: 'lightgreen', borderWidth: 1 },
+          isLive && { borderColor: 'lightgreen', borderWidth: 1 },
         ]}
         key={competition.id}>
         <View style={styles.competitorColumn}>
@@ -186,11 +186,11 @@ const PFL = () => {
             )}
             <View style={styles.competitorInfo}>
               <Text style={styles.competitorName}>{competitor1.athlete.displayName}</Text>
-              {statusType === 'pre' ? (
+              {statusType === 'STATUS_SCHEDULED' || statusType === 'STATUS_PRE_FIGHT' ? (
                 <Text style={[styles.resultText, styles.scheduledText]}>
                   {competitor1.displayRecord}
                 </Text>
-              ) : statusType === 'post' ? (
+              ) : statusType === 'STATUS_FINAL' ? (
                 <Text style={[styles.resultText, !competitor1.winner && styles.lossText]}>
                   {competitor1.winner ? 'W' : 'L'}
                 </Text>
@@ -203,11 +203,11 @@ const PFL = () => {
             )}
             <View style={styles.competitorInfo}>
               <Text style={styles.competitorName}>{competitor2.athlete.displayName}</Text>
-              {statusType === 'pre' ? (
+              {statusType === 'STATUS_SCHEDULED' || statusType === 'STATUS_PRE_FIGHT' ? (
                 <Text style={[styles.resultText, styles.scheduledText]}>
                   {competitor2.displayRecord}
                 </Text>
-              ) : statusType === 'post' ? (
+              ) : statusType === 'STATUS_FINAL' ? (
                 <Text style={[styles.resultText, !competitor2.winner && styles.lossText]}>
                   {competitor2.winner ? 'W' : 'L'}
                 </Text>
@@ -217,14 +217,17 @@ const PFL = () => {
         </View>
 
         <View style={styles.vsColumn}>
-          {statusType === 'post' || isInProgress || statusType === 'in' ? (
+          {statusType === 'STATUS_FINAL' ||
+          isInProgress ||
+          statusType === 'STATUS_END_OF_ROUND' ||
+          statusType === 'STATUS_END_OF_FIGHT' ? (
             <View style={styles.resultColumn}>
               <Text style={styles.resultText3}>
                 {isInProgress
                   ? `Round ${period}`
-                  : statusType === 'in'
+                  : statusType === 'STATUS_END_OF_ROUND'
                     ? `End Round ${period}`
-                    : statusType === 'post'
+                    : statusType === 'STATUS_END_OF_FIGHT'
                       ? 'Final'
                       : ''}
               </Text>
@@ -265,24 +268,7 @@ const PFL = () => {
         <Text style={styles.cardName2}>
           {card?.displayName} {cardTime && `- ${cardTime}`}
         </Text>
-        {card?.competitions.map((comp) => {
-          if (
-            comp.status.type.name !== 'STATUS_SCHEDULED' &&
-            comp.status.type.name !== 'STATUS_FINAL'
-          ) {
-            return renderCompetitionItem(comp, cardKey);
-          }
-          return null;
-        })}
-        {card?.competitions.map((comp) => {
-          if (
-            comp.status.type.name === 'STATUS_SCHEDULED' ||
-            comp.status.type.name === 'STATUS_FINAL'
-          ) {
-            return renderCompetitionItem(comp, cardKey);
-          }
-          return null;
-        })}
+        {card?.competitions.map((comp) => renderCompetitionItem(comp, cardKey))}
       </View>
     );
   };
@@ -357,7 +343,7 @@ const PFL = () => {
           />
         ) : (
           <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-            <Text style={{ color: 'white' }}>No events available</Text>
+            <Text style={{ color: 'white' }}> </Text>
           </View>
         )}
       </View>
