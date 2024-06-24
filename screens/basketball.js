@@ -43,10 +43,13 @@ const getNumberWithSuffix = (number) => {
   }
 };
 
-const NBA = () => {
+const BASKETBALL = ({ route }) => {
+  const { sport } = route.params; // Get the sport type from the route parameters
+  console.log(sport);
   const navigation = useNavigation();
   const [gameData, setGameData] = useState([]);
   const [dates, setDates] = useState([]);
+  const [datesFetched, setDatesFetched] = useState(false);
   const [selectedDate, setSelectedDate] = useState(moment().format('YYYYMMDD'));
   const [refreshing, setRefreshing] = useState(false);
   const [dateListLoading, setDateListLoading] = useState(false);
@@ -74,13 +77,14 @@ const NBA = () => {
   const fetchDates = async () => {
     try {
       const response = await fetch(
-        `https://sports.core.api.espn.com/v2/sports/basketball/leagues/nba/calendar/whitelist`
+        `https://sports.core.api.espn.com/v2/sports/basketball/leagues/${sport.toLowerCase()}/calendar/whitelist`
       );
       const data = await response.json();
       const dates = data.eventDate.dates.map((date) => formatToYYYYMMDD(date));
       const closestDate = findClosestDate(dates);
       const newIndex = dates.findIndex((date) => date === closestDate);
       setDates(dates);
+      setDatesFetched(true); // Set the flag to true
       setIndex(newIndex);
       setSelectedDate(closestDate);
       setDateListLoading(false);
@@ -102,94 +106,118 @@ const NBA = () => {
       }
 
       const response = await fetch(
-        `https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates=${formattedDate}`
+        `https://site.api.espn.com/apis/site/v2/sports/basketball/${sport.toLowerCase()}/scoreboard?dates=${formattedDate}`
       );
+
+      console.log('Fetch URL:', response.url);
 
       if (!response.ok) {
         throw new Error('Network response was not ok');
       }
 
       const data = await response.json();
+
+      if (!data.events) {
+        throw new Error('No events found');
+      }
+
       const gameData = data.events.map((event) => {
+        if (!event.competitions || !event.competitions[0]) {
+          throw new Error('No competitions found for event');
+        }
+
         const competition = event.competitions[0];
+
         const isPlayoff = competition.series && competition.series.type === 'playoff';
         let homeWins = null;
         let awayWins = null;
 
         if (isPlayoff) {
-          homeWins = competition.series.competitors[0].wins;
-          awayWins = competition.series.competitors[1].wins;
+          homeWins = competition.series.competitors?.[0]?.wins ?? null;
+          awayWins = competition.series.competitors?.[1]?.wins ?? null;
         }
 
-        return {
+        const game = {
           id: event.id,
-          HomeTeam: competition.competitors[0].team.shortDisplayName,
-          HomeLogo: competition.competitors[0].team.logo,
-          HomeScore: competition.competitors[0].score,
+          HomeTeam: competition.competitors?.[0]?.team?.shortDisplayName ?? 'Unknown',
+          HomeLogo: competition.competitors?.[0]?.team?.logo ?? '',
+          HomeScore: competition.competitors?.[0]?.score ?? '0',
           HomeTeamRecordSummary: isPlayoff
             ? `${homeWins}-${awayWins}`
-            : competition.competitors[0].records[0].summary,
-          AwayTeam: competition.competitors[1].team.shortDisplayName,
-          AwayLogo: competition.competitors[1].team.logo,
-          AwayScore: competition.competitors[1].score,
+            : competition.competitors?.[0]?.records?.[0]?.summary ?? '',
+          AwayTeam: competition.competitors?.[1]?.team?.shortDisplayName ?? 'Unknown',
+          AwayLogo: competition.competitors?.[1]?.team?.logo ?? '',
+          AwayScore: competition.competitors?.[1]?.score ?? '0',
           AwayTeamRecordSummary: isPlayoff
             ? `${awayWins}-${homeWins}`
-            : competition.competitors[1].records[0].summary,
-          GameTime: competition.date,
-          Status: competition.status.type.name,
-          StatusShortDetail: competition.status.type.shortDetail,
-          DisplayClock: event.status.displayClock,
-          Quarter: event.status.period,
+            : competition.competitors?.[1]?.records?.[0]?.summary ?? '',
+          GameTime: competition.date ?? 'TBD',
+          Status: competition.status?.type?.name ?? 'Unknown',
+          StatusShortDetail: competition.status?.type?.shortDetail ?? 'Unknown',
+          DisplayClock: event.status?.displayClock ?? '0:00',
+          Quarter: event.status?.period ?? '0',
           IsPlayoff: isPlayoff,
           HomeWins: homeWins,
           AwayWins: awayWins,
         };
+
+        return game;
       });
 
-      if (data.events[0] && data.events[0].season && data.events[0].season.slug) {
+      if (data.events[0]?.season?.slug) {
         setSeasonSlug(data.events[0].season.slug);
       }
 
       setGameData(gameData);
     } catch (error) {
-      console.error('Error in fetchNBAGameData:', error);
+      console.error('Error in fetchWNBAGameData:', error);
     }
   };
 
-  useEffect(() => {
-    const fetchData = async () => {
-      await fetchDates();
-      const closestDate = findClosestDate(dates);
-      setSelectedDate(closestDate);
-      await fetchGameData(closestDate);
-    };
-    fetchData();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      const fetchInitialData = async () => {
+        await fetchGameData(selectedDate);
+      };
+
+      fetchInitialData();
+
+      const intervalId = setInterval(() => {
+        fetchGameData(selectedDate);
+      }, 10000); // Refresh every 10 seconds
+
+      return () => clearInterval(intervalId); // Cleanup interval on blur
+    }, [selectedDate, sport])
+  );
 
   useEffect(() => {
     fetchDates();
-  }, []);
+  }, [sport]);
 
   useEffect(() => {
     if (selectedDate) {
       fetchGameData(selectedDate);
     }
-  }, [selectedDate]);
+  }, [selectedDate, sport]);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchGameData(selectedDate);
+    setRefreshing(false);
+  };
 
   useEffect(() => {
-    if (ref.current && dates.length > 0 && !dateListLoading) {
-      const selectedIndex = dates.findIndex((d) => d === selectedDate);
-      setIndex(selectedIndex >= 0 ? selectedIndex : 0);
-      try {
-        ref.current.scrollToIndex({ index: selectedIndex, animated: true, viewPosition: 0.5 });
-      } catch (e) {
-        console.warn('Scroll to index failed:', e);
-      }
+    if (ref.current && datesFetched) {
+      // Check if dates have been fetched
+      const wait = new Promise((resolve) => setTimeout(resolve, 1000));
+      wait.then(() => {
+        ref.current.scrollToIndex({ index, animated: true, viewPosition: 0.5 });
+      });
     }
-  }, [dates, selectedDate, dateListLoading]);
+  }, [index, ref, fetchGameData]);
 
   const onScrollToIndexFailed = useCallback((info) => {
-    const wait = new Promise((resolve) => setTimeout(resolve, 500));
+    const wait = new Promise((resolve) => setTimeout(resolve, 1000));
     wait.then(() => {
       const offset = ITEM_WIDTH * info.index;
       try {
@@ -200,12 +228,6 @@ const NBA = () => {
       }
     });
   }, []);
-
-  const handleRefresh = async () => {
-    setRefreshing(true);
-    await fetchGameData();
-    setRefreshing(false);
-  };
 
   const formatGameTime = (isoDate) => {
     const date = new Date(isoDate);
@@ -236,14 +258,14 @@ const NBA = () => {
 
       const intervalId = setInterval(() => {
         fetchGameData();
-        // console.log('Refreshing NBA...');
+        // console.log('Refreshing WNBA...');
       }, 5000); // Refresh every 10 seconds
 
       return () => clearInterval(intervalId); // Cleanup interval on blur
     }, [selectedDate])
   );
 
-  const renderNBAComponent = () => {
+  const renderWNBAComponent = () => {
     const renderItem = ({ item, index }) => {
       const containerStyle = [
         styles.itemContainer,
@@ -255,7 +277,7 @@ const NBA = () => {
       return (
         <TouchableOpacity
           style={containerStyle}
-          onPress={() => navigation.navigate('NBADetails', { eventId: item.id })}>
+          onPress={() => navigation.navigate('WNBADetails', { eventId: item.id })}>
           <View style={{ flexDirection: 'column' }}>
             <View style={styles.column}>
               <Image source={{ uri: item.AwayLogo }} style={styles.image} />
@@ -339,7 +361,7 @@ const NBA = () => {
         </Text>
         <ScrollView
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor="#888" />
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#888" />
           }>
           <ScrollView horizontal>
             {groupedData.map((row, index) => (
@@ -355,7 +377,7 @@ const NBA = () => {
     );
   };
 
-  const renderNBADates = () => {
+  const renderWNBADates = () => {
     return (
       <FlatList
         ref={ref}
@@ -382,7 +404,7 @@ const NBA = () => {
       <View style={styles.header}>
         <View
           style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Text style={styles.headerText}>NBA</Text>
+          <Text style={styles.headerText}>WNBA</Text>
           <Ionicons name="basketball-outline" size={24} color="white" marginLeft={5} />
         </View>
         <View style={styles.headerIcons}>
@@ -395,7 +417,7 @@ const NBA = () => {
         </View>
       </View>
       <View style={styles.headerContainer}>
-        {dateListLoading ? <ActivityIndicator size="large" color="white" /> : renderNBADates()}
+        {dateListLoading ? <ActivityIndicator size="large" color="white" /> : renderWNBADates()}
       </View>
       <View
         style={{
@@ -403,7 +425,7 @@ const NBA = () => {
           backgroundColor: 'black',
           paddingHorizontal: 10,
         }}>
-        {renderNBAComponent()}
+        {renderWNBAComponent()}
       </View>
       <NavBar />
     </View>
@@ -558,4 +580,4 @@ const styles = StyleSheet.create({
     margin: 0.5,
   },
 });
-export default NBA;
+export default BASKETBALL;

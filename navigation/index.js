@@ -6,15 +6,14 @@ import { SafeAreaView, StyleSheet, View } from 'react-native';
 
 import { ModalProvider } from '../components/modalcontext'; // Adjusted path
 import SportSelector from '../components/sportselector'; // Import the SportSelector modal
+import BASKETBALL from '../screens/basketball';
 import Scores from '../screens/home';
 import LIV from '../screens/liv';
 import MLB from '../screens/mlb';
 import MLBDetails from '../screens/mlbdetails';
 import MMA from '../screens/mma';
-import NBA from '../screens/nba';
 import NHL from '../screens/nhl';
 import PGA from '../screens/pga';
-import WNBA from '../screens/wnba';
 
 const Stack = createStackNavigator();
 
@@ -36,8 +35,11 @@ export default function RootStack() {
               />
               <Stack.Screen name="PGA" component={PGA} options={{ headerShown: false }} />
               <Stack.Screen name="LIV" component={LIV} options={{ headerShown: false }} />
-              <Stack.Screen name="NBA" component={NBA} options={{ headerShown: false }} />
-              <Stack.Screen name="WNBA" component={WNBA} options={{ headerShown: false }} />
+              <Stack.Screen
+                name="BASKETBALL"
+                component={BASKETBALL}
+                options={{ headerShown: false }}
+              />
               <Stack.Screen name="NHL" component={NHL} options={{ headerShown: false }} />
               <Stack.Screen name="MMA" component={MMA} options={{ headerShown: false }} />
             </Stack.Navigator>

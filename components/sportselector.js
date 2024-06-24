@@ -29,6 +29,9 @@ const SportSelector = () => {
     setSelectedSport(sport); // Set the selected sport
     if (sport === 'UFC' || sport === 'PFL') {
       navigation.navigate('MMA', { sport }); // Pass the sport type as a parameter
+    }
+    if (sport === 'NBA' || sport === 'WNBA') {
+      navigation.navigate('BASKETBALL', { sport }); // Pass the sport type as a parameter
     } else {
       navigation.navigate(sport);
     }
