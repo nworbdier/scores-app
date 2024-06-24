@@ -170,7 +170,7 @@ const BASKETBALL = ({ route }) => {
 
       setGameData(gameData);
     } catch (error) {
-      console.error('Error in fetchWNBAGameData:', error);
+      console.error('Error in fetchGameData:', error);
     }
   };
 
@@ -258,14 +258,14 @@ const BASKETBALL = ({ route }) => {
 
       const intervalId = setInterval(() => {
         fetchGameData();
-        // console.log('Refreshing WNBA...');
+        // console.log('Refreshing game data...');
       }, 5000); // Refresh every 10 seconds
 
       return () => clearInterval(intervalId); // Cleanup interval on blur
     }, [selectedDate])
   );
 
-  const renderWNBAComponent = () => {
+  const renderComponent = () => {
     const renderItem = ({ item, index }) => {
       const containerStyle = [
         styles.itemContainer,
@@ -277,7 +277,7 @@ const BASKETBALL = ({ route }) => {
       return (
         <TouchableOpacity
           style={containerStyle}
-          onPress={() => navigation.navigate('WNBADetails', { eventId: item.id })}>
+          onPress={() => navigation.navigate(`${sport}Details`, { eventId: item.id })}>
           <View style={{ flexDirection: 'column' }}>
             <View style={styles.column}>
               <Image source={{ uri: item.AwayLogo }} style={styles.image} />
@@ -377,7 +377,7 @@ const BASKETBALL = ({ route }) => {
     );
   };
 
-  const renderWNBADates = () => {
+  const renderDates = () => {
     return (
       <FlatList
         ref={ref}
@@ -404,7 +404,7 @@ const BASKETBALL = ({ route }) => {
       <View style={styles.header}>
         <View
           style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Text style={styles.headerText}>WNBA</Text>
+          <Text style={styles.headerText}>{sport}</Text>
           <Ionicons name="basketball-outline" size={24} color="white" marginLeft={5} />
         </View>
         <View style={styles.headerIcons}>
@@ -417,7 +417,7 @@ const BASKETBALL = ({ route }) => {
         </View>
       </View>
       <View style={styles.headerContainer}>
-        {dateListLoading ? <ActivityIndicator size="large" color="white" /> : renderWNBADates()}
+        {dateListLoading ? <ActivityIndicator size="large" color="white" /> : renderDates()}
       </View>
       <View
         style={{
@@ -425,7 +425,7 @@ const BASKETBALL = ({ route }) => {
           backgroundColor: 'black',
           paddingHorizontal: 10,
         }}>
-        {renderWNBAComponent()}
+        {renderComponent()}
       </View>
       <NavBar />
     </View>
