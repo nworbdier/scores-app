@@ -105,48 +105,62 @@ const WNBA = () => {
         `https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/scoreboard?dates=${formattedDate}`
       );
 
+      console.log('Fetch URL:', response.url);
+
       if (!response.ok) {
         throw new Error('Network response was not ok');
       }
 
       const data = await response.json();
+
+      if (!data.events) {
+        throw new Error('No events found');
+      }
+
       const gameData = data.events.map((event) => {
+        if (!event.competitions || !event.competitions[0]) {
+          throw new Error('No competitions found for event');
+        }
+
         const competition = event.competitions[0];
+
         const isPlayoff = competition.series && competition.series.type === 'playoff';
         let homeWins = null;
         let awayWins = null;
 
         if (isPlayoff) {
-          homeWins = competition.series.competitors[0].wins;
-          awayWins = competition.series.competitors[1].wins;
+          homeWins = competition.series.competitors?.[0]?.wins ?? null;
+          awayWins = competition.series.competitors?.[1]?.wins ?? null;
         }
 
-        return {
+        const game = {
           id: event.id,
-          HomeTeam: competition.competitors[0].team.shortDisplayName,
-          HomeLogo: competition.competitors[0].team.logo,
-          HomeScore: competition.competitors[0].score,
+          HomeTeam: competition.competitors?.[0]?.team?.shortDisplayName ?? 'Unknown',
+          HomeLogo: competition.competitors?.[0]?.team?.logo ?? '',
+          HomeScore: competition.competitors?.[0]?.score ?? '0',
           HomeTeamRecordSummary: isPlayoff
             ? `${homeWins}-${awayWins}`
-            : competition.competitors[0].records[0].summary,
-          AwayTeam: competition.competitors[1].team.shortDisplayName,
-          AwayLogo: competition.competitors[1].team.logo,
-          AwayScore: competition.competitors[1].score,
+            : competition.competitors?.[0]?.records?.[0]?.summary ?? '',
+          AwayTeam: competition.competitors?.[1]?.team?.shortDisplayName ?? 'Unknown',
+          AwayLogo: competition.competitors?.[1]?.team?.logo ?? '',
+          AwayScore: competition.competitors?.[1]?.score ?? '0',
           AwayTeamRecordSummary: isPlayoff
             ? `${awayWins}-${homeWins}`
-            : competition.competitors[1].records[0].summary,
-          GameTime: competition.date,
-          Status: competition.status.type.name,
-          StatusShortDetail: competition.status.type.shortDetail,
-          DisplayClock: event.status.displayClock,
-          Quarter: event.status.period,
+            : competition.competitors?.[1]?.records?.[0]?.summary ?? '',
+          GameTime: competition.date ?? 'TBD',
+          Status: competition.status?.type?.name ?? 'Unknown',
+          StatusShortDetail: competition.status?.type?.shortDetail ?? 'Unknown',
+          DisplayClock: event.status?.displayClock ?? '0:00',
+          Quarter: event.status?.period ?? '0',
           IsPlayoff: isPlayoff,
           HomeWins: homeWins,
           AwayWins: awayWins,
         };
+
+        return game;
       });
 
-      if (data.events[0] && data.events[0].season && data.events[0].season.slug) {
+      if (data.events[0]?.season?.slug) {
         setSeasonSlug(data.events[0].season.slug);
       }
 
@@ -236,8 +250,8 @@ const WNBA = () => {
 
       const intervalId = setInterval(() => {
         fetchGameData();
-        console.log('Refreshing WNBA...');
-      }, 5000);
+        // console.log('Refreshing WNBA...');
+      }, 5000); // Refresh every 10 seconds
 
       return () => clearInterval(intervalId); // Cleanup interval on blur
     }, [selectedDate])
@@ -249,7 +263,6 @@ const WNBA = () => {
         styles.itemContainer,
         item.Status === 'STATUS_IN_PROGRESS' && { borderColor: 'lightgreen' },
         item.Status === 'STATUS_HALFTIME' && { borderColor: 'lightgreen' },
-        item.Status === 'STATUS_END_PERIOD' && { borderColor: 'lightgreen' },
         item.Status === 'STATUS_RAIN_DELAY' && { borderColor: 'yellow' },
       ];
 
@@ -383,7 +396,7 @@ const WNBA = () => {
       <View style={styles.header}>
         <View
           style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Text style={styles.headerText}>WNBA</Text>
+          <Text style={styles.headerText}>NBA</Text>
           <Ionicons name="basketball-outline" size={24} color="white" marginLeft={5} />
         </View>
         <View style={styles.headerIcons}>

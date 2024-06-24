@@ -310,7 +310,7 @@ const MMA = ({ route }) => {
       <View style={styles.header}>
         <View
           style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Text style={styles.headerText}>UFC</Text>
+          <Text style={styles.headerText}>{sport}</Text>
           <MaterialCommunityIcons name="boxing-glove" size={24} color="white" marginLeft={5} />
         </View>
         <View style={styles.headerIcons}>
