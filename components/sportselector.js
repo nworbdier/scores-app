@@ -27,7 +27,11 @@ const SportSelector = () => {
 
   const navigateToSport = (sport) => {
     setSelectedSport(sport); // Set the selected sport
-    navigation.navigate(sport);
+    if (sport === 'UFC' || sport === 'PFL') {
+      navigation.navigate('MMA', { sport }); // Pass the sport type as a parameter
+    } else {
+      navigation.navigate(sport);
+    }
     toggleModal(); // Close the modal after navigating
   };
 

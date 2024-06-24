@@ -31,7 +31,9 @@ const findClosestDate = (dates) => {
   });
 };
 
-const UFC = () => {
+const MMA = ({ route }) => {
+  const { sport } = route.params; // Get the sport type from the route parameters
+  console.log(sport);
   const ref = useRef();
   const [selectedDate, setSelectedDate] = useState(moment().format('YYYYMMDD'));
   const [refreshing, setRefreshing] = useState(false);
@@ -50,7 +52,7 @@ const UFC = () => {
   const fetchDates = async () => {
     try {
       const response = await fetch(
-        `https://sports.core.api.espn.com/v2/sports/mma/leagues/ufc/calendar/whitelist`
+        `https://sports.core.api.espn.com/v2/sports/mma/leagues/${sport.toLowerCase()}/calendar/whitelist`
       );
       const data = await response.json();
       const dates = data.eventDate.dates.map((date) => formatToYYYYMMDD(date));
@@ -72,7 +74,7 @@ const UFC = () => {
     try {
       const formattedDate = formatToYYYYMMDD(selectedDate);
       const response = await fetch(
-        `https://site.api.espn.com/apis/site/v2/sports/mma/ufc/scoreboard?dates=${formattedDate}`,
+        `https://site.api.espn.com/apis/site/v2/sports/mma/${sport.toLowerCase()}/scoreboard?dates=${formattedDate}`,
         options
       );
       console.log('Fetch UFC Events Data URL:', response.url);
@@ -89,7 +91,7 @@ const UFC = () => {
   const fetchEventDetails = async (eventId) => {
     try {
       const response = await fetch(
-        `https://site.web.api.espn.com/apis/common/v3/sports/mma/ufc/fightcenter/${eventId}`,
+        `https://site.web.api.espn.com/apis/common/v3/sports/mma/${sport.toLowerCase()}/fightcenter/${eventId}`,
         options
       );
       console.log('Url', response.url);
@@ -113,18 +115,18 @@ const UFC = () => {
       }, 10000); // Refresh every 10 seconds
 
       return () => clearInterval(intervalId); // Cleanup interval on blur
-    }, [selectedDate])
+    }, [selectedDate, sport])
   );
 
   useEffect(() => {
     fetchDates();
-  }, []);
+  }, [sport]);
 
   useEffect(() => {
     if (selectedDate) {
       fetchEvents(selectedDate);
     }
-  }, [selectedDate]);
+  }, [selectedDate, sport]);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -528,4 +530,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default UFC;
+export default MMA;

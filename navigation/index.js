@@ -10,11 +10,10 @@ import Scores from '../screens/home';
 import LIV from '../screens/liv';
 import MLB from '../screens/mlb';
 import MLBDetails from '../screens/mlbdetails';
+import MMA from '../screens/mma';
 import NBA from '../screens/nba';
 import NHL from '../screens/nhl';
-import PFL from '../screens/pfl';
 import PGA from '../screens/pga';
-import UFC from '../screens/ufc';
 import WNBA from '../screens/wnba';
 
 const Stack = createStackNavigator();
@@ -40,8 +39,7 @@ export default function RootStack() {
               <Stack.Screen name="NBA" component={NBA} options={{ headerShown: false }} />
               <Stack.Screen name="WNBA" component={WNBA} options={{ headerShown: false }} />
               <Stack.Screen name="NHL" component={NHL} options={{ headerShown: false }} />
-              <Stack.Screen name="UFC" component={UFC} options={{ headerShown: false }} />
-              <Stack.Screen name="PFL" component={PFL} options={{ headerShown: false }} />
+              <Stack.Screen name="MMA" component={MMA} options={{ headerShown: false }} />
             </Stack.Navigator>
             <SportSelector />
           </View>
