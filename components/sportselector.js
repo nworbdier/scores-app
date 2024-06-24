@@ -28,12 +28,11 @@ const SportSelector = () => {
   const navigateToSport = (sport) => {
     setSelectedSport(sport); // Set the selected sport
     if (sport === 'UFC' || sport === 'PFL') {
-      navigation.navigate('MMA', { sport }); // Pass the sport type as a parameter
-    }
-    if (sport === 'NBA' || sport === 'WNBA') {
-      navigation.navigate('BASKETBALL', { sport }); // Pass the sport type as a parameter
+      navigation.navigate('MMA', { sport }); // Navigate to MMA screen with sport type as a parameter
+    } else if (sport === 'NBA' || sport === 'WNBA') {
+      navigation.navigate('BASKETBALL', { sport }); // Navigate to Basketball screen with sport type as a parameter
     } else {
-      navigation.navigate(sport);
+      navigation.navigate(sport); // Navigate to the specific sport screen
     }
     toggleModal(); // Close the modal after navigating
   };
