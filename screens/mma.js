@@ -36,6 +36,7 @@ const MMA = ({ route }) => {
   console.log(sport);
   const ref = useRef();
   const [selectedDate, setSelectedDate] = useState(moment().format('YYYYMMDD'));
+  const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [events, setEvents] = useState([]);
   const [eventDetails, setEventDetails] = useState(null);
@@ -105,7 +106,10 @@ const MMA = ({ route }) => {
   useFocusEffect(
     useCallback(() => {
       const fetchInitialData = async () => {
+        setLoading(true);
+
         await fetchEvents(selectedDate);
+        setLoading(false);
       };
 
       fetchInitialData();
@@ -304,7 +308,11 @@ const MMA = ({ route }) => {
     </TouchableOpacity>
   );
 
-  return (
+  return loading ? (
+    <View style={styles.loadingContainer}>
+      <ActivityIndicator size="large" color="lightgrey" />
+    </View>
+  ) : (
     <View style={styles.container}>
       <SafeAreaView style={styles.safeAreaContainer} />
       <View style={styles.header}>
@@ -345,27 +353,21 @@ const MMA = ({ route }) => {
         )}
       </View>
       <View style={{ flex: 1 }}>
-        {events && events.length > 0 ? (
-          <FlatList
-            data={events}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-              <View style={styles.cardContainer}>
-                <Text style={styles.cardName}>{item.name}</Text>
-                {Object.keys(eventDetails?.cards || {}).map((cardKey) => (
-                  <View key={cardKey}>{renderCard(cardKey)}</View>
-                ))}
-              </View>
-            )}
-            refreshControl={
-              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#888" />
-            }
-          />
-        ) : (
-          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-            <Text style={{ color: 'white' }}>No events available</Text>
-          </View>
-        )}
+        <FlatList
+          data={events}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <View style={styles.cardContainer}>
+              <Text style={styles.cardName}>{item.name}</Text>
+              {Object.keys(eventDetails?.cards || {}).map((cardKey) => (
+                <View key={cardKey}>{renderCard(cardKey)}</View>
+              ))}
+            </View>
+          )}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#888" />
+          }
+        />
       </View>
       <NavBar />
     </View>
@@ -375,6 +377,12 @@ const MMA = ({ route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: 'black',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
     backgroundColor: 'black',
   },
   safeAreaContainer: {
