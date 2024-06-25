@@ -12,6 +12,7 @@ import {
   RefreshControl,
   Modal,
   Image,
+  ActivityIndicator,
 } from 'react-native';
 
 import NavBar from '../components/navbar'; // Import the NavBar component
@@ -28,7 +29,8 @@ const findClosestDate = (dates) => {
   }, dates[0]);
 };
 
-const LIV = () => {
+const GOLF = ({ route }) => {
+  const { sport } = route.params; // Get the sport type from the route parameters
   const [playersData, setPlayersData] = useState([]);
   const [tournamentName, setTournamentName] = useState('');
   const [refreshing, setRefreshing] = useState(false);
@@ -38,6 +40,8 @@ const LIV = () => {
 
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedPlayer, setSelectedPlayer] = useState(null);
+
+  const [loading, setLoading] = useState(false);
 
   const [availableTournaments, setAvailableTournaments] = useState([]);
   const [tournamentModalVisible, setTournamentModalVisible] = useState(false);
@@ -67,9 +71,11 @@ const LIV = () => {
   };
 
   const fetchTournamentCalendar = async () => {
+    setLoading(true);
+
     try {
       const response = await fetch(
-        'https://site.api.espn.com/apis/site/v2/sports/golf/liv/scoreboard'
+        `https://site.api.espn.com/apis/site/v2/sports/golf/${sport.toLowerCase()}/scoreboard`
       );
       const data = await response.json();
       const calendar = data.leagues[0].calendar;
@@ -90,17 +96,18 @@ const LIV = () => {
         console.error('No events found for the current date.');
       }
     } catch (error) {
-      console.error('Error fetching LIV tournament calendar:', error);
+      console.error('Error fetching golf tournament calendar:', error);
     }
+    setLoading(false);
   };
 
-  const fetchLIVData = async (eventId) => {
+  const fetchData = async (eventId) => {
+    setLoading(true);
+
     try {
       const response = await fetch(
-        `https://site.web.api.espn.com/apis/site/v2/sports/golf/leaderboard?league=liv&event=${eventId}`
+        `https://site.web.api.espn.com/apis/site/v2/sports/golf/leaderboard?league=${sport.toLowerCase()}&event=${eventId}`
       );
-
-      console.log('Url:', response.url);
 
       const data = await response.json();
       setCurrentData(data); // Set current data
@@ -177,8 +184,9 @@ const LIV = () => {
 
       setPlayersData(players);
     } catch (error) {
-      console.error('Error fetching LIV data:', error);
+      console.error('Error fetching golf data:', error);
     }
+    setLoading(false);
   };
 
   useFocusEffect(
@@ -188,7 +196,7 @@ const LIV = () => {
         setCurrentEventId(eventId);
         setSelectedTournament(eventId);
         if (eventId) {
-          await fetchLIVData(eventId);
+          await fetchData(eventId);
         }
       };
 
@@ -196,17 +204,27 @@ const LIV = () => {
 
       const intervalId = setInterval(() => {
         if (selectedTournament) {
-          fetchLIVData(selectedTournament);
+          fetchData(selectedTournament);
         }
       }, 100000); // Refresh every 10 seconds
 
       return () => clearInterval(intervalId); // Cleanup interval on blur
-    }, [])
+    }, [sport])
   );
+
+  useEffect(() => {
+    fetchTournamentCalendar();
+  }, [sport]);
+
+  useEffect(() => {
+    if (selectedTournament) {
+      fetchData(selectedTournament);
+    }
+  }, [selectedTournament, sport]);
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await fetchLIVData(selectedTournament);
+    await fetchData(selectedTournament);
     setRefreshing(false);
   };
 
@@ -218,7 +236,7 @@ const LIV = () => {
       setCurrentEventId(selectedTournament.id);
       setSelectedTournament(selectedTournament.id);
       setTournamentName(selectedTournament.label);
-      await fetchLIVData(selectedTournament.id);
+      await fetchData(selectedTournament.id);
       setTournamentModalVisible(false); // Close the modal after selection
     }
   };
@@ -358,7 +376,7 @@ const LIV = () => {
 
         try {
           const response = await fetch(
-            `https://site.web.api.espn.com/apis/site/v2/sports/golf/liv/leaderboard/${eventId}/competitorsummary/${playerId}`
+            `https://site.web.api.espn.com/apis/site/v2/sports/golf/${sport.toLowerCase()}/leaderboard/${eventId}/competitorsummary/${playerId}`
           );
           console.log('Url:', response.url);
           const data = await response.json();
@@ -383,7 +401,7 @@ const LIV = () => {
             setTotScore(formattedScore);
           }
         } catch (error) {
-          console.error('Error fetching LIV player data:', error);
+          console.error('Error fetching golf player data:', error);
         }
       };
 
@@ -514,13 +532,17 @@ const LIV = () => {
     );
   };
 
-  return (
+  return loading ? (
+    <View style={styles.loadingContainer}>
+      <ActivityIndicator size="large" color="lightgrey" />
+    </View>
+  ) : (
     <View style={styles.container}>
       <SafeAreaView style={styles.safeAreaContainer} />
       <View style={styles.header}>
         <View
           style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Text style={styles.headerText}>LIV</Text>
+          <Text style={styles.headerText}>{sport}</Text>
           <MaterialIcons name="sports-golf" size={24} color="white" marginLeft={5} />
         </View>
         <View style={styles.headerIcons}>
@@ -564,6 +586,12 @@ const LIV = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: 'black',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
     backgroundColor: 'black',
   },
   safeAreaContainer: {
@@ -811,4 +839,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default LIV;
+export default GOLF;
