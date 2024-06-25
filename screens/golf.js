@@ -53,6 +53,8 @@ const GOLF = ({ route }) => {
   const [selectedTournament, setSelectedTournament] = useState(null); // Variable for the selected tournament
 
   const flatListRef = useRef();
+  const intervalIdRef = useRef(null); // Ref to store the interval ID
+  const selectedTournamentRef = useRef(selectedTournament); // Ref to store the latest selectedTournament
 
   const formatToYYYYMMDD = (dateString) => {
     const date = new Date(dateString);
@@ -71,8 +73,6 @@ const GOLF = ({ route }) => {
   };
 
   const fetchTournamentCalendar = async () => {
-    setLoading(true);
-
     try {
       const response = await fetch(
         `https://site.api.espn.com/apis/site/v2/sports/golf/${sport.toLowerCase()}/scoreboard`
@@ -98,12 +98,9 @@ const GOLF = ({ route }) => {
     } catch (error) {
       console.error('Error fetching golf tournament calendar:', error);
     }
-    setLoading(false);
   };
 
   const fetchData = async (eventId) => {
-    setLoading(true);
-
     try {
       const response = await fetch(
         `https://site.web.api.espn.com/apis/site/v2/sports/golf/leaderboard?league=${sport.toLowerCase()}&event=${eventId}`
@@ -186,29 +183,34 @@ const GOLF = ({ route }) => {
     } catch (error) {
       console.error('Error fetching golf data:', error);
     }
-    setLoading(false);
   };
 
   useFocusEffect(
     useCallback(() => {
       const fetchInitialData = async () => {
+        setLoading(true);
+
         const eventId = await fetchTournamentCalendar();
         setCurrentEventId(eventId);
         setSelectedTournament(eventId);
+        selectedTournamentRef.current = eventId; // Update ref
         if (eventId) {
           await fetchData(eventId);
         }
+        setLoading(false);
       };
 
       fetchInitialData();
 
-      const intervalId = setInterval(() => {
-        if (selectedTournament) {
-          fetchData(selectedTournament);
+      intervalIdRef.current = setInterval(() => {
+        if (selectedTournamentRef.current) {
+          fetchData(selectedTournamentRef.current);
         }
-      }, 100000); // Refresh every 10 seconds
+      }, 10000); // Refresh every 10 seconds
 
-      return () => clearInterval(intervalId); // Cleanup interval on blur
+      return () => {
+        clearInterval(intervalIdRef.current); // Cleanup interval on blur
+      };
     }, [sport])
   );
 
@@ -220,7 +222,7 @@ const GOLF = ({ route }) => {
     if (selectedTournament) {
       fetchData(selectedTournament);
     }
-  }, [selectedTournament, sport]);
+  }, [selectedTournament]);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -235,6 +237,7 @@ const GOLF = ({ route }) => {
     if (selectedTournament) {
       setCurrentEventId(selectedTournament.id);
       setSelectedTournament(selectedTournament.id);
+      selectedTournamentRef.current = selectedTournament.id; // Update ref
       setTournamentName(selectedTournament.label);
       await fetchData(selectedTournament.id);
       setTournamentModalVisible(false); // Close the modal after selection
@@ -252,8 +255,8 @@ const GOLF = ({ route }) => {
       const offset = ITEM_WIDTH * info.index;
       try {
         flatListRef.current?.scrollToOffset({ offset, animated: true });
-      } catch (e) {
-        console.warn('Scroll to index failed:', e);
+      } catch (error) {
+        console.log('Error scrolling to index:', error);
       }
     });
   }, []);
