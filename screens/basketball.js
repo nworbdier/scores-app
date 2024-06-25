@@ -45,7 +45,7 @@ const getNumberWithSuffix = (number) => {
 
 const BASKETBALL = ({ route }) => {
   const { sport } = route.params; // Get the sport type from the route parameters
-  console.log(sport);
+  // console.log(sport);
   const navigation = useNavigation();
   const [gameData, setGameData] = useState([]);
   const [dates, setDates] = useState([]);
@@ -109,7 +109,7 @@ const BASKETBALL = ({ route }) => {
         `https://site.api.espn.com/apis/site/v2/sports/basketball/${sport.toLowerCase()}/scoreboard?dates=${formattedDate}`
       );
 
-      console.log('Fetch URL:', response.url);
+      // console.log('Fetch URL:', response.url);
 
       if (!response.ok) {
         throw new Error('Network response was not ok');

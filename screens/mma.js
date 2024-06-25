@@ -308,11 +308,7 @@ const MMA = ({ route }) => {
     </TouchableOpacity>
   );
 
-  return loading ? (
-    <View style={styles.loadingContainer}>
-      <ActivityIndicator size="large" color="lightgrey" />
-    </View>
-  ) : (
+  return (
     <View style={styles.container}>
       <SafeAreaView style={styles.safeAreaContainer} />
       <View style={styles.header}>
@@ -352,23 +348,29 @@ const MMA = ({ route }) => {
           />
         )}
       </View>
-      <View style={{ flex: 1 }}>
-        <FlatList
-          data={events}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <View style={styles.cardContainer}>
-              <Text style={styles.cardName}>{item.name}</Text>
-              {Object.keys(eventDetails?.cards || {}).map((cardKey) => (
-                <View key={cardKey}>{renderCard(cardKey)}</View>
-              ))}
-            </View>
-          )}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#888" />
-          }
-        />
-      </View>
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="lightgrey" />
+        </View>
+      ) : (
+        <View style={{ flex: 1 }}>
+          <FlatList
+            data={events}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <View style={styles.cardContainer}>
+                <Text style={styles.cardName}>{item.name}</Text>
+                {Object.keys(eventDetails?.cards || {}).map((cardKey) => (
+                  <View key={cardKey}>{renderCard(cardKey)}</View>
+                ))}
+              </View>
+            )}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#888" />
+            }
+          />
+        </View>
+      )}
       <NavBar />
     </View>
   );

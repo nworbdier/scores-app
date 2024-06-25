@@ -7,13 +7,13 @@ import { useModal } from './modalcontext'; // Import your context
 
 const sportNames = [
   'UFC',
+  'PFL',
   'PGA',
   'LIV',
   'MLB',
-  'NBA',
   'WNBA',
+  'NBA',
   'NHL',
-  'PFL',
   'TENNIS',
   'NFL',
   'CFB',
