@@ -315,11 +315,11 @@ const MLB = () => {
           </View>
           <View style={styles.column2}>
             {item.Status === 'STATUS_SCHEDULED' ? (
-              <View style={styles.column2}>
+              <View style={styles.column3}>
                 <Text style={styles.gametime}>{formatGameTime(item.GameTime)}</Text>
               </View>
             ) : item.Status === 'STATUS_FINAL' ? (
-              <View style={styles.column2}>
+              <View style={styles.column3}>
                 <View flexDirection="row" justifyContent="center" alignItems="center">
                   <Image source={require('../assets/vsLogonoBG.png')} style={styles.image2} />
                   <Text style={styles.TextStyle2}>
@@ -329,15 +329,15 @@ const MLB = () => {
                 <Text style={styles.gametime}>{item.StatusShortDetail}</Text>
               </View>
             ) : item.Status === 'STATUS_RAIN_DELAY' ? (
-              <View style={styles.column2}>
+              <View style={styles.column3}>
                 <Text style={[styles.TextStyle2, { fontWeight: 'bold' }]}>Rain Delay</Text>
               </View>
             ) : item.Status === 'STATUS_POSTPONED' ? (
-              <View style={styles.column2}>
+              <View style={styles.column3}>
                 <Text style={[styles.TextStyle2, { fontWeight: 'bold' }]}>Postponed</Text>
               </View>
             ) : (
-              <View style={styles.column2}>
+              <View style={styles.column3}>
                 {/* <View flexDirection="row" justifyContent="center" alignItems="center">
                   <Image source={require('../assets/vsLogonoBG.png')} style={styles.image2} />
                   <Text style={styles.TextStyle2}>
@@ -536,7 +536,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'white',
     borderRadius: 5,
-    margin: 2,
+    margin: 3,
     backgroundColor: '#141414',
   },
   TextStyle1: {
@@ -594,6 +594,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-around',
     marginRight: 5,
+  },
+  column3: {
+    flex: 1,
+    flexDirection: 'column',
+    alignSelf: 'flex-end',
+    alignItems: 'center',
+    justifyContent: 'space-around',
   },
   image: {
     width: 35,

@@ -73,7 +73,7 @@ const NHL = () => {
   const fetchDates = async () => {
     try {
       const response = await fetch(
-        `https://sports.core.api.espn.com/v2/sports/hockey/leagues/nhl/calendar/whitelist`
+        `https://sports.core.api.espn.com/v2/sports/hockey/leagues/nhl/calendar/whitelist?dates=2024`
       );
       const data = await response.json();
       const dates = data.eventDate.dates.map((date) => formatToYYYYMMDD(date));
@@ -281,21 +281,21 @@ const NHL = () => {
           </View>
           <View style={styles.column2}>
             {item.Status === 'STATUS_SCHEDULED' ? (
-              <View style={styles.column2}>
+              <View style={styles.column3}>
                 <Text style={styles.gametime}>{formatGameTime(item.GameTime)}</Text>
               </View>
             ) : item.Status === 'STATUS_FINAL' ? (
-              <View style={styles.column2}>
+              <View style={styles.column3}>
                 <Text style={styles.gametime}>{item.StatusShortDetail}</Text>
               </View>
             ) : item.Status === 'STATUS_HALFTIME' ? (
-              <View style={styles.column2}>
+              <View style={styles.column3}>
                 <Text style={styles.gametime}>Half</Text>
               </View>
             ) : item.Status === 'STATUS_END_PERIOD' ? (
               <Text style={styles.gametime}>End {item.Period}</Text>
             ) : (
-              <View style={styles.column2}>
+              <View style={styles.column3}>
                 <View>
                   <Text style={[styles.TextStyle2, { fontWeight: 'bold' }]}>
                     {getNumberWithSuffix(item.Period)}
@@ -458,11 +458,11 @@ const styles = StyleSheet.create({
   itemContainer: {
     flexDirection: 'row',
     width: width * 0.6,
-    padding: 5,
+    padding: 8,
     borderWidth: 1,
     borderColor: 'white',
     borderRadius: 5,
-    margin: 2,
+    margin: 3,
     backgroundColor: '#141414',
   },
   TextStyle1: {
@@ -520,6 +520,16 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     justifyContent: 'space-around',
     marginRight: 5,
+    borderWidth: 2,
+    borderRadius: 10,
+    backgroundColor: 'transparent',
+    borderColor: 'transparent',
+  },
+  column3: {
+    flex: 1,
+    flexDirection: 'column',
+    alignItems: 'flex-end',
+    justifyContent: 'space-around',
     borderWidth: 2,
     borderRadius: 10,
     backgroundColor: 'transparent',

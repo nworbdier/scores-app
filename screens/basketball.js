@@ -277,7 +277,7 @@ const BASKETBALL = ({ route }) => {
       return (
         <TouchableOpacity
           style={containerStyle}
-          onPress={() => navigation.navigate(`${sport}Details`, { eventId: item.id })}>
+          onPress={() => navigation.navigate(`BASKETBALLDetails`, { eventId: item.id, sport })}>
           <View style={{ flexDirection: 'column' }}>
             <View style={styles.column}>
               <Image source={{ uri: item.AwayLogo }} style={styles.image} />
@@ -482,11 +482,11 @@ const styles = StyleSheet.create({
   itemContainer: {
     flexDirection: 'row',
     width: width * 0.6,
-    padding: 5,
+    padding: 8,
     borderWidth: 1,
     borderColor: 'white',
     borderRadius: 5,
-    margin: 2,
+    margin: 3,
     backgroundColor: '#141414',
   },
   TextStyle1: {

@@ -13,7 +13,7 @@ import {
 
 import NavBar from '../components/navbar'; // Import the NavBar component
 
-const MLBDetails = ({ route }) => {
+const NHLDetails = ({ route }) => {
   const { eventId } = route.params; // Get the eventId from the navigation route parameters
   const [matchupData, setMatchupData] = useState(null);
   const [selectedTab, setSelectedTab] = useState('Feed');
@@ -22,7 +22,7 @@ const MLBDetails = ({ route }) => {
   const fetchMatchupData = async () => {
     try {
       const response = await fetch(
-        `https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/summary?event=${eventId}`
+        `https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/summary?event=${eventId}`
       );
       console.log('Url', response.url);
       const data = await response.json();
@@ -65,7 +65,7 @@ const MLBDetails = ({ route }) => {
           const hours = Math.floor(duration.asHours());
           const minutes = duration.minutes();
 
-          let countdownText = 'First Pitch: ';
+          let countdownText = 'Puck Drop: ';
           if (hours > 0) {
             countdownText += `${hours} hr `;
           }
@@ -81,23 +81,6 @@ const MLBDetails = ({ route }) => {
 
     return () => clearInterval(interval);
   }, [matchupData]);
-
-  const renderBasesComponent = (situation) => {
-    return (
-      <View style={styles.basesContainer}>
-        <View style={styles.baseRow}>
-          <View style={styles.emptySpace} />
-          <View style={[styles.base, situation?.onSecond?.playerId ? styles.baseActive : null]} />
-          <View style={styles.emptySpace} />
-        </View>
-        <View style={styles.baseRow}>
-          <View style={[styles.base, situation?.onThird?.playerId ? styles.baseActive : null]} />
-          <View style={styles.emptySpace} />
-          <View style={[styles.base, situation?.onFirst?.playerId ? styles.baseActive : null]} />
-        </View>
-      </View>
-    );
-  };
 
   if (
     !matchupData ||
@@ -117,71 +100,43 @@ const MLBDetails = ({ route }) => {
   const homeTeam = competition.competitors[1].team.abbreviation;
   const awayTeam = competition.competitors[0].team.abbreviation;
   const defaultImage = require('../assets/person.png');
-  const getUpdatedBatOrder = (athletes) => {
-    const batOrderMapping = {};
 
-    return athletes.map((athlete) => {
-      const baseOrder = athlete.batOrder;
-      if (batOrderMapping[baseOrder] === undefined) {
-        batOrderMapping[baseOrder] = 0;
-      } else {
-        batOrderMapping[baseOrder] += 1;
-      }
-      const increment = batOrderMapping[baseOrder];
-      const updatedBatOrder = increment === 0 ? baseOrder : `${baseOrder}.${increment}`;
+  const HomeSkaterAthletes = [
+    ...matchupData.boxscore.players[0].statistics[0].athletes,
+    ...matchupData.boxscore.players[0].statistics[1].athletes,
+  ];
+  const HomeGoalieAthletes = matchupData.boxscore.players[0].statistics[2].athletes;
 
-      return { ...athlete, updatedBatOrder };
-    });
-  };
-  const updatedBattersHome = getUpdatedBatOrder(
-    matchupData.boxscore.players[0].statistics[0].athletes
-  );
-  const updatedBattersAway = getUpdatedBatOrder(
-    matchupData.boxscore.players[1].statistics[0].athletes
-  );
+  const AwaySkaterAthletes = [
+    ...matchupData.boxscore.players[1].statistics[0].athletes,
+    ...matchupData.boxscore.players[1].statistics[1].athletes,
+  ];
+  const AwayGoalieAthletes = matchupData.boxscore.players[1].statistics[2].athletes;
 
   const renderContent = () => {
     switch (selectedTab) {
       case 'Feed':
         if (competition.status.type.name !== 'STATUS_SCHEDULED') {
-          // Filter items where status is not 'STATUS_SCHEDULED' and make the necessary text replacements
+          // Filter items where status is not 'STATUS_SCHEDULED' and make necessary text replacements
           const filteredItems = matchupData.plays
             .filter((item) => item.status !== 'STATUS_SCHEDULED')
-            .map((item) => {
-              // Make the necessary text replacements
+            .map((item, index) => {
+              // Make necessary text replacements
               if (item.text?.includes('Strike Foul')) {
-                item.type.text = 'Foul ball';
+                item.text = 'Foul ball';
               }
-              return item;
+              return { ...item, index }; // Add index to item object
             });
 
-          // Prepare grouped items and filter out "Pitcher pitches to Batter"
-          const groupedItems = {};
-          filteredItems.forEach((item) => {
-            if (item.text && item.text.includes('pitches to')) {
-              return; // Skip this item
-            }
-            if (!groupedItems[item.atBatId]) {
-              groupedItems[item.atBatId] = [];
-            }
-            groupedItems[item.atBatId].push(item.text);
-          });
+          // Reverse the order of items
+          filteredItems.reverse();
 
-          // Reverse the order of atBatId keys
-          const reversedAtBatIds = Object.keys(groupedItems).reverse();
-
-          // Render the items, reversing the order of both atBatId keys and texts within each group
           return (
             <View style={styles.feedContent}>
               <ScrollView>
-                {reversedAtBatIds.map((atBatId) => (
-                  <View key={atBatId} style={styles.feedItem}>
-                    <Text style={styles.feedItemHeader}>{atBatId}</Text>
-                    {groupedItems[atBatId].reverse().map((text, index) => (
-                      <Text key={index} style={styles.feedItemText}>
-                        {text}
-                      </Text>
-                    ))}
+                {filteredItems.map((item) => (
+                  <View key={item.index} style={styles.feedItem}>
+                    <Text style={styles.feedItemText}>{item.text}</Text>
                   </View>
                 ))}
               </ScrollView>
@@ -207,44 +162,8 @@ const MLBDetails = ({ route }) => {
         return (
           <View style={styles.tabContent}>
             <ScrollView>
-              <Text style={styles.tabContent}>Pitching</Text>
-              {matchupData.boxscore.players[0].statistics[1].athletes
-                .filter((athlete) => athlete.starter === true)
-                .map((athlete) => (
-                  <View key={athlete?.athlete?.id} style={styles.playerContainer}>
-                    {athlete?.athlete?.headshot?.href ? (
-                      <View style={styles.headshotContainer}>
-                        <Image
-                          source={{ uri: athlete.athlete.headshot.href }}
-                          style={styles.headshot}
-                        />
-                      </View>
-                    ) : (
-                      <View style={styles.headshotContainer}>
-                        <Image source={defaultImage} style={styles.headshot} />
-                      </View>
-                    )}
-                    <View style={{ flexDirection: 'column', flex: 1 }}>
-                      <Text style={styles.players}>
-                        {athlete?.athlete?.displayName} - {athlete?.athlete?.position?.abbreviation}
-                      </Text>
-                      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                          {athlete.stats.map((stat, index) => (
-                            <View key={index} style={{ marginHorizontal: 10 }}>
-                              <Text style={styles.playerStats}>{stat}</Text>
-                              <Text style={styles.playerStatsLabels}>
-                                {matchupData.boxscore.players[0].statistics[1].labels[index]}
-                              </Text>
-                            </View>
-                          ))}
-                        </View>
-                      </ScrollView>
-                    </View>
-                  </View>
-                ))}
-              <Text style={styles.tabContent}>Batting</Text>
-              {updatedBattersHome.map((athlete) => (
+              <Text style={styles.tabContent}>Goalies</Text>
+              {HomeGoalieAthletes.map((athlete) => (
                 <View key={athlete?.athlete?.id} style={styles.playerContainer}>
                   {athlete?.athlete?.headshot?.href ? (
                     <View style={styles.headshotContainer}>
@@ -252,20 +171,44 @@ const MLBDetails = ({ route }) => {
                         source={{ uri: athlete.athlete.headshot.href }}
                         style={styles.headshot}
                       />
-                      {athlete.batOrder !== undefined && (
-                        <View style={styles.batOrderContainer}>
-                          <Text style={styles.batOrder}>{athlete.updatedBatOrder}</Text>
-                        </View>
-                      )}
                     </View>
                   ) : (
                     <View style={styles.headshotContainer}>
                       <Image source={defaultImage} style={styles.headshot} />
-                      {athlete.batOrder !== undefined && (
-                        <View style={styles.batOrderContainer}>
-                          <Text style={styles.batOrder}>{athlete.updatedBatOrder}</Text>
-                        </View>
-                      )}
+                    </View>
+                  )}
+                  <View style={{ flexDirection: 'column', flex: 1 }}>
+                    <Text style={styles.players}>
+                      {athlete?.athlete?.displayName} - {athlete?.athlete?.position?.abbreviation}
+                    </Text>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        {athlete.stats.map((stat, index) => (
+                          <View key={index} style={{ marginHorizontal: 10 }}>
+                            <Text style={styles.playerStats}>{stat}</Text>
+                            <Text style={styles.playerStatsLabels}>
+                              {matchupData.boxscore.players[1].statistics[2].labels[index]}
+                            </Text>
+                          </View>
+                        ))}
+                      </View>
+                    </ScrollView>
+                  </View>
+                </View>
+              ))}
+              <Text style={styles.tabContent}>Skaters</Text>
+              {HomeSkaterAthletes.map((athlete) => (
+                <View key={athlete?.athlete?.id} style={styles.playerContainer}>
+                  {athlete?.athlete?.headshot?.href ? (
+                    <View style={styles.headshotContainer}>
+                      <Image
+                        source={{ uri: athlete.athlete.headshot.href }}
+                        style={styles.headshot}
+                      />
+                    </View>
+                  ) : (
+                    <View style={styles.headshotContainer}>
+                      <Image source={defaultImage} style={styles.headshot} />
                     </View>
                   )}
                   <View style={{ flexDirection: 'column', flex: 1 }}>
@@ -287,50 +230,6 @@ const MLBDetails = ({ route }) => {
                   </View>
                 </View>
               ))}
-
-              {matchupData.boxscore.players[0].statistics[1].athletes.filter(
-                (athlete) => athlete.starter === false
-              ).length > 0 && (
-                <>
-                  <Text style={styles.tabContent}>Other Pitching</Text>
-                  {matchupData.boxscore.players[0].statistics[1].athletes
-                    .filter((athlete) => athlete.starter === false)
-                    .map((athlete) => (
-                      <View key={athlete?.athlete?.id} style={styles.playerContainer}>
-                        {athlete?.athlete?.headshot?.href ? (
-                          <View style={styles.headshotContainer}>
-                            <Image
-                              source={{ uri: athlete.athlete.headshot.href }}
-                              style={styles.headshot}
-                            />
-                          </View>
-                        ) : (
-                          <View style={styles.headshotContainer}>
-                            <Image source={defaultImage} style={styles.headshot} />
-                          </View>
-                        )}
-                        <View style={{ flexDirection: 'column', flex: 1 }}>
-                          <Text style={styles.players}>
-                            {athlete?.athlete?.displayName} -{' '}
-                            {athlete?.athlete?.position?.abbreviation}
-                          </Text>
-                          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                              {athlete.stats.map((stat, index) => (
-                                <View key={index} style={{ marginHorizontal: 10 }}>
-                                  <Text style={styles.playerStats}>{stat}</Text>
-                                  <Text style={styles.playerStatsLabels}>
-                                    {matchupData.boxscore.players[0].statistics[1].labels[index]}
-                                  </Text>
-                                </View>
-                              ))}
-                            </View>
-                          </ScrollView>
-                        </View>
-                      </View>
-                    ))}
-                </>
-              )}
             </ScrollView>
           </View>
         );
@@ -339,45 +238,8 @@ const MLBDetails = ({ route }) => {
         return (
           <View style={styles.tabContent}>
             <ScrollView>
-              <Text style={styles.tabContent}>Pitching</Text>
-              {matchupData.boxscore.players[1].statistics[1].athletes
-                .filter((athlete) => athlete.starter === true)
-                .map((athlete) => (
-                  <View key={athlete?.athlete?.id} style={styles.playerContainer}>
-                    {athlete?.athlete?.headshot?.href ? (
-                      <View style={styles.headshotContainer}>
-                        <Image
-                          source={{ uri: athlete.athlete.headshot.href }}
-                          style={styles.headshot}
-                        />
-                      </View>
-                    ) : (
-                      <View style={styles.headshotContainer}>
-                        <Image source={defaultImage} style={styles.headshot} />
-                      </View>
-                    )}
-                    <View style={{ flexDirection: 'column', flex: 1 }}>
-                      <Text style={styles.players}>
-                        {athlete?.athlete?.displayName} - {athlete?.athlete?.position?.abbreviation}
-                      </Text>
-                      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                          {athlete.stats.map((stat, index) => (
-                            <View key={index} style={{ marginHorizontal: 10 }}>
-                              <Text style={styles.playerStats}>{stat}</Text>
-                              <Text style={styles.playerStatsLabels}>
-                                {matchupData.boxscore.players[1].statistics[1].labels[index]}
-                              </Text>
-                            </View>
-                          ))}
-                        </View>
-                      </ScrollView>
-                    </View>
-                  </View>
-                ))}
-
-              <Text style={styles.tabContent}>Batting</Text>
-              {updatedBattersAway.map((athlete) => (
+              <Text style={styles.tabContent}>Goalies</Text>
+              {AwayGoalieAthletes.map((athlete) => (
                 <View key={athlete?.athlete?.id} style={styles.playerContainer}>
                   {athlete?.athlete?.headshot?.href ? (
                     <View style={styles.headshotContainer}>
@@ -385,20 +247,10 @@ const MLBDetails = ({ route }) => {
                         source={{ uri: athlete.athlete.headshot.href }}
                         style={styles.headshot}
                       />
-                      {athlete.batOrder !== undefined && (
-                        <View style={styles.batOrderContainer}>
-                          <Text style={styles.batOrder}>{athlete.updatedBatOrder}</Text>
-                        </View>
-                      )}
                     </View>
                   ) : (
                     <View style={styles.headshotContainer}>
                       <Image source={defaultImage} style={styles.headshot} />
-                      {athlete.batOrder !== undefined && (
-                        <View style={styles.batOrderContainer}>
-                          <Text style={styles.batOrder}>{athlete.updatedBatOrder}</Text>
-                        </View>
-                      )}
                     </View>
                   )}
                   <View style={{ flexDirection: 'column', flex: 1 }}>
@@ -407,6 +259,40 @@ const MLBDetails = ({ route }) => {
                     </Text>
                     <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        {athlete.stats.map((stat, index) => (
+                          <View key={index} style={{ marginHorizontal: 10 }}>
+                            <Text style={styles.playerStats}>{stat}</Text>
+                            <Text style={styles.playerStatsLabels}>
+                              {matchupData.boxscore.players[0].statistics[2].labels[index]}
+                            </Text>
+                          </View>
+                        ))}
+                      </View>
+                    </ScrollView>
+                  </View>
+                </View>
+              ))}
+              <Text style={styles.tabContent}>Skaters</Text>
+              {AwaySkaterAthletes.map((athlete) => (
+                <View key={athlete?.athlete?.id} style={styles.playerContainer}>
+                  {athlete?.athlete?.headshot?.href ? (
+                    <View style={styles.headshotContainer}>
+                      <Image
+                        source={{ uri: athlete.athlete.headshot.href }}
+                        style={styles.headshot}
+                      />
+                    </View>
+                  ) : (
+                    <View style={styles.headshotContainer}>
+                      <Image source={defaultImage} style={styles.headshot} />
+                    </View>
+                  )}
+                  <View style={{ flexDirection: 'column', flex: 1 }}>
+                    <Text style={styles.players}>
+                      {athlete?.athlete?.displayName} - {athlete?.athlete?.position?.abbreviation}
+                    </Text>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
                         {athlete.stats.map((stat, index) => (
                           <View key={index} style={{ marginHorizontal: 10 }}>
                             <Text style={styles.playerStats}>{stat}</Text>
@@ -420,53 +306,10 @@ const MLBDetails = ({ route }) => {
                   </View>
                 </View>
               ))}
-
-              {matchupData.boxscore.players[1].statistics[1].athletes.filter(
-                (athlete) => athlete.starter === false
-              ).length > 0 && (
-                <>
-                  <Text style={styles.tabContent}>Other Pitching</Text>
-                  {matchupData.boxscore.players[1].statistics[1].athletes
-                    .filter((athlete) => athlete.starter === false)
-                    .map((athlete) => (
-                      <View key={athlete?.athlete?.id} style={styles.playerContainer}>
-                        {athlete?.athlete?.headshot?.href ? (
-                          <View style={styles.headshotContainer}>
-                            <Image
-                              source={{ uri: athlete.athlete.headshot.href }}
-                              style={styles.headshot}
-                            />
-                          </View>
-                        ) : (
-                          <View style={styles.headshotContainer}>
-                            <Image source={defaultImage} style={styles.headshot} />
-                          </View>
-                        )}
-                        <View style={{ flexDirection: 'column', flex: 1 }}>
-                          <Text style={styles.players}>
-                            {athlete?.athlete?.displayName} -{' '}
-                            {athlete?.athlete?.position?.abbreviation}
-                          </Text>
-                          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                              {athlete.stats.map((stat, index) => (
-                                <View key={index} style={{ marginHorizontal: 10 }}>
-                                  <Text style={styles.playerStats}>{stat}</Text>
-                                  <Text style={styles.playerStatsLabels}>
-                                    {matchupData.boxscore.players[0].statistics[1].labels[index]}
-                                  </Text>
-                                </View>
-                              ))}
-                            </View>
-                          </ScrollView>
-                        </View>
-                      </View>
-                    ))}
-                </>
-              )}
             </ScrollView>
           </View>
         );
+
       default:
         return null;
     }
@@ -500,21 +343,8 @@ const MLBDetails = ({ route }) => {
               <View style={styles.gameTime}>
                 <View>
                   {competition.status.periodPrefix.includes('Top') && (
-                    <Text style={styles.inning}>Top {competition.status.period}</Text>
+                    <Text style={styles.inning}>{competition.status.period}</Text>
                   )}
-                  {competition.status.periodPrefix.includes('Mid') && (
-                    <Text style={styles.inning}>Mid {competition.status.period}</Text>
-                  )}
-                  {competition.status.periodPrefix.includes('Bot') && (
-                    <Text style={styles.inning}>Bot {competition.status.period}</Text>
-                  )}
-                  {competition.status.periodPrefix.includes('End') && (
-                    <Text style={styles.inning}>End {competition.status.period}</Text>
-                  )}
-                </View>
-                <View>{renderBasesComponent(situation)}</View>
-                <View>
-                  <Text style={styles.ballsandstrikes}>{situation?.outs} Outs</Text>
                 </View>
               </View>
             )}
@@ -757,4 +587,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default MLBDetails;
+export default NHLDetails;
