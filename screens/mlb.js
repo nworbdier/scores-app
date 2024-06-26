@@ -75,6 +75,8 @@ const MLB = () => {
         `https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard?dates=${date}`
       );
 
+      console.log(response.url);
+
       if (!response.ok) {
         throw new Error('Network response was not ok');
       }
@@ -185,7 +187,7 @@ const MLB = () => {
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    await fetchGameData();
+    await fetchGameData(selectedDate); // Pass selectedDate as an argument
     setRefreshing(false);
   };
 
@@ -230,6 +232,55 @@ const MLB = () => {
         item.Status === 'STATUS_RAIN_DELAY' && { borderColor: 'yellow' },
       ];
 
+      const calculateExcitementScore = (homeScore, awayScore) => {
+        const totalScore = homeScore + awayScore;
+        const scoreDifference = Math.abs(homeScore - awayScore);
+
+        // Start with a base excitement score of 0
+        let excitementScore = 0;
+
+        // Adjust for total score
+        if (totalScore <= 1) excitementScore += 0.25;
+        else if (totalScore <= 2) excitementScore += 0.5;
+        else if (totalScore <= 3) excitementScore += 0.75;
+        else if (totalScore <= 4) excitementScore += 1;
+        else if (totalScore <= 5) excitementScore += 1.25;
+        else if (totalScore <= 6) excitementScore += 1.5;
+        else if (totalScore <= 7) excitementScore += 1.75;
+        else if (totalScore <= 8) excitementScore += 2;
+        else if (totalScore <= 9) excitementScore += 2.25;
+        else if (totalScore <= 10) excitementScore += 2.5;
+        else if (totalScore <= 11) excitementScore += 2.75;
+        else if (totalScore <= 12) excitementScore += 3;
+        else if (totalScore <= 13) excitementScore += 3.25;
+        else if (totalScore <= 14) excitementScore += 3.5;
+        else if (totalScore <= 15) excitementScore += 3.75;
+        else excitementScore += 4;
+
+        // Adjust for score difference
+        if (scoreDifference === 0) excitementScore += 3;
+        else if (scoreDifference === 1) excitementScore += 2.5;
+        else if (scoreDifference === 2) excitementScore += 2;
+        else if (scoreDifference === 3) excitementScore += 1.5;
+        else if (scoreDifference === 4) excitementScore += 1;
+        else if (scoreDifference === 5) excitementScore += 0.5;
+        else if (scoreDifference === 6) excitementScore += 0.4;
+        else if (scoreDifference === 7) excitementScore += 0.3;
+        else excitementScore += 0.2;
+
+        // Extra excitement for very high-scoring games
+        if (totalScore > 16) excitementScore += 0.5;
+        if (totalScore > 20) excitementScore += 0.5;
+
+        // Extra excitement for close, high-scoring games
+        if (totalScore > 8 && scoreDifference <= 2) excitementScore += 0.5;
+
+        // Cap the excitement score between 1 and 10
+        return Math.max(1, Math.min(10, excitementScore));
+      };
+
+      const excitementScore = calculateExcitementScore(item.HomeScore, item.AwayScore);
+
       return (
         <TouchableOpacity
           style={containerStyle}
@@ -265,14 +316,30 @@ const MLB = () => {
               </View>
             ) : item.Status === 'STATUS_FINAL' ? (
               <View style={styles.column2}>
+                <View flexDirection="row" justifyContent="center" alignItems="center">
+                  <Image source={require('../assets/vsLogonoBG.png')} style={styles.image2} />
+                  <Text style={styles.TextStyle2}>
+                    <Text style={{ fontWeight: 'bold' }}>{excitementScore.toFixed(1)}</Text>
+                  </Text>
+                </View>
                 <Text style={styles.gametime}>{item.StatusShortDetail}</Text>
               </View>
             ) : item.Status === 'STATUS_RAIN_DELAY' ? (
               <View style={styles.column2}>
                 <Text style={[styles.TextStyle2, { fontWeight: 'bold' }]}>Rain Delay</Text>
               </View>
+            ) : item.Status === 'STATUS_POSTPONED' ? (
+              <View style={styles.column2}>
+                <Text style={[styles.TextStyle2, { fontWeight: 'bold' }]}>Postponed</Text>
+              </View>
             ) : (
               <View style={styles.column2}>
+                <View flexDirection="row" justifyContent="center" alignItems="center">
+                  <Image source={require('../assets/vsLogonoBG.png')} style={styles.image2} />
+                  <Text style={styles.TextStyle2}>
+                    <Text style={{ fontWeight: 'bold' }}>{excitementScore.toFixed(1)}</Text>
+                  </Text>
+                </View>
                 <View style={styles.gameTime}>
                   {item.StatusShortDetail.includes('Top') && (
                     <Text style={[styles.inning]}>Top {item.Inning}</Text>
@@ -362,18 +429,18 @@ const MLB = () => {
   useFocusEffect(
     useCallback(() => {
       const fetchInitialData = async () => {
-        await fetchGameData();
+        await fetchGameData(selectedDate);
       };
 
       fetchInitialData();
 
       const intervalId = setInterval(
-        () => fetchGameData(),
+        () => fetchGameData(selectedDate),
         10000 // Refresh every 10 seconds
       );
 
       return () => clearInterval(intervalId); // Cleanup interval on blur
-    }, [])
+    }, [selectedDate]) // Add selectedDate to the dependency array
   );
 
   return (
@@ -527,6 +594,10 @@ const styles = StyleSheet.create({
   image: {
     width: 35,
     height: 35,
+  },
+  image2: {
+    width: 20,
+    height: 20,
   },
   basesContainer: {
     marginVertical: 5,
