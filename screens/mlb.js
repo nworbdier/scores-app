@@ -273,7 +273,11 @@ const MLB = () => {
         if (totalScore > 20) excitementScore += 0.5;
 
         // Extra excitement for close, high-scoring games
-        if (totalScore > 8 && scoreDifference <= 2) excitementScore += 0.5;
+        if (totalScore === 8 && scoreDifference <= 2) excitementScore += 1;
+        if (totalScore === 9 && scoreDifference <= 2) excitementScore += 1.5;
+        if (totalScore === 10 && scoreDifference <= 2) excitementScore += 2;
+        if (totalScore === 11 && scoreDifference <= 2) excitementScore += 2.5;
+        if (totalScore === 12 && scoreDifference <= 2) excitementScore += 3.5;
 
         // Cap the excitement score between 1 and 10
         return Math.max(1, Math.min(10, excitementScore));
@@ -334,12 +338,12 @@ const MLB = () => {
               </View>
             ) : (
               <View style={styles.column2}>
-                <View flexDirection="row" justifyContent="center" alignItems="center">
+                {/* <View flexDirection="row" justifyContent="center" alignItems="center">
                   <Image source={require('../assets/vsLogonoBG.png')} style={styles.image2} />
                   <Text style={styles.TextStyle2}>
                     <Text style={{ fontWeight: 'bold' }}>{excitementScore.toFixed(1)}</Text>
                   </Text>
-                </View>
+                </View> */}
                 <View style={styles.gameTime}>
                   {item.StatusShortDetail.includes('Top') && (
                     <Text style={[styles.inning]}>Top {item.Inning}</Text>
@@ -528,7 +532,7 @@ const styles = StyleSheet.create({
   itemContainer: {
     flexDirection: 'row',
     width: width * 0.6,
-    padding: 10,
+    padding: 8,
     borderWidth: 1,
     borderColor: 'white',
     borderRadius: 5,
