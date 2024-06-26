@@ -127,7 +127,13 @@ const BASKETBALLDetails = ({ route }) => {
               <ScrollView>
                 {filteredItems.map((item) => (
                   <View key={item.index} style={styles.feedItem}>
-                    <Text style={styles.feedItemText}>{item.text}</Text>
+                    <Text
+                      style={[
+                        styles.feedItemText,
+                        { fontWeight: item.scoringPlay ? 'bold' : 'normal' },
+                      ]}>
+                      {item.text}
+                    </Text>
                   </View>
                 ))}
               </ScrollView>
