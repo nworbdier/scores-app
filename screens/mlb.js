@@ -81,7 +81,7 @@ const MLB = () => {
 
     // Adjust for score difference
     if (scoreDifference === 1) excitementScore += 2;
-    else if (scoreDifference === 2) excitementScore += 1.5;
+    else if (scoreDifference === 2) excitementScore += 1.75;
     else if (scoreDifference === 3) excitementScore += 1;
     else if (scoreDifference === 4) excitementScore += 0.75;
     else if (scoreDifference === 5) excitementScore += 0.5;

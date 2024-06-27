@@ -1,6 +1,6 @@
 import { useFocusEffect } from '@react-navigation/native';
 import moment from 'moment';
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -9,15 +9,18 @@ import {
   SafeAreaView,
   TouchableOpacity,
   ScrollView,
+  Animated,
 } from 'react-native';
 
 import NavBar from '../components/navbar'; // Import the NavBar component
 
 const MLBDetails = ({ route }) => {
-  const { eventId } = route.params; // Get the eventId from the navigation route parameters
+  const { eventId } = route.params;
   const [matchupData, setMatchupData] = useState(null);
   const [selectedTab, setSelectedTab] = useState('Feed');
   const [countdown, setCountdown] = useState('');
+  const scrollX = useRef(new Animated.Value(0)).current;
+  const scrollViewRefs = useRef([]);
 
   const fetchMatchupData = async () => {
     try {
@@ -46,9 +49,9 @@ const MLBDetails = ({ route }) => {
 
       const intervalId = setInterval(() => {
         fetchGameData();
-      }, 10000); // Refresh every 10 seconds
+      }, 10000);
 
-      return () => clearInterval(intervalId); // Cleanup interval on blur
+      return () => clearInterval(intervalId);
     }, [eventId])
   );
 
@@ -70,7 +73,6 @@ const MLBDetails = ({ route }) => {
             countdownText += `${hours} hr `;
           }
           if (minutes > 0 || hours === 0) {
-            // display minutes if there are hours or if there are only minutes
             countdownText += `${minutes} min`;
           }
 
@@ -81,6 +83,24 @@ const MLBDetails = ({ route }) => {
 
     return () => clearInterval(interval);
   }, [matchupData]);
+
+  useEffect(() => {
+    scrollX.addListener(({ value }) => {
+      scrollViewRefs.current.forEach((ref) => {
+        if (ref && ref.scrollTo) {
+          ref.scrollTo({ x: value, animated: false });
+        }
+      });
+    });
+
+    return () => {
+      scrollX.removeAllListeners();
+    };
+  }, []);
+
+  const handleScroll = Animated.event([{ nativeEvent: { contentOffset: { x: scrollX } } }], {
+    useNativeDriver: false,
+  });
 
   const renderBasesComponent = (situation) => {
     return (
@@ -117,6 +137,7 @@ const MLBDetails = ({ route }) => {
   const homeTeam = competition.competitors[1].team.abbreviation;
   const awayTeam = competition.competitors[0].team.abbreviation;
   const defaultImage = require('../assets/person.png');
+
   const getUpdatedBatOrder = (athletes) => {
     const batOrderMapping = {};
 
@@ -133,6 +154,7 @@ const MLBDetails = ({ route }) => {
       return { ...athlete, updatedBatOrder };
     });
   };
+
   const updatedBattersHome = getUpdatedBatOrder(
     matchupData.boxscore.players[0].statistics[0].athletes
   );
@@ -140,26 +162,40 @@ const MLBDetails = ({ route }) => {
     matchupData.boxscore.players[1].statistics[0].athletes
   );
 
+  const renderAthleteStats = (athlete, index, labels) => (
+    <Animated.ScrollView
+      ref={(ref) => (scrollViewRefs.current[index] = ref)}
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      onScroll={handleScroll}>
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        {athlete.stats.map((stat, statIndex) => (
+          <View key={statIndex} style={{ marginHorizontal: 10 }}>
+            <Text style={styles.playerStats}>{stat}</Text>
+            <Text style={styles.playerStatsLabels}>{labels[statIndex]}</Text>
+          </View>
+        ))}
+      </View>
+    </Animated.ScrollView>
+  );
+
   const renderContent = () => {
     switch (selectedTab) {
       case 'Feed':
         if (competition.status.type.name !== 'STATUS_SCHEDULED') {
-          // Filter items where status is not 'STATUS_SCHEDULED' and make the necessary text replacements
           const filteredItems = matchupData.plays
             .filter((item) => item.status !== 'STATUS_SCHEDULED')
             .map((item) => {
-              // Make the necessary text replacements
               if (item.text?.includes('Strike Foul')) {
                 item.type.text = 'Foul ball';
               }
               return item;
             });
 
-          // Prepare grouped items and filter out "Pitcher pitches to Batter"
           const groupedItems = {};
           filteredItems.forEach((item) => {
             if (item.text && item.text.includes('pitches to')) {
-              return; // Skip this item
+              return;
             }
             if (!groupedItems[item.atBatId]) {
               groupedItems[item.atBatId] = [];
@@ -167,10 +203,8 @@ const MLBDetails = ({ route }) => {
             groupedItems[item.atBatId].push(item.text);
           });
 
-          // Reverse the order of atBatId keys
           const reversedAtBatIds = Object.keys(groupedItems).reverse();
 
-          // Render the items, reversing the order of both atBatId keys and texts within each group
           return (
             <View style={styles.feedContent}>
               <ScrollView>
@@ -188,7 +222,6 @@ const MLBDetails = ({ route }) => {
             </View>
           );
         } else {
-          // Render scheduled message or countdown if status is 'STATUS_SCHEDULED'
           return (
             <View style={styles.feedContent}>
               <Text style={styles.countdownText}>{countdown}</Text>
@@ -210,7 +243,7 @@ const MLBDetails = ({ route }) => {
               <Text style={styles.tabContent}>Pitching</Text>
               {matchupData.boxscore.players[0].statistics[1].athletes
                 .filter((athlete) => athlete.starter === true)
-                .map((athlete) => (
+                .map((athlete, index) => (
                   <View key={athlete?.athlete?.id} style={styles.playerContainer}>
                     {athlete?.athlete?.headshot?.href ? (
                       <View style={styles.headshotContainer}>
@@ -228,23 +261,16 @@ const MLBDetails = ({ route }) => {
                       <Text style={styles.players}>
                         {athlete?.athlete?.displayName} - {athlete?.athlete?.position?.abbreviation}
                       </Text>
-                      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                          {athlete.stats.map((stat, index) => (
-                            <View key={index} style={{ marginHorizontal: 10 }}>
-                              <Text style={styles.playerStats}>{stat}</Text>
-                              <Text style={styles.playerStatsLabels}>
-                                {matchupData.boxscore.players[0].statistics[1].labels[index]}
-                              </Text>
-                            </View>
-                          ))}
-                        </View>
-                      </ScrollView>
+                      {renderAthleteStats(
+                        athlete,
+                        index,
+                        matchupData.boxscore.players[0].statistics[1].labels
+                      )}
                     </View>
                   </View>
                 ))}
               <Text style={styles.tabContent}>Batting</Text>
-              {updatedBattersHome.map((athlete) => (
+              {updatedBattersHome.map((athlete, index) => (
                 <View key={athlete?.athlete?.id} style={styles.playerContainer}>
                   {athlete?.athlete?.headshot?.href ? (
                     <View style={styles.headshotContainer}>
@@ -272,18 +298,11 @@ const MLBDetails = ({ route }) => {
                     <Text style={styles.players}>
                       {athlete?.athlete?.displayName} - {athlete?.athlete?.position?.abbreviation}
                     </Text>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                        {athlete.stats.map((stat, index) => (
-                          <View key={index} style={{ marginHorizontal: 10 }}>
-                            <Text style={styles.playerStats}>{stat}</Text>
-                            <Text style={styles.playerStatsLabels}>
-                              {matchupData.boxscore.players[0].statistics[0].labels[index]}
-                            </Text>
-                          </View>
-                        ))}
-                      </View>
-                    </ScrollView>
+                    {renderAthleteStats(
+                      athlete,
+                      index + matchupData.boxscore.players[0].statistics[1].athletes.length,
+                      matchupData.boxscore.players[0].statistics[0].labels
+                    )}
                   </View>
                 </View>
               ))}
@@ -295,7 +314,7 @@ const MLBDetails = ({ route }) => {
                   <Text style={styles.tabContent}>Other Pitching</Text>
                   {matchupData.boxscore.players[0].statistics[1].athletes
                     .filter((athlete) => athlete.starter === false)
-                    .map((athlete) => (
+                    .map((athlete, index) => (
                       <View key={athlete?.athlete?.id} style={styles.playerContainer}>
                         {athlete?.athlete?.headshot?.href ? (
                           <View style={styles.headshotContainer}>
@@ -314,18 +333,15 @@ const MLBDetails = ({ route }) => {
                             {athlete?.athlete?.displayName} -{' '}
                             {athlete?.athlete?.position?.abbreviation}
                           </Text>
-                          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                              {athlete.stats.map((stat, index) => (
-                                <View key={index} style={{ marginHorizontal: 10 }}>
-                                  <Text style={styles.playerStats}>{stat}</Text>
-                                  <Text style={styles.playerStatsLabels}>
-                                    {matchupData.boxscore.players[0].statistics[1].labels[index]}
-                                  </Text>
-                                </View>
-                              ))}
-                            </View>
-                          </ScrollView>
+                          {renderAthleteStats(
+                            athlete,
+                            index +
+                              updatedBattersHome.length +
+                              matchupData.boxscore.players[0].statistics[1].athletes.filter(
+                                (a) => a.starter === true
+                              ).length,
+                            matchupData.boxscore.players[0].statistics[1].labels
+                          )}
                         </View>
                       </View>
                     ))}
@@ -342,7 +358,7 @@ const MLBDetails = ({ route }) => {
               <Text style={styles.tabContent}>Pitching</Text>
               {matchupData.boxscore.players[1].statistics[1].athletes
                 .filter((athlete) => athlete.starter === true)
-                .map((athlete) => (
+                .map((athlete, index) => (
                   <View key={athlete?.athlete?.id} style={styles.playerContainer}>
                     {athlete?.athlete?.headshot?.href ? (
                       <View style={styles.headshotContainer}>
@@ -360,24 +376,17 @@ const MLBDetails = ({ route }) => {
                       <Text style={styles.players}>
                         {athlete?.athlete?.displayName} - {athlete?.athlete?.position?.abbreviation}
                       </Text>
-                      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                          {athlete.stats.map((stat, index) => (
-                            <View key={index} style={{ marginHorizontal: 10 }}>
-                              <Text style={styles.playerStats}>{stat}</Text>
-                              <Text style={styles.playerStatsLabels}>
-                                {matchupData.boxscore.players[1].statistics[1].labels[index]}
-                              </Text>
-                            </View>
-                          ))}
-                        </View>
-                      </ScrollView>
+                      {renderAthleteStats(
+                        athlete,
+                        index,
+                        matchupData.boxscore.players[1].statistics[1].labels
+                      )}
                     </View>
                   </View>
                 ))}
 
               <Text style={styles.tabContent}>Batting</Text>
-              {updatedBattersAway.map((athlete) => (
+              {updatedBattersAway.map((athlete, index) => (
                 <View key={athlete?.athlete?.id} style={styles.playerContainer}>
                   {athlete?.athlete?.headshot?.href ? (
                     <View style={styles.headshotContainer}>
@@ -405,18 +414,11 @@ const MLBDetails = ({ route }) => {
                     <Text style={styles.players}>
                       {athlete?.athlete?.displayName} - {athlete?.athlete?.position?.abbreviation}
                     </Text>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                        {athlete.stats.map((stat, index) => (
-                          <View key={index} style={{ marginHorizontal: 10 }}>
-                            <Text style={styles.playerStats}>{stat}</Text>
-                            <Text style={styles.playerStatsLabels}>
-                              {matchupData.boxscore.players[0].statistics[0].labels[index]}
-                            </Text>
-                          </View>
-                        ))}
-                      </View>
-                    </ScrollView>
+                    {renderAthleteStats(
+                      athlete,
+                      index + matchupData.boxscore.players[1].statistics[1].athletes.length,
+                      matchupData.boxscore.players[1].statistics[0].labels
+                    )}
                   </View>
                 </View>
               ))}
@@ -428,7 +430,7 @@ const MLBDetails = ({ route }) => {
                   <Text style={styles.tabContent}>Other Pitching</Text>
                   {matchupData.boxscore.players[1].statistics[1].athletes
                     .filter((athlete) => athlete.starter === false)
-                    .map((athlete) => (
+                    .map((athlete, index) => (
                       <View key={athlete?.athlete?.id} style={styles.playerContainer}>
                         {athlete?.athlete?.headshot?.href ? (
                           <View style={styles.headshotContainer}>
@@ -447,18 +449,15 @@ const MLBDetails = ({ route }) => {
                             {athlete?.athlete?.displayName} -{' '}
                             {athlete?.athlete?.position?.abbreviation}
                           </Text>
-                          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                              {athlete.stats.map((stat, index) => (
-                                <View key={index} style={{ marginHorizontal: 10 }}>
-                                  <Text style={styles.playerStats}>{stat}</Text>
-                                  <Text style={styles.playerStatsLabels}>
-                                    {matchupData.boxscore.players[0].statistics[1].labels[index]}
-                                  </Text>
-                                </View>
-                              ))}
-                            </View>
-                          </ScrollView>
+                          {renderAthleteStats(
+                            athlete,
+                            index +
+                              updatedBattersAway.length +
+                              matchupData.boxscore.players[1].statistics[1].athletes.filter(
+                                (a) => a.starter === true
+                              ).length,
+                            matchupData.boxscore.players[1].statistics[1].labels
+                          )}
                         </View>
                       </View>
                     ))}
