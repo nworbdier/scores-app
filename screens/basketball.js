@@ -362,8 +362,9 @@ const BASKETBALL = ({ route }) => {
         <ScrollView
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#888" />
-          }>
-          <ScrollView horizontal>
+          }
+          showsVerticalScrollIndicator={false}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             {groupedData.map((row, index) => (
               <View key={index} style={{ flexDirection: 'column' }}>
                 {row.map((item, rowIndex) => (
@@ -543,7 +544,6 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
     alignItems: 'flex-end',
     justifyContent: 'space-around',
-    marginRight: 5,
     borderWidth: 2,
     borderRadius: 10,
     backgroundColor: 'transparent',

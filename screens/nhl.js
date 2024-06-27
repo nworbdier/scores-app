@@ -338,8 +338,9 @@ const NHL = () => {
         <ScrollView
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor="#888" />
-          }>
-          <ScrollView horizontal>
+          }
+          showsVerticalScrollIndicator={false}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             {groupedData.map((row, index) => (
               <View key={index} style={{ flexDirection: 'column' }}>
                 {row.map((item, rowIndex) => (

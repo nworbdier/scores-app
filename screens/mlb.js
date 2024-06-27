@@ -46,6 +46,68 @@ const MLB = () => {
     });
   };
 
+  const calculateExcitementScore = (homeScore, awayScore) => {
+    // Convert homeScore and awayScore to numbers explicitly
+    homeScore = parseInt(homeScore, 10);
+    awayScore = parseInt(awayScore, 10);
+
+    const totalScore = homeScore + awayScore;
+    // console.log(totalScore); // This should log the sum correctly now
+
+    const scoreDifference = Math.abs(homeScore - awayScore);
+    // console.log('Diff', scoreDifference);
+
+    // Rest of your excitement score calculation remains unchanged
+    let excitementScore = 0;
+
+    // Adjust for total score
+    if (totalScore === 1) excitementScore += 0.25;
+    else if (totalScore === 2) excitementScore += 0.5;
+    else if (totalScore === 3) excitementScore += 0.75;
+    else if (totalScore === 4) excitementScore += 1;
+    else if (totalScore === 5) excitementScore += 1.25;
+    else if (totalScore === 6) excitementScore += 1.5;
+    else if (totalScore === 7) excitementScore += 1.75;
+    else if (totalScore === 8) excitementScore += 2;
+    else if (totalScore === 9) excitementScore += 2.25;
+    else if (totalScore === 10) excitementScore += 2.5;
+    else if (totalScore === 11) excitementScore += 2.75;
+    else if (totalScore === 12) excitementScore += 3;
+    else if (totalScore === 13) excitementScore += 3.25;
+    else if (totalScore === 14) excitementScore += 3.5;
+    else if (totalScore === 15) excitementScore += 3.75;
+    else if (totalScore === 16) excitementScore += 4;
+    else excitementScore += 4.25;
+
+    // Adjust for score difference
+    if (scoreDifference === 1) excitementScore += 2;
+    else if (scoreDifference === 2) excitementScore += 1.5;
+    else if (scoreDifference === 3) excitementScore += 1;
+    else if (scoreDifference === 4) excitementScore += 0.75;
+    else if (scoreDifference === 5) excitementScore += 0.5;
+    else if (scoreDifference === 6) excitementScore += 0.4;
+    else if (scoreDifference === 7) excitementScore += 0.3;
+    else excitementScore += 0.25;
+
+    // Extra excitement for close, high-scoring games
+    if (totalScore <= 6 && scoreDifference <= 2) excitementScore += 0.75;
+    if (totalScore === 7 && scoreDifference <= 2) excitementScore += 1;
+    if (totalScore === 8 && scoreDifference <= 2) excitementScore += 1.25;
+    if (totalScore === 9 && scoreDifference <= 2) excitementScore += 1.5;
+    if (totalScore === 10 && scoreDifference <= 2) excitementScore += 1.75;
+    if (totalScore === 11 && scoreDifference <= 2) excitementScore += 2;
+    if (totalScore === 12 && scoreDifference <= 2) excitementScore += 2.25;
+    if (totalScore === 13 && scoreDifference <= 2) excitementScore += 2.5;
+    if (totalScore === 14 && scoreDifference <= 2) excitementScore += 2.75;
+    if (totalScore === 15 && scoreDifference <= 2) excitementScore += 3;
+    if (totalScore === 16 && scoreDifference <= 2) excitementScore += 3.25;
+    if (totalScore === 17 && scoreDifference <= 2) excitementScore += 3.5;
+    if (totalScore >= 18 && scoreDifference <= 2) excitementScore += 3.75;
+
+    // Cap the excitement score between 1 and 10
+    return Math.max(1, Math.min(10, excitementScore));
+  };
+
   const fetchDates = async () => {
     try {
       const response = await fetch(
@@ -92,6 +154,10 @@ const MLB = () => {
           homeWins = competition.series.competitors[0].wins;
           awayWins = competition.series.competitors[1].wins;
         }
+        const excitementScore = calculateExcitementScore(
+          competition.competitors[0].score,
+          competition.competitors[1].score
+        );
         return {
           id: event.id,
           HomeTeam: competition.competitors[0].team.shortDisplayName,
@@ -114,6 +180,7 @@ const MLB = () => {
           IsPlayoff: isPlayoff,
           HomeWins: homeWins,
           AwayWins: awayWins,
+          ExcitementScore: excitementScore,
         };
       });
 
@@ -124,7 +191,7 @@ const MLB = () => {
       // Sort the game data
       const sortedGameData = gameData.sort((a, b) => {
         if (a.Status === 'STATUS_FINAL' && b.Status === 'STATUS_FINAL') {
-          return a.GameTime.localeCompare(b.GameTime);
+          return b.ExcitementScore - a.ExcitementScore;
         } else if (a.Status === 'STATUS_FINAL') {
           return 1;
         } else if (b.Status === 'STATUS_FINAL') {
@@ -232,59 +299,6 @@ const MLB = () => {
         item.Status === 'STATUS_RAIN_DELAY' && { borderColor: 'yellow' },
       ];
 
-      const calculateExcitementScore = (homeScore, awayScore) => {
-        const totalScore = homeScore + awayScore;
-        const scoreDifference = Math.abs(homeScore - awayScore);
-
-        // Start with a base excitement score of 0
-        let excitementScore = 0;
-
-        // Adjust for total score
-        if (totalScore <= 1) excitementScore += 0.25;
-        else if (totalScore <= 2) excitementScore += 0.5;
-        else if (totalScore <= 3) excitementScore += 0.75;
-        else if (totalScore <= 4) excitementScore += 1;
-        else if (totalScore <= 5) excitementScore += 1.25;
-        else if (totalScore <= 6) excitementScore += 1.5;
-        else if (totalScore <= 7) excitementScore += 1.75;
-        else if (totalScore <= 8) excitementScore += 2;
-        else if (totalScore <= 9) excitementScore += 2.25;
-        else if (totalScore <= 10) excitementScore += 2.5;
-        else if (totalScore <= 11) excitementScore += 2.75;
-        else if (totalScore <= 12) excitementScore += 3;
-        else if (totalScore <= 13) excitementScore += 3.25;
-        else if (totalScore <= 14) excitementScore += 3.5;
-        else if (totalScore <= 15) excitementScore += 3.75;
-        else excitementScore += 4;
-
-        // Adjust for score difference
-        if (scoreDifference === 0) excitementScore += 3;
-        else if (scoreDifference === 1) excitementScore += 2.5;
-        else if (scoreDifference === 2) excitementScore += 2;
-        else if (scoreDifference === 3) excitementScore += 1.5;
-        else if (scoreDifference === 4) excitementScore += 1;
-        else if (scoreDifference === 5) excitementScore += 0.5;
-        else if (scoreDifference === 6) excitementScore += 0.4;
-        else if (scoreDifference === 7) excitementScore += 0.3;
-        else excitementScore += 0.2;
-
-        // Extra excitement for very high-scoring games
-        if (totalScore > 16) excitementScore += 0.5;
-        if (totalScore > 20) excitementScore += 0.5;
-
-        // Extra excitement for close, high-scoring games
-        if (totalScore === 8 && scoreDifference <= 2) excitementScore += 1;
-        if (totalScore === 9 && scoreDifference <= 2) excitementScore += 1.5;
-        if (totalScore === 10 && scoreDifference <= 2) excitementScore += 2;
-        if (totalScore === 11 && scoreDifference <= 2) excitementScore += 2.5;
-        if (totalScore === 12 && scoreDifference <= 2) excitementScore += 3.5;
-
-        // Cap the excitement score between 1 and 10
-        return Math.max(1, Math.min(10, excitementScore));
-      };
-
-      const excitementScore = calculateExcitementScore(item.HomeScore, item.AwayScore);
-
       return (
         <TouchableOpacity
           style={containerStyle}
@@ -320,10 +334,10 @@ const MLB = () => {
               </View>
             ) : item.Status === 'STATUS_FINAL' ? (
               <View style={styles.column3}>
-                <View flexDirection="row" justifyContent="center" alignItems="center">
+                <View flexDirection="row" alignItems="center" alignSelf="flex-end">
                   <Image source={require('../assets/vsLogonoBG.png')} style={styles.image2} />
-                  <Text style={styles.TextStyle2}>
-                    <Text style={{ fontWeight: 'bold' }}>{excitementScore.toFixed(1)}</Text>
+                  <Text style={{ fontSize: 17, fontWeight: 'bold', color: 'white' }}>
+                    {item.ExcitementScore.toFixed(1)}
                   </Text>
                 </View>
                 <Text style={styles.gametime}>{item.StatusShortDetail}</Text>
@@ -336,12 +350,16 @@ const MLB = () => {
               <View style={styles.column3}>
                 <Text style={[styles.TextStyle2, { fontWeight: 'bold' }]}>Postponed</Text>
               </View>
+            ) : item.Status === 'STATUS_SUSPENDED' ? (
+              <View style={styles.column3}>
+                <Text style={[styles.TextStyle2, { fontWeight: 'bold' }]}>Suspended</Text>
+              </View>
             ) : (
               <View style={styles.column3}>
                 {/* <View flexDirection="row" justifyContent="center" alignItems="center">
                   <Image source={require('../assets/vsLogonoBG.png')} style={styles.image2} />
                   <Text style={styles.TextStyle2}>
-                    <Text style={{ fontWeight: 'bold' }}>{excitementScore.toFixed(1)}</Text>
+                    <Text style={{ fontWeight: 'bold' }}>{item.ExcitementScore.toFixed(1)}</Text>
                   </Text>
                 </View> */}
                 <View style={styles.gameTime}>
@@ -396,8 +414,9 @@ const MLB = () => {
         <ScrollView
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor="#888" />
-          }>
-          <ScrollView horizontal>
+          }
+          showsVerticalScrollIndicator={false}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             {groupedData.map((row, index) => (
               <View key={index} style={{ flexDirection: 'column' }}>
                 {row.map((item, rowIndex) => (
@@ -566,10 +585,10 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   gametime: {
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: 'bold',
     color: 'white',
-    textAlign: 'left',
+    textAlign: 'right',
   },
   TextStyle3: {
     fontSize: 12,
@@ -599,16 +618,16 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'column',
     alignSelf: 'flex-end',
-    alignItems: 'center',
-    justifyContent: 'space-around',
+    alignItems: 'flex-end',
+    justifyContent: 'space-evenly',
   },
   image: {
     width: 35,
     height: 35,
   },
   image2: {
-    width: 20,
-    height: 20,
+    width: 22,
+    height: 22,
   },
   basesContainer: {
     marginVertical: 5,
