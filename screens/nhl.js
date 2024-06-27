@@ -104,6 +104,8 @@ const NHL = () => {
         `https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/scoreboard?dates=${formattedDate}`
       );
 
+      console.log('Url:', response.url);
+
       if (!response.ok) {
         throw new Error('Network response was not ok');
       }
