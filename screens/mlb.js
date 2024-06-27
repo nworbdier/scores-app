@@ -154,10 +154,19 @@ const MLB = () => {
           homeWins = competition.series.competitors[0].wins;
           awayWins = competition.series.competitors[1].wins;
         }
-        const excitementScore = calculateExcitementScore(
+        // Calculate excitement score
+        let excitementScore = calculateExcitementScore(
           competition.competitors[0].score,
           competition.competitors[1].score
         );
+
+        // Set excitement score to 0 if status is "Suspended" or "Postponed"
+        if (
+          competition.status.type.name === 'STATUS_SUSPENDED' ||
+          competition.status.type.name === 'STATUS_POSTPONED'
+        ) {
+          excitementScore = 0.0;
+        }
         return {
           id: event.id,
           HomeTeam: competition.competitors[0].team.shortDisplayName,
@@ -190,16 +199,35 @@ const MLB = () => {
 
       // Sort the game data
       const sortedGameData = gameData.sort((a, b) => {
-        if (a.Status === 'STATUS_FINAL' && b.Status === 'STATUS_FINAL') {
-          return b.ExcitementScore - a.ExcitementScore;
-        } else if (a.Status === 'STATUS_FINAL') {
-          return 1;
-        } else if (b.Status === 'STATUS_FINAL') {
+        const isFinalOrSuspendedOrPostponed = (status) =>
+          status === 'STATUS_FINAL' ||
+          status === 'STATUS_SUSPENDED' ||
+          status === 'STATUS_POSTPONED';
+
+        const isScheduledOrInProgress = (status) =>
+          status === 'STATUS_SCHEDULED' || status === 'STATUS_IN_PROGRESS';
+
+        if (isScheduledOrInProgress(a.Status) && isScheduledOrInProgress(b.Status)) {
+          return a.GameTime.localeCompare(b.GameTime);
+        } else if (isScheduledOrInProgress(a.Status)) {
           return -1;
+        } else if (isScheduledOrInProgress(b.Status)) {
+          return 1;
+        } else if (
+          isFinalOrSuspendedOrPostponed(a.Status) &&
+          isFinalOrSuspendedOrPostponed(b.Status)
+        ) {
+          return b.ExcitementScore - a.ExcitementScore;
+        } else if (isFinalOrSuspendedOrPostponed(a.Status)) {
+          return -1;
+        } else if (isFinalOrSuspendedOrPostponed(b.Status)) {
+          return 1;
         } else {
           return a.GameTime.localeCompare(b.GameTime);
         }
       });
+
+      setGameData(sortedGameData);
 
       setGameData(sortedGameData);
     } catch (error) {
@@ -344,14 +372,32 @@ const MLB = () => {
               </View>
             ) : item.Status === 'STATUS_RAIN_DELAY' ? (
               <View style={styles.column3}>
+                <View flexDirection="row" alignItems="center" alignSelf="flex-end">
+                  <Image source={require('../assets/vsLogonoBG.png')} style={styles.image2} />
+                  <Text style={{ fontSize: 17, fontWeight: 'bold', color: 'white' }}>
+                    {item.ExcitementScore.toFixed(1)}
+                  </Text>
+                </View>
                 <Text style={[styles.TextStyle2, { fontWeight: 'bold' }]}>Rain Delay</Text>
               </View>
             ) : item.Status === 'STATUS_POSTPONED' ? (
               <View style={styles.column3}>
+                <View flexDirection="row" alignItems="center" alignSelf="flex-end">
+                  <Image source={require('../assets/vsLogonoBG.png')} style={styles.image2} />
+                  <Text style={{ fontSize: 17, fontWeight: 'bold', color: 'white' }}>
+                    {item.ExcitementScore.toFixed(1)}
+                  </Text>
+                </View>
                 <Text style={[styles.TextStyle2, { fontWeight: 'bold' }]}>Postponed</Text>
               </View>
             ) : item.Status === 'STATUS_SUSPENDED' ? (
               <View style={styles.column3}>
+                <View flexDirection="row" alignItems="center" alignSelf="flex-end">
+                  <Image source={require('../assets/vsLogonoBG.png')} style={styles.image2} />
+                  <Text style={{ fontSize: 17, fontWeight: 'bold', color: 'white' }}>
+                    {item.ExcitementScore.toFixed(1)}
+                  </Text>
+                </View>
                 <Text style={[styles.TextStyle2, { fontWeight: 'bold' }]}>Suspended</Text>
               </View>
             ) : (
