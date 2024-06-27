@@ -46,6 +46,13 @@ const MLB = () => {
     });
   };
 
+  const TeamRename = (input) => {
+    if (input === 'Diamondbacks') {
+      return 'D-backs';
+    }
+    return input;
+  };
+
   const calculateExcitementScore = (homeScore, awayScore) => {
     // Convert homeScore and awayScore to numbers explicitly
     homeScore = parseInt(homeScore, 10);
@@ -169,11 +176,11 @@ const MLB = () => {
         }
         return {
           id: event.id,
-          HomeTeam: competition.competitors[0].team.shortDisplayName,
+          HomeTeam: TeamRename(competition.competitors[0].team.shortDisplayName),
           HomeLogo: competition.competitors[0].team.logo,
           HomeScore: competition.competitors[0].score,
           HomeTeamRecordSummary: competition.competitors[0].records[0].summary,
-          AwayTeam: competition.competitors[1].team.shortDisplayName,
+          AwayTeam: TeamRename(competition.competitors[1].team.shortDisplayName),
           AwayLogo: competition.competitors[1].team.logo,
           AwayScore: competition.competitors[1].score,
           AwayTeamRecordSummary: competition.competitors[1].records[0].summary,

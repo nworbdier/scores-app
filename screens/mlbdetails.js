@@ -22,6 +22,15 @@ const MLBDetails = ({ route }) => {
   const scrollX = useRef(new Animated.Value(0)).current;
   const scrollViewRefs = useRef([]);
 
+  // Rename some team names logic
+  const TeamRename = (input) => {
+    if (input === 'Diamondbacks') {
+      return 'D-backs';
+    }
+    return input;
+  };
+
+  // Fetch data for the given eventID
   const fetchMatchupData = async () => {
     try {
       const response = await fetch(
@@ -35,26 +44,24 @@ const MLBDetails = ({ route }) => {
     }
   };
 
-  const fetchGameData = async () => {
-    await fetchMatchupData();
-  };
-
+  // Refreshes data every 10 seconds if you're on the page
   useFocusEffect(
     useCallback(() => {
       const fetchInitialData = async () => {
-        await fetchGameData();
+        await fetchMatchupData();
       };
 
       fetchInitialData();
 
       const intervalId = setInterval(() => {
-        fetchGameData();
+        fetchMatchupData();
       }, 10000);
 
       return () => clearInterval(intervalId);
     }, [eventId])
   );
 
+  // useEffect for displaying time until first pitch if the status is scheduled
   useEffect(() => {
     let interval;
     if (matchupData && matchupData.header && matchupData.header.competitions) {
@@ -84,6 +91,7 @@ const MLBDetails = ({ route }) => {
     return () => clearInterval(interval);
   }, [matchupData]);
 
+  // Stat and Stat Label Scrolling UseEffect
   useEffect(() => {
     scrollX.addListener(({ value }) => {
       scrollViewRefs.current.forEach((ref) => {
@@ -98,10 +106,12 @@ const MLBDetails = ({ route }) => {
     };
   }, []);
 
+  // Stat and Stat Label Scrolling Const
   const handleScroll = Animated.event([{ nativeEvent: { contentOffset: { x: scrollX } } }], {
     useNativeDriver: false,
   });
 
+  // Logic for displaying the bases graphic
   const renderBasesComponent = (situation) => {
     return (
       <View style={styles.basesContainer}>
@@ -119,6 +129,7 @@ const MLBDetails = ({ route }) => {
     );
   };
 
+  // Checks data before rendering. Renders "loading... if not yet
   if (
     !matchupData ||
     !matchupData.header ||
@@ -132,12 +143,14 @@ const MLBDetails = ({ route }) => {
     );
   }
 
+  // Some const values to use in the below stuff
   const competition = matchupData.header.competitions[0];
   const situation = matchupData.situation;
   const homeTeam = competition.competitors[1].team.abbreviation;
   const awayTeam = competition.competitors[0].team.abbreviation;
   const defaultImage = require('../assets/person.png');
 
+  // Update batter order if more than one batter with the same order occur
   const getUpdatedBatOrder = (athletes) => {
     const batOrderMapping = {};
 
@@ -155,13 +168,17 @@ const MLBDetails = ({ route }) => {
     });
   };
 
+  // Using getUpdatedBatOrder for the home batters
   const updatedBattersHome = getUpdatedBatOrder(
     matchupData.boxscore.players[0].statistics[0].athletes
   );
+
+  // Using getUpdatedBatOrder for the away batters
   const updatedBattersAway = getUpdatedBatOrder(
     matchupData.boxscore.players[1].statistics[0].athletes
   );
 
+  // Athlete Stats and Stats Label Logic
   const renderAthleteStats = (athlete, index, labels) => (
     <Animated.ScrollView
       ref={(ref) => (scrollViewRefs.current[index] = ref)}
@@ -179,8 +196,10 @@ const MLBDetails = ({ route }) => {
     </Animated.ScrollView>
   );
 
+  // Tab Switcher Logic
   const renderContent = () => {
     switch (selectedTab) {
+      // Play Feed
       case 'Feed':
         if (competition.status.type.name !== 'STATUS_SCHEDULED') {
           const filteredItems = matchupData.plays
@@ -229,6 +248,7 @@ const MLBDetails = ({ route }) => {
           );
         }
 
+      // Game and Team Statistics
       case 'Game':
         return (
           <View style={styles.feedContent}>
@@ -236,6 +256,7 @@ const MLBDetails = ({ route }) => {
           </View>
         );
 
+      // Home Athletes Names, Stats, & Labels
       case homeTeam:
         return (
           <View style={styles.tabContent}>
@@ -351,6 +372,7 @@ const MLBDetails = ({ route }) => {
           </View>
         );
 
+      // Away Athletes Names, Stats, & Labels
       case awayTeam:
         return (
           <View style={styles.tabContent}>
@@ -471,68 +493,67 @@ const MLBDetails = ({ route }) => {
     }
   };
 
+  // Logo, Score, and Team Name
+  const renderTeamInfo = (competitor, index) => {
+    const team = competitor.team;
+    const logoUri = team.logos[1].href;
+    const isScheduled = competition.status.type.name === 'STATUS_SCHEDULED';
+
+    return (
+      <View style={styles.column} key={index}>
+        <Image source={{ uri: logoUri }} style={styles.logo} />
+        <View style={{ marginLeft: 10 }}>
+          {isScheduled ? (
+            <Text style={styles.record}>{competitor.record[0].displayValue}</Text>
+          ) : (
+            <Text style={styles.score}>{competitor.score}</Text>
+          )}
+          <Text style={styles.teamName}>{TeamRename(team.name)}</Text>
+        </View>
+      </View>
+    );
+  };
+
+  // Inning, Bases Graphic, and Outs
+  const renderMatchupInfo = () => {
+    const status = competition.status.type.name;
+
+    if (status === 'STATUS_SCHEDULED') {
+      return <Text style={styles.dateText}>{moment(competition.date).format('h:mm A')}</Text>;
+    } else if (status === 'STATUS_FINAL') {
+      return <Text style={styles.inning}>{competition.status.type.shortDetail}</Text>;
+    } else {
+      return (
+        <View style={styles.gameTime}>
+          <View>
+            {['Top', 'Mid', 'Bot', 'End'].map(
+              (prefix) =>
+                competition.status.periodPrefix.includes(prefix) && (
+                  <Text style={styles.inning}>{`${prefix} ${competition.status.period}`}</Text>
+                )
+            )}
+          </View>
+          <View>{renderBasesComponent(situation)}</View>
+          <View>
+            <Text style={styles.ballsandstrikes}>{situation?.outs} Outs</Text>
+          </View>
+        </View>
+      );
+    }
+  };
+
+  // Final Return
   return (
     <View style={styles.container}>
       <SafeAreaView style={styles.safeAreaContainer} />
       <View style={styles.matchupContainer}>
-        <View style={styles.column}>
-          <View style={styles.teamContainer}>
-            <Image
-              source={{ uri: competition.competitors[1].team.logos[1].href }}
-              style={styles.logo}
-            />
-            <Text style={styles.teamName}>{competition.competitors[1].team.name}</Text>
-            {competition.status.type.name === 'STATUS_SCHEDULED' ? (
-              <Text style={styles.record}>{competition.competitors[1].record[0].displayValue}</Text>
-            ) : (
-              <Text style={styles.score}>{competition.competitors[1].score}</Text>
-            )}
-          </View>
+        <View style={{ flex: 2, flexDirection: 'column' }}>
+          {competition.competitors
+            .slice()
+            .reverse()
+            .map((competitor, index) => renderTeamInfo(competitor, index))}
         </View>
-        <View>
-          <View>
-            {competition.status.type.name === 'STATUS_SCHEDULED' ? (
-              <Text style={styles.dateText}>{moment(competition.date).format('h:mm A')}</Text>
-            ) : competition.status.type.name === 'STATUS_FINAL' ? (
-              <Text style={styles.inning}>{competition.status.type.shortDetail}</Text>
-            ) : (
-              <View style={styles.gameTime}>
-                <View>
-                  {competition.status.periodPrefix.includes('Top') && (
-                    <Text style={styles.inning}>Top {competition.status.period}</Text>
-                  )}
-                  {competition.status.periodPrefix.includes('Mid') && (
-                    <Text style={styles.inning}>Mid {competition.status.period}</Text>
-                  )}
-                  {competition.status.periodPrefix.includes('Bot') && (
-                    <Text style={styles.inning}>Bot {competition.status.period}</Text>
-                  )}
-                  {competition.status.periodPrefix.includes('End') && (
-                    <Text style={styles.inning}>End {competition.status.period}</Text>
-                  )}
-                </View>
-                <View>{renderBasesComponent(situation)}</View>
-                <View>
-                  <Text style={styles.ballsandstrikes}>{situation?.outs} Outs</Text>
-                </View>
-              </View>
-            )}
-          </View>
-        </View>
-        <View style={styles.column}>
-          <View style={styles.teamContainer}>
-            <Image
-              source={{ uri: competition.competitors[0].team.logos[1].href }}
-              style={styles.logo}
-            />
-            <Text style={styles.teamName}>{competition.competitors[0].team.name}</Text>
-            {competition.status.type.name === 'STATUS_SCHEDULED' ? (
-              <Text style={styles.record}>{competition.competitors[0].record[0].displayValue}</Text>
-            ) : (
-              <Text style={styles.score}>{competition.competitors[0].score}</Text>
-            )}
-          </View>
-        </View>
+        <View style={{ flex: 1, justifyContent: 'center' }}>{renderMatchupInfo()}</View>
       </View>
       <View style={{ flex: 4, flexDirection: 'column' }}>
         <View>
@@ -565,6 +586,7 @@ const MLBDetails = ({ route }) => {
   );
 };
 
+// Style Sheet
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -576,31 +598,26 @@ const styles = StyleSheet.create({
   matchupContainer: {
     flex: 1,
     flexDirection: 'row',
-    justifyContent: 'space-around',
     alignItems: 'center',
+    marginHorizontal: 20,
   },
   column: {
     flex: 1,
     alignItems: 'center',
-  },
-  teamContainer: {
-    alignItems: 'center',
+    flexDirection: 'row',
   },
   logo: {
-    width: 50,
-    height: 50,
+    width: 45,
+    height: 45,
     resizeMode: 'contain',
   },
   teamName: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginTop: 10,
+    fontSize: 18,
     color: 'white',
   },
   score: {
-    fontSize: 18,
+    fontSize: 24,
     fontWeight: 'bold',
-    marginTop: 10,
     color: 'white',
   },
   record: {

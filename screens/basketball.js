@@ -109,7 +109,7 @@ const BASKETBALL = ({ route }) => {
         `https://site.api.espn.com/apis/site/v2/sports/basketball/${sport.toLowerCase()}/scoreboard?dates=${formattedDate}`
       );
 
-      // console.log('Fetch URL:', response.url);
+      console.log('Fetch URL:', response.url);
 
       if (!response.ok) {
         throw new Error('Network response was not ok');
@@ -184,7 +184,7 @@ const BASKETBALL = ({ route }) => {
 
       const intervalId = setInterval(() => {
         fetchGameData(selectedDate);
-      }, 10000); // Refresh every 10 seconds
+      }, 5000); // Refresh every 10 seconds
 
       return () => clearInterval(intervalId); // Cleanup interval on blur
     }, [selectedDate, sport])
@@ -245,24 +245,6 @@ const BASKETBALL = ({ route }) => {
         {moment(item).format('MMM D')}
       </Text>
     </TouchableOpacity>
-  );
-
-  useFocusEffect(
-    useCallback(() => {
-      const fetchInitialData = async () => {
-        await fetchGameData();
-        // console.log('Initial fetch for MLB...');
-      };
-
-      fetchInitialData();
-
-      const intervalId = setInterval(() => {
-        fetchGameData();
-        // console.log('Refreshing game data...');
-      }, 5000); // Refresh every 10 seconds
-
-      return () => clearInterval(intervalId); // Cleanup interval on blur
-    }, [selectedDate])
   );
 
   const renderComponent = () => {

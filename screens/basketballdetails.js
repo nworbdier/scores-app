@@ -1,6 +1,6 @@
 import { useFocusEffect } from '@react-navigation/native';
 import moment from 'moment';
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   SafeAreaView,
   TouchableOpacity,
   ScrollView,
+  Animated,
 } from 'react-native';
 
 import NavBar from '../components/navbar'; // Import the NavBar component
@@ -18,6 +19,8 @@ const BASKETBALLDetails = ({ route }) => {
   const [matchupData, setMatchupData] = useState(null);
   const [selectedTab, setSelectedTab] = useState('Feed');
   const [countdown, setCountdown] = useState('');
+  const scrollX = useRef(new Animated.Value(0)).current;
+  const scrollViewRefs = useRef([]);
 
   const fetchMatchupData = async () => {
     try {
@@ -82,6 +85,24 @@ const BASKETBALLDetails = ({ route }) => {
     return () => clearInterval(interval);
   }, [matchupData]);
 
+  useEffect(() => {
+    scrollX.addListener(({ value }) => {
+      scrollViewRefs.current.forEach((ref) => {
+        if (ref && ref.scrollTo) {
+          ref.scrollTo({ x: value, animated: false });
+        }
+      });
+    });
+
+    return () => {
+      scrollX.removeAllListeners();
+    };
+  }, []);
+
+  const handleScroll = Animated.event([{ nativeEvent: { contentOffset: { x: scrollX } } }], {
+    useNativeDriver: false,
+  });
+
   if (
     !matchupData ||
     !matchupData.header ||
@@ -96,13 +117,29 @@ const BASKETBALLDetails = ({ route }) => {
   }
 
   const competition = matchupData.header.competitions[0];
-  const situation = matchupData.situation;
   const homeTeam = competition.competitors[1].team.abbreviation;
   const awayTeam = competition.competitors[0].team.abbreviation;
   const defaultImage = require('../assets/person.png');
 
   const HomeAthletes = matchupData.boxscore.players[0].statistics[0].athletes;
   const AwayAthletes = matchupData.boxscore.players[1].statistics[0].athletes;
+
+  const renderAthleteStats = (athlete, index, labels) => (
+    <Animated.ScrollView
+      ref={(ref) => (scrollViewRefs.current[index] = ref)}
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      onScroll={handleScroll}>
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        {athlete.stats.map((stat, statIndex) => (
+          <View key={statIndex} style={{ marginHorizontal: 10 }}>
+            <Text style={styles.playerStats}>{stat}</Text>
+            <Text style={styles.playerStatsLabels}>{labels[statIndex]}</Text>
+          </View>
+        ))}
+      </View>
+    </Animated.ScrollView>
+  );
 
   const renderContent = () => {
     switch (selectedTab) {
@@ -160,7 +197,7 @@ const BASKETBALLDetails = ({ route }) => {
           <View style={styles.tabContent}>
             <ScrollView>
               <Text style={styles.tabContent}>Players</Text>
-              {HomeAthletes.map((athlete) => (
+              {HomeAthletes.map((athlete, index) => (
                 <View key={athlete?.athlete?.id} style={styles.playerContainer}>
                   {athlete?.athlete?.headshot?.href ? (
                     <View style={styles.headshotContainer}>
@@ -178,18 +215,11 @@ const BASKETBALLDetails = ({ route }) => {
                     <Text style={styles.players}>
                       {athlete?.athlete?.displayName} - {athlete?.athlete?.position?.abbreviation}
                     </Text>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                        {athlete.stats.map((stat, index) => (
-                          <View key={index} style={{ marginHorizontal: 10 }}>
-                            <Text style={styles.playerStats}>{stat}</Text>
-                            <Text style={styles.playerStatsLabels}>
-                              {matchupData.boxscore.players[0].statistics[0].labels[index]}
-                            </Text>
-                          </View>
-                        ))}
-                      </View>
-                    </ScrollView>
+                    {renderAthleteStats(
+                      athlete,
+                      index + matchupData.boxscore.players[0].statistics[0].athletes.length,
+                      matchupData.boxscore.players[0].statistics[0].labels
+                    )}
                   </View>
                 </View>
               ))}
@@ -202,7 +232,7 @@ const BASKETBALLDetails = ({ route }) => {
           <View style={styles.tabContent}>
             <ScrollView>
               <Text style={styles.tabContent}>Players</Text>
-              {AwayAthletes.map((athlete) => (
+              {AwayAthletes.map((athlete, index) => (
                 <View key={athlete?.athlete?.id} style={styles.playerContainer}>
                   {athlete?.athlete?.headshot?.href ? (
                     <View style={styles.headshotContainer}>
@@ -220,20 +250,11 @@ const BASKETBALLDetails = ({ route }) => {
                     <Text style={styles.players}>
                       {athlete?.athlete?.displayName} - {athlete?.athlete?.position?.abbreviation}
                     </Text>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                        {athlete.stats.map((stat, index) => (
-                          <View key={index} style={{ marginHorizontal: 10 }}>
-                            <ScrollView>
-                              <Text style={styles.playerStats}>{stat}</Text>
-                              <Text style={styles.playerStatsLabels}>
-                                {matchupData.boxscore.players[0].statistics[0].labels[index]}
-                              </Text>
-                            </ScrollView>
-                          </View>
-                        ))}
-                      </View>
-                    </ScrollView>
+                    {renderAthleteStats(
+                      athlete,
+                      index + matchupData.boxscore.players[0].statistics[0].athletes.length,
+                      matchupData.boxscore.players[0].statistics[0].labels
+                    )}
                   </View>
                 </View>
               ))}
@@ -251,12 +272,14 @@ const BASKETBALLDetails = ({ route }) => {
       <SafeAreaView style={styles.safeAreaContainer} />
       <View style={styles.matchupContainer}>
         <View style={styles.column}>
-          <View style={styles.teamContainer}>
+          <View style={{ flexDirection: 'column', alignItems: 'center' }}>
             <Image
               source={{ uri: competition.competitors[1].team.logos[1].href }}
               style={styles.logo}
             />
             <Text style={styles.teamName}>{competition.competitors[1].team.name}</Text>
+          </View>
+          <View style={{ marginLeft: 10 }}>
             {competition.status.type.name === 'STATUS_SCHEDULED' ? (
               <Text style={styles.record}>{competition.competitors[1].record[0].displayValue}</Text>
             ) : (
@@ -264,35 +287,35 @@ const BASKETBALLDetails = ({ route }) => {
             )}
           </View>
         </View>
-        <View>
-          <View>
-            {competition.status.type.name === 'STATUS_SCHEDULED' ? (
-              <Text style={styles.dateText}>{moment(competition.date).format('h:mm A')}</Text>
-            ) : competition.status.type.name === 'STATUS_FINAL' ? (
-              <Text style={styles.inning}>{competition.status.type.shortDetail}</Text>
-            ) : (
-              <View style={styles.gameTime}>
-                <View>
-                  {competition.status.periodPrefix.includes('Top') && (
-                    <Text style={styles.inning}>{competition.status.period}</Text>
-                  )}
-                </View>
+        <View styles={{ flex: 1, justifyContent: 'center' }}>
+          {competition.status.type.name === 'STATUS_SCHEDULED' ? (
+            <Text style={styles.dateText}>{moment(competition.date).format('h:mm A')}</Text>
+          ) : competition.status.type.name === 'STATUS_FINAL' ? (
+            <Text style={styles.inning}>{competition.status.type.shortDetail}</Text>
+          ) : (
+            <View style={styles.gameTime}>
+              <View>
+                {competition.status.periodPrefix.includes('Top') && (
+                  <Text style={styles.inning}>{competition.status.period}</Text>
+                )}
               </View>
-            )}
-          </View>
+            </View>
+          )}
         </View>
         <View style={styles.column}>
-          <View style={styles.teamContainer}>
-            <Image
-              source={{ uri: competition.competitors[0].team.logos[1].href }}
-              style={styles.logo}
-            />
-            <Text style={styles.teamName}>{competition.competitors[0].team.name}</Text>
+          <View style={{ marginRight: 10 }}>
             {competition.status.type.name === 'STATUS_SCHEDULED' ? (
               <Text style={styles.record}>{competition.competitors[0].record[0].displayValue}</Text>
             ) : (
               <Text style={styles.score}>{competition.competitors[0].score}</Text>
             )}
+          </View>
+          <View style={{ flexDirection: 'column', alignItems: 'center' }}>
+            <Image
+              source={{ uri: competition.competitors[0].team.logos[1].href }}
+              style={styles.logo}
+            />
+            <Text style={styles.teamName}>{competition.competitors[0].team.name}</Text>
           </View>
         </View>
       </View>
@@ -342,11 +365,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   column: {
-    flex: 1,
+    flex: 2,
+    justifyContent: 'center',
     alignItems: 'center',
-  },
-  teamContainer: {
-    alignItems: 'center',
+    flexDirection: 'row',
   },
   logo: {
     width: 50,
