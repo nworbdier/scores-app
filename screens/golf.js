@@ -558,22 +558,16 @@ const GOLF = ({ route }) => {
         </View>
       </View>
       <View style={{ flex: 1, backgroundColor: 'black', paddingHorizontal: 10, paddingBottom: 10 }}>
-        {playersData.length > 0 ? (
-          <FlatList
-            data={playersData}
-            renderItem={renderPlayer}
-            keyExtractor={(item) => item.id.toString()}
-            contentContainerStyle={styles.listContent}
-            refreshControl={
-              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#888" />
-            }
-            ListHeaderComponent={renderHeader}
-          />
-        ) : (
-          <View style={styles.noDataContainer}>
-            <Text style={styles.noDataText}>Check Back Later</Text>
-          </View>
-        )}
+        <FlatList
+          data={playersData}
+          renderItem={renderPlayer}
+          keyExtractor={(item) => item.id.toString()}
+          contentContainerStyle={styles.listContent}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#888" />
+          }
+          ListHeaderComponent={renderHeader}
+        />
         <PlayerModal
           visible={modalVisible}
           player={selectedPlayer}

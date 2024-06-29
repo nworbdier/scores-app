@@ -343,7 +343,7 @@ const MLB = () => {
               <Image source={{ uri: item.AwayLogo }} style={styles.image} />
               <View style={{ flexDirection: 'column', marginLeft: 10 }}>
                 {item.Status === 'STATUS_SCHEDULED' ? (
-                  <Text style={styles.score}>{item.AwayTeamRecordSummary}</Text>
+                  <Text style={styles.record}>{item.AwayTeamRecordSummary}</Text>
                 ) : (
                   <Text style={styles.score}>{item.AwayScore}</Text>
                 )}
@@ -354,7 +354,7 @@ const MLB = () => {
               <Image source={{ uri: item.HomeLogo }} style={styles.image} />
               <View style={{ flexDirection: 'column', marginLeft: 10 }}>
                 {item.Status === 'STATUS_SCHEDULED' ? (
-                  <Text style={styles.score}>{item.HomeTeamRecordSummary}</Text>
+                  <Text style={styles.record}>{item.HomeTeamRecordSummary}</Text>
                 ) : (
                   <Text style={styles.score}>{item.HomeScore}</Text>
                 )}
@@ -621,6 +621,12 @@ const styles = StyleSheet.create({
   score: {
     fontSize: 20,
     fontWeight: 'bold',
+    color: 'white',
+    textAlign: 'left',
+    marginBottom: 4,
+  },
+  record: {
+    fontSize: 20,
     color: 'white',
     textAlign: 'left',
     marginBottom: 4,

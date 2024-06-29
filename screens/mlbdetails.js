@@ -498,18 +498,26 @@ const MLBDetails = ({ route }) => {
     const team = competitor.team;
     const logoUri = team.logos[1].href;
     const isScheduled = competition.status.type.name === 'STATUS_SCHEDULED';
+    const scoreStyle = index === 0 ? { marginRight: 20 } : { marginLeft: 20 };
 
     return (
-      <View style={styles.column} key={index}>
-        <Image source={{ uri: logoUri }} style={styles.logo} />
-        <View style={{ marginLeft: 10 }}>
-          {isScheduled ? (
-            <Text style={styles.record}>{competitor.record[0].displayValue}</Text>
-          ) : (
-            <Text style={styles.score}>{competitor.score}</Text>
-          )}
+      <View
+        style={[styles.row, { justifyContent: index === 0 ? 'flex-end' : 'flex-start' }]}
+        key={index}>
+        {index === 0 && (
+          <Text style={[styles.score, scoreStyle]}>
+            {isScheduled ? competitor.record[0].displayValue : competitor.score}
+          </Text>
+        )}
+        <View style={{ alignItems: 'center' }}>
+          <Image source={{ uri: logoUri }} style={styles.logo} />
           <Text style={styles.teamName}>{TeamRename(team.name)}</Text>
         </View>
+        {index === 1 && (
+          <Text style={[styles.score, scoreStyle]}>
+            {isScheduled ? competitor.record[0].displayValue : competitor.score}
+          </Text>
+        )}
       </View>
     );
   };
@@ -547,13 +555,9 @@ const MLBDetails = ({ route }) => {
     <View style={styles.container}>
       <SafeAreaView style={styles.safeAreaContainer} />
       <View style={styles.matchupContainer}>
-        <View style={{ flex: 2, flexDirection: 'column' }}>
-          {competition.competitors
-            .slice()
-            .reverse()
-            .map((competitor, index) => renderTeamInfo(competitor, index))}
-        </View>
-        <View style={{ flex: 1, justifyContent: 'center' }}>{renderMatchupInfo()}</View>
+        <View>{renderTeamInfo(competition.competitors[1], 1)}</View>
+        <View>{renderMatchupInfo()}</View>
+        <View>{renderTeamInfo(competition.competitors[0], 0)}</View>
       </View>
       <View style={{ flex: 4, flexDirection: 'column' }}>
         <View>
@@ -598,10 +602,11 @@ const styles = StyleSheet.create({
   matchupContainer: {
     flex: 1,
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
     marginHorizontal: 20,
   },
-  column: {
+  row: {
     flex: 1,
     alignItems: 'center',
     flexDirection: 'row',
@@ -613,16 +618,16 @@ const styles = StyleSheet.create({
   },
   teamName: {
     fontSize: 18,
+    marginTop: 10,
     color: 'white',
   },
   score: {
-    fontSize: 24,
+    fontSize: 30,
     fontWeight: 'bold',
     color: 'white',
   },
   record: {
     fontSize: 18,
-    marginTop: 10,
     color: 'white',
   },
   gameTime: {

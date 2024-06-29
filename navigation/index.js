@@ -8,6 +8,7 @@ import { ModalProvider } from '../components/modalcontext'; // Adjusted path
 import SportSelector from '../components/sportselector'; // Import the SportSelector modal
 import BASKETBALL from '../screens/basketball';
 import BASKETBALLDetails from '../screens/basketballdetails';
+import FOOTBALL from '../screens/football';
 import GOLF from '../screens/golf';
 import Scores from '../screens/home';
 import MLB from '../screens/mlb';
@@ -51,6 +52,7 @@ export default function RootStack() {
                 component={NHLDetails}
                 options={{ headerShown: false }}
               />
+              <Stack.Screen name="FOOTBALL" component={FOOTBALL} options={{ headerShown: false }} />
               <Stack.Screen name="MMA" component={MMA} options={{ headerShown: false }} />
             </Stack.Navigator>
             <SportSelector />
