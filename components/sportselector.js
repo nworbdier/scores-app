@@ -8,16 +8,16 @@ import { useModal } from './modalcontext'; // Import your context
 const sportNames = [
   'UFC',
   'PFL',
-  'PGA',
-  'LIV',
+  'NFL',
+  'CFB',
   'MLB',
   'WNBA',
   'NBA',
-  'NHL',
-  'TENNIS',
-  'NFL',
-  'CFB',
   'CBB',
+  'TENNIS',
+  'NHL',
+  'PGA',
+  'LIV',
 ];
 
 const SportSelector = () => {
