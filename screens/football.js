@@ -387,7 +387,8 @@ const FOOTBALL = ({ route }) => {
       <View style={styles.header}>
         <View
           style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Text style={styles.headerText}>{sport}</Text>
+          <Text style={styles.headerText}>{sport === 'COLLEGE-FOOTBALL' ? 'CFB' : sport}</Text>
+
           <Ionicons name="american-football-outline" size={24} color="white" marginLeft={5} />
         </View>
         <View style={styles.headerIcons}>
