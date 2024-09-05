@@ -33,7 +33,7 @@ const SportSelector = () => {
       navigation.navigate('BASKETBALL', { sport }); // Navigate to Basketball screen with sport type as a parameter
     } else if (sport === 'PGA' || sport === 'LIV') {
       navigation.navigate('GOLF', { sport }); // Navigate to Basketball screen with sport type as a parameter
-    } else if (sport === 'NFL' || sport === 'CFB') {
+    } else if (sport === 'NFL' || sport === 'COLLEGE-FOOTBALL') {
       navigation.navigate('FOOTBALL', { sport }); // Navigate to Basketball screen with sport type as a parameter
     } else {
       navigation.navigate(sport); // Navigate to the specific sport screen
