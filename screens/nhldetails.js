@@ -95,7 +95,6 @@ const NHLDetails = ({ route }) => {
   }
 
   const competition = matchupData.header.competitions[0];
-  const situation = matchupData.situation;
   const homeTeam = competition.competitors[1].team.abbreviation;
   const awayTeam = competition.competitors[0].team.abbreviation;
   const defaultImage = require('../assets/person.png');
