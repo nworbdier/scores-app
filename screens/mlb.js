@@ -59,10 +59,8 @@ const MLB = () => {
     awayScore = parseInt(awayScore, 10);
 
     const totalScore = homeScore + awayScore;
-    // console.log(totalScore); // This should log the sum correctly now
 
     const scoreDifference = Math.abs(homeScore - awayScore);
-    // console.log('Diff', scoreDifference);
 
     // Rest of your excitement score calculation remains unchanged
     let excitementScore = 0;
@@ -143,8 +141,6 @@ const MLB = () => {
       const response = await fetch(
         `https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard?dates=${date}`
       );
-
-      console.log(response.url);
 
       if (!response.ok) {
         throw new Error('Network response was not ok');

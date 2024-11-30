@@ -104,8 +104,6 @@ const NHL = () => {
         `https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/scoreboard?dates=${formattedDate}`
       );
 
-      console.log('Url:', response.url);
-
       if (!response.ok) {
         throw new Error('Network response was not ok');
       }
@@ -230,14 +228,12 @@ const NHL = () => {
     useCallback(() => {
       const fetchInitialData = async () => {
         await fetchGameData();
-        // console.log('Initial fetch for MLB...');
       };
 
       fetchInitialData();
 
       const intervalId = setInterval(() => {
         fetchGameData();
-        // console.log('Refreshing MLB...');
       }, 10000); // Refresh every 10 seconds
 
       return () => clearInterval(intervalId); // Cleanup interval on blur

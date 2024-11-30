@@ -33,7 +33,6 @@ const findClosestDate = (dates) => {
 
 const MMA = ({ route }) => {
   const { sport } = route.params; // Get the sport type from the route parameters
-  console.log(sport);
   const ref = useRef();
   const [selectedDate, setSelectedDate] = useState(moment().format('YYYYMMDD'));
   const [loading, setLoading] = useState(false);
@@ -78,7 +77,6 @@ const MMA = ({ route }) => {
         `https://site.api.espn.com/apis/site/v2/sports/mma/${sport.toLowerCase()}/scoreboard?dates=${formattedDate}`,
         options
       );
-      console.log('Fetch UFC Events Data URL:', response.url);
       const result = await response.json();
       setEvents(result.events || []);
       if (result.events && result.events.length > 0) {
@@ -95,7 +93,6 @@ const MMA = ({ route }) => {
         `https://site.web.api.espn.com/apis/common/v3/sports/mma/${sport.toLowerCase()}/fightcenter/${eventId}`,
         options
       );
-      console.log('Url', response.url);
       const result = await response.json();
       setEventDetails(result);
     } catch (error) {

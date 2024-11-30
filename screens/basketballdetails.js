@@ -27,7 +27,6 @@ const BASKETBALLDetails = ({ route }) => {
       const response = await fetch(
         `https://site.api.espn.com/apis/site/v2/sports/basketball/${sport.toLowerCase()}/summary?event=${eventId}`
       );
-      console.log('Url', response.url);
       const data = await response.json();
       setMatchupData(data);
     } catch (error) {

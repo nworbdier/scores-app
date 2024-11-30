@@ -381,7 +381,6 @@ const GOLF = ({ route }) => {
           const response = await fetch(
             `https://site.web.api.espn.com/apis/site/v2/sports/golf/${sport.toLowerCase()}/leaderboard/${eventId}/competitorsummary/${playerId}`
           );
-          console.log('Url:', response.url);
           const data = await response.json();
           setPlayerData(data);
 

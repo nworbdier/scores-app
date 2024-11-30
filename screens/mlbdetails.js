@@ -36,7 +36,6 @@ const MLBDetails = ({ route }) => {
       const response = await fetch(
         `https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/summary?event=${eventId}`
       );
-      console.log('Url', response.url);
       const data = await response.json();
       setMatchupData(data);
     } catch (error) {
